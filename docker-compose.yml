@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: ensa-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ensa_platform
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ensa-network
+
+  backend:
+    build: ./backend
+    container_name: ensa-backend
+    ports:
+      - "5000:5000"
+    environment:
+      DB_HOST: postgres
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: ensa_platform
+    depends_on:
+      - postgres
+    networks:
+      - ensa-network
+
+  frontend:
+    build: ./frontend
+    container_name: ensa-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - ensa-network
+
+volumes:
+  postgres_data:
+
+networks:
+  ensa-network:
+    driver: bridge
