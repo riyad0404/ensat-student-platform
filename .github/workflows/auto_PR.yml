@@ -21,7 +21,7 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          title: "Auto PR - Mise à jour depuis feature"
+          title: "Auto PR - Mise à jour depuis feature !"
           body: |
              Pull Request générée automatiquement via CI  
              Cible : dev
