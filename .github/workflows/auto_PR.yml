@@ -28,3 +28,4 @@ jobs:
           branch: ${{ github.ref_name }}
           base: dev 
           draft: false
+          delete-branch: false
