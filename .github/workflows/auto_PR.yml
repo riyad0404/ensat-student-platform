@@ -24,7 +24,7 @@ jobs:
           title: "Auto PR - Mise à jour depuis feature"
           body: |
              Pull Request générée automatiquement via CI  
-             Cible : develop
+             Cible : dev
           branch: ${{ github.ref_name }}
-          base: develop   
+          base: dev 
           draft: false
