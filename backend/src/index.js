@@ -1,7 +1,9 @@
 // src/index.js
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
+const sequelize = require('./models/database');
+const dotenv = require('dotenv');
+dotenv.config();
 
 const app = express();
 
@@ -16,6 +18,15 @@ app.get('/api/health', (req, res) => {
     env: process.env.NODE_ENV || 'development',
   });
 });
+
+// Tester la connexion à la base de données
+sequelize.authenticate()
+  .then(() => {
+    console.log('Connexion réussie à la base de données');
+  })
+  .catch((err) => {
+    console.error('Impossible de se connecter à la base de données:', err);
+  });
 
 // TODO: add routes (auth, posts, documents, search, etc.)
 
