@@ -19,6 +19,15 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Tester la connexion à la base de données
+sequelize.authenticate()
+  .then(() => {
+    console.log('Connexion réussie à la base de données');
+  })
+  .catch((err) => {
+    console.error('Impossible de se connecter à la base de données:', err);
+  });
+
 // TODO: add routes (auth, posts, documents, search, etc.)
 
 const PORT = process.env.PORT || 5000;
