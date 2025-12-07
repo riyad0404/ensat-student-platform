@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
@@ -23,8 +25,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           title: "Auto PR - Mise à jour depuis feature"
           body: |
-            Pull Request générée automatiquement via CI  
-            Cible : dev
+             Pull Request générée automatiquement via CI  
+             Cible : dev
           head: ${{ github.ref }}
           base: dev
           draft: false
