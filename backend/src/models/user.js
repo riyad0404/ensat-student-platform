@@ -1,65 +1,57 @@
-"use strict";
+import sequelize from '../database.js';  // Importer l'instance de sequelize
+import { DataTypes } from 'sequelize';
 
-export const up = async (queryInterface, Sequelize) => {
-  await queryInterface.createTable("user", {
-    iduser: {
-      type: Sequelize.INTEGER,
-      allowNull: false,
-      autoIncrement: true,
-      primaryKey: true
-    },
-    nom: {
-      type: Sequelize.STRING,
-      allowNull: false
-    },
-    prenom: {
-      type: Sequelize.STRING,
-      allowNull: false
-    },
-    email: {
-      type: Sequelize.STRING,
-      allowNull: false,
-      unique: true
-    },
-    password: {
-      type: Sequelize.STRING,
-      allowNull: false
-    },
-    niveau: {
-      type: Sequelize.STRING,
-      allowNull: false
-    },
-    secretCode: {
-      type: Sequelize.INTEGER,
-      allowNull: false
-    },
-    bio: {
-      type: Sequelize.STRING,
-      allowNull: true
-    },
-    photo: {
-      type: Sequelize.STRING,
-      allowNull: true
-    },
-    resetPasswordToken: {
-      type: Sequelize.STRING,
-      allowNull: true
-    },
-    resetPasswordExpires: {
-      type: Sequelize.DATE,
-      allowNull: true
-    },
-    createdAt: {
-      type: Sequelize.DATE,
-      allowNull: false
-    },
-    updatedAt: {
-      type: Sequelize.DATE,
-      allowNull: false
-    }
-  });
-};
+const User = sequelize.define('user', {
+  iduser: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true,
+    allowNull: false
+  },
+  nom: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  prenom: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  email: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
+  },
+  password: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  niveau: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  secretCode: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  bio: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  photo: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  resetPasswordToken: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  resetPasswordExpires: {
+    type: DataTypes.DATE,
+    allowNull: true
+  }
+}, {
+  tableName: 'user',  // Nom de la table
+  timestamps: true    // Gestion automatique de createdAt et updatedAt
+});
 
-export const down = async (queryInterface, Sequelize) => {
-  await queryInterface.dropTable("user");
-};
+export { User };
