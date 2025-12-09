@@ -50,7 +50,7 @@ const User = sequelize.define('user', {
     allowNull: true
   }
 }, {
-  tableName: 'user',  // Nom de la table
+  tableName: 'users',  // Nom de la table
   timestamps: true    // Gestion automatique de createdAt et updatedAt
 });
 
