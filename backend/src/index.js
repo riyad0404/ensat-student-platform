@@ -1,10 +1,9 @@
-import express from 'express'
+import express, { urlencoded } from 'express'
 import cors from 'cors';
 import dotenv from 'dotenv';
-import sequelize from './models/database.js';
+import sequelize from './database.js';
 
 dotenv.config();
-
 const app = express();
 const PORT = process.env.PORT || 5000;
 
