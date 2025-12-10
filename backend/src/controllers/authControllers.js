@@ -1,5 +1,35 @@
 import bcrypt from 'bcrypt';
 import { User } from '../models/user.js';  // Importer le modèle User
+import { generateTokens } from '../utils/generateTokens.js';
+import { getResetPasswordEmailTemplate } from '../utils/emailTemplates.js';
+import { verifyAccessToken,verifyRefreshToken } from '../utils/generateTokens.js';
+import { sendEmail } from '../utils/sendEmail.js';
+import crypto from 'crypto';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const isProd = process.env.NODE_ENV === 'production';
+
+const accessCookieOptions = {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: isProd ? 'none' : 'lax',
+  maxAge: 15 * 60 * 1000, // 15 minutes
+};
+
+const refreshCookieOptions = {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: isProd ? 'none' : 'lax',
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
+};
+
+const sendAuthCookies = (res, accessToken, refreshToken) => {
+  res.cookie('accessToken', accessToken, accessCookieOptions);
+  res.cookie('refreshToken', refreshToken, refreshCookieOptions);
+};
+
 
 // Inscription de l'utilisateur
 export const register = async (req, res) => {
@@ -24,12 +54,28 @@ export const register = async (req, res) => {
       niveau,
       secretCode
     });
+     // 🔐 Générer les tokens
+    const { accessToken, refreshToken } = generateTokens(newUser);
 
-    // Retourner un message de succès avec l'utilisateur créé
-    res.status(201).json({ message: 'Utilisateur créé avec succès', user: newUser });
+    // 🔐 Mettre les tokens dans des cookies HTTP-only
+    sendAuthCookies(res, accessToken, refreshToken);
+
+    // Ne pas renvoyer le hash du mot de passe au frontend
+    const userData = newUser.toJSON();
+    delete userData.password;
+    delete userData.resetPasswordToken;
+    delete userData.resetPasswordExpires;
+
+    return res
+      .status(201)
+      .json({ message: 'Utilisateur créé avec succès', user: userData });
   } catch (error) {
-    res.status(500).json({ message: 'Erreur du serveur', error: error.message });
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: 'Erreur du serveur', error: error.message });
   }
+
 };
 
 // Connexion de l'utilisateur
@@ -48,11 +94,178 @@ export const login = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ message: 'Mot de passe incorrect' });
     }
+ const { accessToken, refreshToken } = generateTokens(user);
 
-    // Si l'email et le mot de passe sont corrects
-    // (Pour l'instant, on ne génère pas de JWT, c'est à ton collègue de le faire)
-    res.status(200).json({ message: 'Connexion réussie', user });
+    // 🔐 Mettre les tokens dans des cookies HTTP-only
+    sendAuthCookies(res, accessToken, refreshToken);
+
+    // Nettoyer l'objet user avant de le renvoyer
+    const userData = user.toJSON();
+    delete userData.password;
+    delete userData.resetPasswordToken;
+    delete userData.resetPasswordExpires;
+
+    return res.status(200).json({ message: 'Connexion réussie', user: userData });
   } catch (error) {
-    res.status(500).json({ message: 'Erreur du serveur', error: error.message });
+    console.error(error);
+    return res
+      .status(500)
+      .json({ message: 'Erreur du serveur', error: error.message });
   }
 };
+export const logout = (req, res) => {
+  // Clear both cookies
+  res.clearCookie('accessToken', {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+  });
+
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
+  });
+
+  return res.status(200).json({ message: 'Logged out successfully' });
+};
+export const refreshToken = async (req, res) => {
+  const token = req.cookies?.refreshToken;
+
+  if (!token) {
+    return res.status(401).json({ message: 'Refresh token missing' });
+  }
+
+  try {
+    const decoded = verifyRefreshToken(token); // { iduser: ... }
+
+    // Optionally load user from DB to make sure they still exist
+    const user = await User.findByPk(decoded.iduser);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Generate new pair of tokens
+    const { accessToken, refreshToken } = generateTokens(user);
+
+    // Send back in cookies
+    sendAuthCookies(res, accessToken, refreshToken);
+
+    const userData = user.toJSON();
+    delete userData.password;
+    delete userData.resetPasswordToken;
+    delete userData.resetPasswordExpires;
+
+    return res.status(200).json({
+      message: 'Tokens refreshed successfully',
+      user: userData,
+    });
+  } catch (error) {
+    console.error('Refresh token error:', error.message);
+    return res.status(401).json({ message: 'Invalid or expired refresh token' });
+  }
+};
+export const forgotPasswordByEmail = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      // For security, do not reveal if the email exists
+      return res
+        .status(200)
+        .json({ message: 'If this email exists, a reset link has been sent.' });
+    }
+
+    // Generate a random token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+
+    // Set token + expiration on user
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    await user.save();
+
+    // Frontend page that will handle the reset (React route)
+    const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+
+    const subject = 'Password Reset Instructions';
+    const html = getResetPasswordEmailTemplate(
+      user.prenom || user.nom || '',
+      resetUrl
+    );
+
+
+    await sendEmail({ to: user.email, subject, html });
+
+    return res
+      .status(200)
+      .json({ message: 'If this email exists, a reset link has been sent.' });
+  } catch (error) {
+    console.error('forgotPasswordByEmail error:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+export const resetPasswordWithToken = async (req, res) => {
+  const { token, newPassword } = req.body;
+
+  if (!token || !newPassword) {
+    return res.status(400).json({ message: 'Token and new password are required' });
+  }
+
+  try {
+    const user = await User.findOne({ where: { resetPasswordToken: token } });
+
+    if (
+      !user ||
+      !user.resetPasswordExpires ||
+      user.resetPasswordExpires < new Date()
+    ) {
+      return res.status(400).json({ message: 'Token is invalid or has expired' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    user.password = hashedPassword;
+    user.resetPasswordToken = null;
+    user.resetPasswordExpires = null;
+    await user.save();
+
+    return res.status(200).json({ message: 'Password has been reset successfully' });
+  } catch (error) {
+    console.error('resetPasswordWithToken error:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+export const resetPasswordWithSecretCode = async (req, res) => {
+  const { email, secretCode, newPassword } = req.body;
+
+  if (!email || !secretCode || !newPassword) {
+    return res.status(400).json({
+      message: 'Email, secretCode and newPassword are required',
+    });
+  }
+
+  try {
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    // secretCode is stored as integer in DB
+    if (Number(secretCode) !== user.secretCode) {
+      return res.status(400).json({ message: 'Invalid secret code' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    user.password = hashedPassword;
+    // We do not touch resetPasswordToken here
+    await user.save();
+
+    return res.status(200).json({ message: 'Password has been reset successfully' });
+  } catch (error) {
+    console.error('resetPasswordWithSecretCode error:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
