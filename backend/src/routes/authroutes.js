@@ -1,9 +1,32 @@
 import express from 'express';
-import {login,register} from '../controllers/authControllers.js';
+import {
+  register,
+  login,
+  logout,
+  refreshToken,
+  forgotPasswordByEmail,
+  resetPasswordWithToken,
+  resetPasswordWithSecretCode,
+} from '../controllers/authControllers.js';
+import {authMiddleware} from '../middleware/authMiddleware.js'
 const router=express.Router();
 
 // Route pour l'inscription
 router.post('/signup',register);
 // Route pour la connexion
 router.post('/login',login);
+router.post('/refresh-token', refreshToken);
+router.post('/logout', logout);
+
+// Example protected route: current authenticated user
+router.get('/me', authMiddleware, (req, res) => {
+  return res.status(200).json({ user: req.user });
+});
+// Password reset by email link
+router.post('/forgot-password', forgotPasswordByEmail);
+router.post('/reset-password-token', resetPasswordWithToken);
+
+// Password reset using secretCode
+router.post('/reset-password-secret', resetPasswordWithSecretCode);
+
 export default router;

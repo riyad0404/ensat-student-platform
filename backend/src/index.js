@@ -3,12 +3,20 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/authroutes.js';
 import sequelize from './database.js';
+import cookieParser from 'cookie-parser';
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Global middlewares
-app.use(cors());
+app.use(cookieParser());
+// CORS pour React (important pour les cookies)
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || 'http://localhost:5173', // adapter apres au port de ton React
+    credentials: true, // autorise l'envoi de cookies
+  })
+);
 app.use(express.json());
 app.use('/api/auth', authRoutes);
 
