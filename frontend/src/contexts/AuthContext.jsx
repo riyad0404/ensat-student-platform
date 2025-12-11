@@ -31,49 +31,53 @@ export const AuthProvider = ({ children }) => {
 }, []);
 
 
-  const login = async (credentials) => {
-    try {
-      const data = await authAPI.login(credentials);
-      localStorage.setItem('authToken', data.token);
-      setUser(data.user);
-      
-      // ✅ CORRECTION : Redirection vers la page d'accueil
-      navigate('/');
-      
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
-  };
+ const login = async (credentials) => {
+  try {
+    const data = await authAPI.login(credentials);
+    
+    // ⭐ STOCKER LES DEUX TOKENS
+    localStorage.setItem('authToken', data.token);
+    localStorage.setItem('refreshToken', data.refreshToken || data.token);
+    
+    setUser(data.user);
+    navigate('/');
+    
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
 
-  const logout = async () => {
-    try {
-      await authAPI.logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      localStorage.removeItem('authToken');
-      setUser(null);
-      
-      // Redirection après logout (reste vers /login)
-      navigate('/login');
-    }
-  };
+const register = async (userData) => {
+  try {
+    const data = await authAPI.register(userData);
+    
+    // ⭐ STOCKER LES DEUX TOKENS
+    localStorage.setItem('authToken', data.token);
+    localStorage.setItem('refreshToken', data.refreshToken || data.token);
+    
+    setUser(data.user);
+    navigate('/');
+    
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+};
 
-  const register = async (userData) => {
-    try {
-      const data = await authAPI.register(userData);
-      localStorage.setItem('authToken', data.token);
-      setUser(data.user);
-      
-      // ✅ CORRECTION : Redirection vers la page d'accueil
-      navigate('/');
-      
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: error.message };
-    }
-  };
+const logout = async () => {
+  try {
+    await authAPI.logout();
+  } catch (error) {
+    console.error('Logout error:', error);
+  } finally {
+    // ⭐ SUPPRIMER LES DEUX TOKENS
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
+    
+    setUser(null);
+    navigate('/login');
+  }};
 
   return (
     <AuthContext.Provider value={{ user, login, logout, register, loading, }}>

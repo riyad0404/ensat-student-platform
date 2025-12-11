@@ -1,62 +1,84 @@
-import axiosInstance from './axiosConfig';
-
-// Toutes les fonctions pour l'authentification
+// src/api/authAPI.js - VERSION MOCK COMPLÈTE
 export const authAPI = {
-  // Connexion utilisateur
+  // ⭐ TOUT EN MOCK POUR LES TESTS
+  
   login: async (credentials) => {
-    const response = await axiosInstance.post('/auth/login', credentials);
-    return response.data;
+    console.log('🔐 Mock login avec:', credentials.email);
+    
+    // Simuler délai réseau
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Retourner données mock
+    return {
+      token: 'mock-jwt-token-' + Date.now(),
+      refreshToken: 'mock-refresh-token-' + Date.now(),
+      user: {
+        id: 1,
+        name: 'Étudiant ENSA',
+        email: credentials.email,
+        role: 'student'
+      }
+    };
   },
   
-  // Inscription utilisateur
   register: async (userData) => {
-    const response = await axiosInstance.post('/auth/register', userData);
-    return response.data;
+    console.log('📝 Mock register avec:', userData.email);
+    
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    return {
+      token: 'mock-jwt-register-' + Date.now(),
+      refreshToken: 'mock-refresh-register-' + Date.now(),
+      user: {
+        id: 2,
+        name: userData.name || 'Nouvel étudiant',
+        email: userData.email,
+        role: 'student'
+      }
+    };
   },
   
-  // Déconnexion
-  logout: async () => {
-    const response = await axiosInstance.post('/auth/logout');
-    return response.data;
-  },
-  
-  // Vérifier si le token est valide
-  /*verifyToken: async () => {
-    const response = await axiosInstance.get('/auth/verify');
-    return response.data;
-  }*/
   verifyToken: async () => {
-  // ========================
-  // POUR LES TESTS DU SPRINT 1
-  // ========================
+    const token = localStorage.getItem('authToken');
+    
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+    
+    console.log('🔐 Mock verifyToken');
+    await new Promise(resolve => setTimeout(resolve, 300));
+    
+    return {
+      id: 1,
+      name: 'Étudiant ENSA',
+      email: 'etudiant@ensa.com',
+      role: 'student'
+    };
+  },
   
-  // 1. Récupère le token du localStorage
-  const token = localStorage.getItem('authToken');
+  logout: async () => {
+    console.log('🚪 Mock logout');
+    await new Promise(resolve => setTimeout(resolve, 200));
+    return { success: true };
+  },
   
-  // 2. Si pas de token, erreur (comme en vrai)
-  if (!token) {
-    throw new Error('No authentication token found');
+  refreshToken: async (refreshToken) => {
+    console.log('🔄 Mock refreshToken appelé');
+    
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const mockResponse = {
+      token: 'new-mock-access-token-' + Date.now(),
+      refreshToken: 'new-mock-refresh-token-' + Date.now(),
+      user: {
+        id: 1,
+        name: 'Étudiant ENSA',
+        email: 'etudiant@ensa.com',
+        role: 'student'
+      }
+    };
+    
+    console.log('✅ Nouveaux tokens mock générés');
+    return mockResponse;
   }
-  
-  // 3. Pour les tests, retourne un utilisateur mock
-  console.log('🔐 Mock verifyToken - Simulation backend');
-  
-  return {
-    id: 1,
-    name: 'Étudiant ENSA',
-    email: 'etudiant@ensa.com',
-    role: 'student',
-    niveau: '2ème année',
-    filiere: 'Génie Informatique',
-    token: token // Inclus le token dans la réponse
-  };
-  
-  // ========================
-  // POUR LA PRODUCTION (PLUS TARD)
-  // ========================
-  // À DÉCOMMENTER QUAND LE BACKEND SERA PRÊT :
-  //
-  // const response = await axiosInstance.get('/auth/verify');
-  // return response.data;
-},
 };

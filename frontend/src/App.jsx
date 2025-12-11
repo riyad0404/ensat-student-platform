@@ -2,6 +2,7 @@ import {  Routes, Route } from 'react-router-dom';
 import RequireAuth from './components/auth/RequireAuth';
 import AlreadyAuth from './components/auth/AlreadyAuth';
 
+
 // Pages minimales - ta binôme les remplacera
 const HomePage = () => (
   <div style={{ padding: '20px' }}>
