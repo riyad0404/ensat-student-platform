@@ -22,21 +22,22 @@ export const authAPI = {
   },
   
   register: async (userData) => {
-    console.log('📝 Mock register avec:', userData.email);
-    
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    return {
-      token: 'mock-jwt-register-' + Date.now(),
-      refreshToken: 'mock-refresh-register-' + Date.now(),
-      user: {
-        id: 2,
-        name: userData.name || 'Nouvel étudiant',
-        email: userData.email,
-        role: 'student'
-      }
-    };
-  },
+  console.log('📝 Register avec:', userData);
+  
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  return {
+    token: 'mock-jwt-register-' + Date.now(),
+    refreshToken: 'mock-refresh-register-' + Date.now(),
+    user: {
+      id: 2,
+      name: userData.name,
+      email: userData.email,
+      level: userData.level,  // ⭐ IMPORTANT: inclure level
+      role: 'student'
+    }
+  };
+},
   
   verifyToken: async () => {
     const token = localStorage.getItem('authToken');
