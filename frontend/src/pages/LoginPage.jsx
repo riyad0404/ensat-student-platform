@@ -1,13 +1,13 @@
+import { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import "./../styles/login.css";
 import { FiMail, FiLock } from "react-icons/fi";
 import loginImg from "../assets/login-illustration.png";
 import Input from "../components/input.jsx";
 import Button from "../components/button.jsx";
-import { useAuth } from "../contexts/AuthContext.jsx";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 
-export default function LoginPage() {  // ⭐ CHANGEZ "login" en "Login" (majuscule)
+export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -21,19 +21,35 @@ export default function LoginPage() {  // ⭐ CHANGEZ "login" en "Login" (majusc
     e.preventDefault();
     setLoading(true);
     setError("");
+
+    console.log('=== DEBUG LOGIN ===');
+    console.log('1. Données du formulaire:', formData);
     
+    if (!formData.email || !formData.password) {
+      setError("Veuillez remplir tous les champs");
+      setLoading(false);
+      return;
+    }
+
     try {
+      console.log('2. Appel à login()...');
       const result = await login(formData);
       
+      console.log('3. Résultat du login:', result);
+      
       if (result.success) {
-        console.log("✅ Connexion réussie!");
+        console.log('✅ Login réussi!');
+        // La redirection est gérée dans AuthContext.jsx
       } else {
+        console.error('❌ Erreur login:', result.error);
         setError(result.error || "Erreur de connexion");
       }
     } catch (err) {
-      setError("Une erreur est survenue");
+      console.error('❌ Exception login:', err);
+      setError("Une erreur est survenue lors de la connexion");
     } finally {
       setLoading(false);
+      console.log('=== FIN DEBUG ===');
     }
   };
 
@@ -61,9 +77,10 @@ export default function LoginPage() {  // ⭐ CHANGEZ "login" en "Login" (majusc
               color: "#c62828",
               padding: "10px",
               borderRadius: "4px",
-              marginBottom: "15px"
+              marginBottom: "15px",
+              fontSize: "14px"
             }}>
-              {error}
+              ⚠️ {error}
             </div>
           )}
 
@@ -75,6 +92,8 @@ export default function LoginPage() {  // ⭐ CHANGEZ "login" en "Login" (majusc
               type="email"
               value={formData.email}
               onChange={handleChange("email")}
+              required
+              autoComplete="email"
             />
             
             <Input 
@@ -84,6 +103,8 @@ export default function LoginPage() {  // ⭐ CHANGEZ "login" en "Login" (majusc
               type="password"
               value={formData.password}
               onChange={handleChange("password")}
+              required
+              autoComplete="current-password"
             />
 
             <a className="forgot">Forgot Password?</a>
@@ -96,6 +117,7 @@ export default function LoginPage() {  // ⭐ CHANGEZ "login" en "Login" (majusc
             />
           </form>
           
+          {/* ⚠️ BOUTON "CREATE AN ACCOUNT" */}
           <Button 
             text="CREATE AN ACCOUNT" 
             className="btn-create" 

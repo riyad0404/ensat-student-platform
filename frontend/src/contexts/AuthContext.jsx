@@ -9,78 +9,116 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
- useEffect(() => {
-  const checkAuth = async () => {
-    const token = localStorage.getItem('authToken');
-    
-    if (token) {
+  // ✅ Vérifie si l'utilisateur est connecté via cookies
+  useEffect(() => {
+    const checkAuth = async () => {
       try {
-        const userData = await authAPI.verifyToken();
-        setUser(userData);
+        console.log('🔄 Vérification de la session...');
+        
+        // Le backend vérifie automatiquement le cookie HTTP-only
+        const response = await authAPI.verifyToken();
+        
+        if (response.user) {
+          console.log(' Utilisateur connecté:', response.user.email);
+          setUser(response.user);
+        } else {
+          console.log(' Pas d\'utilisateur dans la réponse');
+          setUser(null);
+        }
       } catch (error) {
-        console.log('⚠️ Backend non disponible, mais on garde le token pour les tests');
-        // On garde le token même si vérification échoue
-        setUser({ token, name: 'Utilisateur (backend offline)' });
-        // ⚠️ NE PAS FAIRE : localStorage.removeItem('authToken');
+        console.log(' Non connecté ou session expirée');
+        setUser(null);
+      } finally {
+        setLoading(false);
       }
-    }
-    setLoading(false);
-  };
-  
-  checkAuth();
-}, []);
+    };
+    
+    checkAuth();
+  }, []);
 
-
- const login = async (credentials) => {
+  //  Connexion avec cookies HTTP-only
+  // Dans la fonction login de AuthContext.jsx
+const login = async (credentials) => {
   try {
+    console.log('🎯 Tentative de connexion...');
     const data = await authAPI.login(credentials);
     
-    // ⭐ STOCKER LES DEUX TOKENS
-    localStorage.setItem('authToken', data.token);
-    localStorage.setItem('refreshToken', data.refreshToken || data.token);
+    console.log('✅ Réponse backend login:', data);
     
-    setUser(data.user);
-    navigate('/');
-    
-    return { success: true };
+    if (data.user) {
+      console.log('✅ Utilisateur connecté:', data.user.email);
+      setUser(data.user);
+      
+      // ⚠️ Redirige APRÈS avoir mis à jour l'état
+      setTimeout(() => {
+        console.log('🔄 Redirection vers /...');
+        navigate('/', { replace: true });
+      }, 50); // Petit délai pour que React mette à jour l'état
+      
+      return { success: true };
+    } else {
+      console.error('❌ Pas d\'utilisateur dans la réponse');
+      return { success: false, error: 'Utilisateur non reçu' };
+    }
   } catch (error) {
-    return { success: false, error: error.message };
+    console.error('❌ Erreur login dans contexte:', error);
+    
+    const errorMsg = error.response?.data?.error || 
+                    error.response?.data?.message || 
+                    error.message || 
+                    'Email ou mot de passe incorrect';
+    
+    return { success: false, error: errorMsg };
   }
 };
 
-const register = async (userData) => {
-  try {
-    const data = await authAPI.register(userData);
-    
-    // ⭐ STOCKER LES DEUX TOKENS
-    localStorage.setItem('authToken', data.token);
-    localStorage.setItem('refreshToken', data.refreshToken || data.token);
-    
-    setUser(data.user);
-    navigate('/');
-    
-    return { success: true };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
-};
+  //  Inscription
+  const register = async (userData) => {
+    try {
+      console.log(' Inscription en cours...');
+      const result = await authAPI.register(userData);
+      
+      console.log(' Réponse inscription:', result);
+      
+      // Le backend retourne { message: 'Utilisateur créé avec succès', user: {...} }
+      if (result.message) {
+        console.log(' Inscription réussie! Redirection vers login...');
+        navigate('/login');
+        return { success: true, message: result.message };
+      } else {
+        return { success: false, error: result.error || 'Erreur inconnue' };
+      }
+    } catch (error) {
+      console.error(' Erreur inscription:', error);
+      return { 
+        success: false, 
+        error: error.response?.data?.error || 'Erreur d\'inscription' 
+      };
+    }
+  };
 
-const logout = async () => {
-  try {
-    await authAPI.logout();
-  } catch (error) {
-    console.error('Logout error:', error);
-  } finally {
-    // ⭐ SUPPRIMER LES DEUX TOKENS
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('refreshToken');
-    
-    setUser(null);
-    navigate('/login');
-  }};
+  //  Déconnexion (le backend supprime le cookie)
+  const logout = async () => {
+    try {
+      console.log('👋 Déconnexion en cours...');
+      await authAPI.logout();
+    } catch (error) {
+      console.error('⚠️ Erreur logout:', error);
+    } finally {
+      
+      setUser(null);
+      navigate('/login');
+    }
+  };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register, loading, }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      login, 
+      logout, 
+      register, 
+      loading 
+    }}>
       {children}
     </AuthContext.Provider>
   );
