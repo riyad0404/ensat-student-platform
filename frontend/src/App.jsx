@@ -1,31 +1,37 @@
-import { Routes, Route, Outlet } from 'react-router-dom';
-import RequireAuth from './components/auth/RequireAuth';
-import AlreadyAuth from './components/auth/AlreadyAuth';
+import { Routes, Route, Outlet, Navigate } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext';
 import LoginPage from './pages/LoginPage';
 import Register from './pages/Register';
 
-// Pages
-const HomePage = () => (
-  <div style={{ padding: '20px' }}>
-    <h1>ENSAT Student Platform</h1>
-    <p>Bienvenue sur la plateforme étudiante</p>
-    <div>
-      <button onClick={() => {
-        localStorage.clear();
-        window.location.href = '/login';
-      }}>
-        Déconnexion
-      </button>
-    </div>
-  </div>
-);
+// HOC pour protéger les routes
+const RequireAuth = ({ children }) => {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return <div>Chargement...</div>;
+  }
+  
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return children;
+};
 
-const ProfilePage = () => (
-  <div style={{ padding: '20px' }}>
-    <h1>👤 Profil</h1>
-    <p>Page protégée - Connecté avec succès!</p>
-  </div>
-);
+// HOC pour les routes publiques quand déjà connecté
+const AlreadyAuth = ({ children }) => {
+  const { user, loading } = useAuth();
+  
+  if (loading) {
+    return <div>Chargement...</div>;
+  }
+  
+  if (user) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return children;
+};
 
 // Layout pour AlreadyAuth
 const AlreadyAuthLayout = () => {
@@ -45,6 +51,45 @@ const RequireAuthLayout = () => {
   );
 };
 
+// Page d'accueil
+const HomePage = () => {
+  const { user, logout } = useAuth();
+  
+  return (
+    <div style={{ padding: '20px' }}>
+      <h1>ENSAT Student Platform</h1>
+      <p>Bienvenue sur la plateforme étudiante</p>
+      
+      {user && (
+        <div>
+          <p>Connecté en tant que: <strong>{user.email}</strong></p>
+          <button 
+            onClick={logout}
+            style={{
+              padding: '10px 15px',
+              background: '#dc3545',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: 'pointer'
+            }}
+          >
+            Déconnexion
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Page de profil
+const ProfilePage = () => (
+  <div style={{ padding: '20px' }}>
+    <h1>👤 Profil</h1>
+    <p>Page protégée - Connecté avec succès!</p>
+  </div>
+);
+
 function App() {
   return (
     <Routes>
@@ -63,17 +108,4 @@ function App() {
   );
 }
 
-export default App;// AppTest.jsx
-/*import { Routes, Route } from 'react-router-dom';
-import LoginPage from './pages/LoginPage.jsx';
-import Register from './pages/Register';
-export default function AppTest() {
-  console.log('AppTest rendu, LoginPage:', LoginPage); // Vérifiez dans console
-  return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/" element={<div>Home</div>} />
-      <Route path="/register" element={<Register />} />
-    </Routes>
-  );
-}*/
+export default App;
