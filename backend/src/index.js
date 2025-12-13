@@ -1,11 +1,13 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express, { urlencoded } from 'express'
 import cors from 'cors';
-import dotenv from 'dotenv';
+
 import authRoutes from './routes/authroutes.js';
 import sequelize from './database.js';
 import cookieParser from 'cookie-parser';
 import conversationRoutes from './routes/conversationRoutes.js';
-dotenv.config();
 import './models/associations.js';
 const app = express();
 const PORT = process.env.PORT || 5000;
