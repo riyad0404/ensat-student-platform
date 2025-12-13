@@ -1,12 +1,12 @@
-import express, { urlencoded } from 'express'
-import cors from 'cors';
 import dotenv from 'dotenv';
+dotenv.config();              // ✅ TOUJOURS TOUT EN HAUT
+
+import express from 'express';
+import cors from 'cors';
 import authRoutes from './routes/authroutes.js';
 import sequelize from './database.js';
 import cookieParser from 'cookie-parser';
-import conversationRoutes from './routes/conversationRoutes.js';
-dotenv.config();
-import './models/associations.js';
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -36,13 +36,9 @@ app.get('/api/health', (req, res) => {
 
 async function start() {
   try {
-    // 1. Check DB connectivity
     await sequelize.authenticate();
     console.log('✅ Database connection established.');
 
-  
-
-    // 3. Start HTTP server
     app.listen(PORT, () => {
       console.log(`🚀 Server listening on http://localhost:${PORT}`);
     });
