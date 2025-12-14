@@ -2,6 +2,8 @@ import { Routes, Route, Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import LoginPage from './pages/LoginPage';
 import Register from './pages/Register';
+import ResetPasswordCS from './pages/ResetPassword-CS';
+import ResetPasswordEmail from './pages/ResetPassword-email';
 
 // HOC pour protéger les routes
 const RequireAuth = ({ children }) => {
@@ -103,6 +105,10 @@ function App() {
       <Route element={<AlreadyAuthLayout />}>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/resetByemail" element={<ResetPasswordEmail />} />
+        <Route path="/resetByCode" element={<ResetPasswordCS />} />
+        <Route path="/homepage" element={<HomePage />} />
+
       </Route>
     </Routes>
   );

@@ -5,10 +5,8 @@ import Input from "../components/input.jsx";
 import Button from "../components/button.jsx";
 import { useNavigate } from "react-router-dom";
 
-
-
 export default function Register() {
-  const navigate = useNavigate();
+  const navigate = useNavigate(); 
   return (
     <div className="login-page">
       <div className="login-card">
@@ -18,16 +16,14 @@ export default function Register() {
         </div>
 
         <div className="login-right">
-          <h2>Create an Account</h2>
-          <p className="subtitle">Welcome to the community</p>
+          <h2>Reset Password</h2>
+          <p className="subtitle">Enter your email to reset your password</p>
 
-          <Input label="FULL NAME" placeholder="Enter Your Full Name" />
           <Input label="EMAIL" placeholder="Enter Your Email" icon={<FiMail />} type="email" />
-          <Input label="LEVEL" placeholder="Enter Your Level" />
-          <Input label="PASSWORD" placeholder="Enter Your Password" icon={<FiLock />} type="password" />
+          <Input label="NEW PASSWORD" placeholder="Enter Your New Password" icon={<FiLock />} type="password" />
+          <Input label="CONFIRM PASSWORD" placeholder="Confirm Your Password" icon={<FiLock />} type="password" />
 
-          <Button text="CREATE ACCOUNT" className="btn-create"  onClick={() => navigate("/login")}/>
-
+          <Button text="RESET PASSWORD" className="btn-create"  onClick={() => navigate("/login")}/>
           <p className="redirect">
             Already have an account? <a href="/login">Login</a>
           </p>
@@ -36,4 +32,3 @@ export default function Register() {
     </div>
   );
 }
-            
