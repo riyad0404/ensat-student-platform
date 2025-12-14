@@ -3,8 +3,12 @@ import { FiMail, FiLock } from "react-icons/fi";
 import registerImg from "../assets/login-illustration.png";
 import Input from "../components/input.jsx";
 import Button from "../components/button.jsx";
+import { useNavigate } from "react-router-dom";
+
+
 
 export default function Register() {
+  const navigate = useNavigate();
   return (
     <div className="login-page">
       <div className="login-card">
@@ -22,7 +26,7 @@ export default function Register() {
           <Input label="LEVEL" placeholder="Enter Your Level" />
           <Input label="PASSWORD" placeholder="Enter Your Password" icon={<FiLock />} type="password" />
 
-          <Button text="CREATE ACCOUNT" className="btn-create" />
+          <Button text="CREATE ACCOUNT" className="btn-create"  onClick={() => navigate("/login")}/>
 
           <p className="redirect">
             Already have an account? <a href="/login">Login</a>

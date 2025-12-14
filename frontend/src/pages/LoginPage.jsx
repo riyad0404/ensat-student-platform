@@ -7,9 +7,11 @@ import Button from "../components/button.jsx";
 import { useNavigate } from "react-router-dom";
 
 
+
+
 export default function Login() {
   const [open, setOpen] = useState(false);
-  const navigate = useNavigate();
+ const navigate = useNavigate();
 
   return (
     <div className="login-page">
@@ -65,7 +67,7 @@ export default function Login() {
             )}
           </div>
 
-          <Button text="LOGIN" className="btn-login" />
+          <Button text="LOGIN" className="btn-login" onClick={() => navigate("/home")} />
           <Button
             text="CREATE AN ACCOUNT"
             className="btn-create"

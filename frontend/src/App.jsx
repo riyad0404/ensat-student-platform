@@ -107,6 +107,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/resetByemail" element={<ResetPasswordEmail />} />
         <Route path="/resetByCode" element={<ResetPasswordCS />} />
+        <Route path="/homepage" element={<HomePage />} />
 
       </Route>
     </Routes>
