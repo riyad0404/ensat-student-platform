@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage';
 import Register from './pages/Register';
 import ResetPasswordCS from './pages/ResetPassword-CS';
 import ResetPasswordEmail from './pages/ResetPassword-email';
+import ResetPasswordToken from './pages/ResetPasswordToken';
 
 // HOC pour protéger les routes
 const RequireAuth = ({ children }) => {
@@ -107,7 +108,8 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/resetByemail" element={<ResetPasswordEmail />} />
         <Route path="/resetByCode" element={<ResetPasswordCS />} />
-        <Route path="/homepage" element={<HomePage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordToken />} />
+
 
       </Route>
     </Routes>
@@ -115,3 +117,4 @@ function App() {
 }
 
 export default App;
+
