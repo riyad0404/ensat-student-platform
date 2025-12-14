@@ -3,6 +3,7 @@ import { FiMail, FiLock } from "react-icons/fi";
 import registerImg from "../assets/login-illustration.png";
 import Input from "../components/input.jsx";
 import Button from "../components/button.jsx";
+
 import { useNavigate } from "react-router-dom";
 
 export default function Register() {

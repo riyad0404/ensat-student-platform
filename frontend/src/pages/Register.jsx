@@ -6,6 +6,7 @@ import Button from "../components/button.jsx";
 import { useNavigate } from "react-router-dom";
 
 
+
 export default function Register() {
   const navigate = useNavigate();
   return (

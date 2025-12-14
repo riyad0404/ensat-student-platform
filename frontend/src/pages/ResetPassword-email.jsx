@@ -6,7 +6,7 @@ import Button from "../components/button.jsx";
 import { useNavigate } from "react-router-dom";
 
 export default function Register() {
-  const navigate = useNavigate();
+  const navigate = useNavigate(); 
   return (
     <div className="login-page">
       <div className="login-card">
