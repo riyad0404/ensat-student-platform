@@ -18,40 +18,115 @@ export default function LoginPage() {
     password: ""
   });
 
+  const [errors, setErrors] = useState({
+    email: "",
+    password: ""
+  });
+
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [formError, setFormError] = useState("");
+
+  // Validation en temps réel pour login
+  const validateLoginField = (name, value) => {
+  let error = "";
+  
+  switch (name) {
+    case "email":
+      if (!value) {
+        error = "Email required";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        error = "Invalid email format";
+      }
+      break;
+      
+    case "password":
+      if (!value) return "Password required";
+      if (value.length < 6) return "Minimum 6 characters";
+      return "";
+      
+  }
+  
+  return error;
+};
 
   const handleChange = (field) => (e) => {
+    const value = e.target.value;
+    
     setFormData(prev => ({
       ...prev,
-      [field]: e.target.value
+      [field]: value
     }));
+    
+    // Validation en temps réel
+    const error = validateLoginField(field, value);
+    setErrors(prev => ({
+      ...prev,
+      [field]: error
+    }));
+    
+    // Effacer l'erreur générale si on corrige
+    if (error === "" && formError) {
+      setFormError("");
+    }
+  };
+
+  const validateAllFields = () => {
+    const newErrors = {
+      email: validateLoginField("email", formData.email),
+      password: validateLoginField("password", formData.password)
+    };
+    
+    setErrors(newErrors);
+    
+    // Vérifier s'il y a des erreurs
+    return !Object.values(newErrors).some(error => error !== "");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setFormError("");
 
+    // Valider tous les champs
+    if (!validateAllFields()) {
+      setFormError("Please correct the errors above.");
+      return;
+    }
+
+    // Vérifier si tous les champs sont remplis
     if (!formData.email || !formData.password) {
-      setError("Veuillez remplir tous les champs");
+      setFormError("Please fill in all fields");
       return;
     }
 
     setLoading(true);
 
-    try {
-      const result = await login(formData);
+  try {
+    const result = await login(formData);
 
-      if (!result.success) {
-        setError(result.error || "Email ou mot de passe incorrect");
-      }
-      // ✅ SI SUCCESS → redirection automatique via AuthContext
-    } catch (err) {
-      setError("Erreur serveur, veuillez réessayer plus tard");
-      console.error(err);
-    } finally {
-      setLoading(false);
+    if (!result.success) {
+      // Generic message for login failure
+      setFormError("Incorrect login credentials. Please check your email and password.");
+      
+      // Optional: clear password for security
+      setFormData(prev => ({ ...prev, password: "" }));
     }
+    // ✅ IF SUCCESS → automatic redirect via AuthContext
+  } catch (err) {
+    console.error(err);
+    
+    // Error type detection
+    if (err.response?.status === 401) {
+      setFormError("Incorrect login credentials.");
+    } else if (err.response?.status === 404) {
+      setFormError("No account found with this email.");
+    } else if (err.response?.status >= 500) {
+      setFormError("Login service unavailable. Please try again later.");
+    } else {
+      setFormError("Connection error. Please check your network.");
+    }
+  } finally {
+    setLoading(false);
+  }
   };
 
   return (
@@ -72,16 +147,21 @@ export default function LoginPage() {
           <h2>Welcome Back!</h2>
           <p className="subtitle">Sign in to continue</p>
 
-          {error && <span className="error-text">⚠️ {error}</span>}
+          {formError && (
+            <div className="error-message">
+              {formError}
+            </div>
+          )}
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             <Input
               label="EMAIL"
               type="email"
-              placeholder="Enter Your Email"
+              placeholder="ex: user@example.com"
               icon={<FiMail />}
               value={formData.email}
               onChange={handleChange("email")}
+              error={errors.email}
               required
             />
 
@@ -92,53 +172,32 @@ export default function LoginPage() {
               icon={<FiLock />}
               value={formData.password}
               onChange={handleChange("password")}
+              error={errors.password}
               required
             />
 
-            <div className="forgot-wrapper" style={{ position: "relative" }}>
+            <div className="forgot-wrapper">
   <span
     className="forgot"
     onClick={() => setShowForgotOptions(prev => !prev)}
-    style={{ cursor: "pointer" }}
   >
     Forgot Password?
   </span>
 
   {showForgotOptions && (
-    <div
-      className="forgot-dropdown"
-      style={{
-        position: "absolute",
-        top: "100%",
-        left: 0,
-        background: "#fff",
-        border: "1px solid #ccc",
-        borderRadius: "4px",
-        padding: "5px 0",
-        width: "200px",
-        zIndex: 10,
-        boxShadow: "0 2px 8px rgba(0,0,0,0.2)"
-      }}
-    >
-      <div
-        style={{ padding: "8px 15px", cursor: "pointer" }}
-        onClick={() => navigate("/resetByCode")}
-      >
+    <div className="forgot-dropdown">
+      <div onClick={() => navigate("/resetByCode")}>
         Reset by Code Secret
       </div>
-      <div
-        style={{ padding: "8px 15px", cursor: "pointer" }}
-        onClick={() => navigate("/resetByEmail")}
-      >
+      <div onClick={() => navigate("/resetByEmail")}>
         Reset by Email Link
       </div>
     </div>
   )}
 </div>
 
-
             <Button
-              text={loading ? "LOGGING IN..." : "LOGIN"}
+              text={loading ? "LOGGING IN..." : "LOGIN"}     
               className="btn-login"
               type="submit"
               disabled={loading}
@@ -147,7 +206,7 @@ export default function LoginPage() {
 
           <Button
             text="CREATE AN ACCOUNT"
-            className="btn-create"
+            className="btn-create secondary"
             onClick={() => navigate("/register")}
           />
         </div>
@@ -155,4 +214,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
