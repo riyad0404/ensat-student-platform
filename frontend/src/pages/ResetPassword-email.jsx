@@ -1,31 +1,97 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./../styles/login.css";
-import { FiMail, FiLock } from "react-icons/fi";
-import registerImg from "../assets/login-illustration.png";
+import { FiMail } from "react-icons/fi";
 import Input from "../components/input.jsx";
 import Button from "../components/button.jsx";
-import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import registerImg from "../assets/login-illustration.png";
 
-export default function Register() {
-  const navigate = useNavigate(); 
+export default function ForgotPasswordEmail() {
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const [emailError, setEmailError] = useState(""); // ⭐ Erreur spécifique
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
+
+  const validateEmail = (email) => {
+    if (!email) return "Email required";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "Invalid email format";
+    return "";
+  };
+
+  const handleSubmit = async (e) => {
+    e?.preventDefault();
+    setError("");
+    setEmailError("");
+    setMessage("");
+
+    // Validation
+    const emailValidation = validateEmail(email);
+    if (emailValidation) {
+      setEmailError(emailValidation);
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await axios.post("http://localhost:5000/api/auth/forgot-password", { email });
+      setMessage("✅ Check your email! You will receive a link to reset your password.");
+    } catch (err) {
+      setError("❌ Invalid email address or server problem");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="login-page">
-      <div className="login-card">
-
+      <div className="login-card reset-page"> {/* ⭐ AJOUTEZ reset-page */}
         <div className="login-left">
-          <img src={registerImg} alt="Register Illustration" className="login-illustration" />
+          <img src={registerImg} alt="Reset Illustration" className="login-illustration" />
         </div>
 
         <div className="login-right">
           <h2>Reset Password</h2>
           <p className="subtitle">Enter your email to reset your password</p>
 
-          <Input label="EMAIL" placeholder="Enter Your Email" icon={<FiMail />} type="email" />
-          <Input label="NEW PASSWORD" placeholder="Enter Your New Password" icon={<FiLock />} type="password" />
-          <Input label="CONFIRM PASSWORD" placeholder="Confirm Your Password" icon={<FiLock />} type="password" />
+          {error && <div className="error-message">⚠️ {error}</div>}
+          {message && <div className="success-message">{message}</div>}
 
-          <Button text="RESET PASSWORD" className="btn-create"  onClick={() => navigate("/login")}/>
+          <form onSubmit={handleSubmit}>
+            <Input
+              label="EMAIL"
+              placeholder="Enter Your Email"
+              icon={<FiMail />}
+              type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setEmailError(validateEmail(e.target.value));
+              }}
+              error={emailError}
+              required
+            />
+
+            <Button
+              text={loading ? "SENDING..." : "SEND RESET LINK"}
+              className="btn-create"
+              onClick={handleSubmit}
+              disabled={loading}
+            />
+          </form>
+
           <p className="redirect">
-            Already have an account? <a href="/login">Login</a>
+            Back to{" "}
+            <span 
+              onClick={() => navigate("/login")} 
+              style={{ cursor: "pointer", color: "#E334FE", fontWeight: "600" }}
+            >
+              Login
+            </span>
           </p>
         </div>
       </div>

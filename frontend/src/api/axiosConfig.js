@@ -33,16 +33,17 @@ axiosInstance.interceptors.response.use(
   (error) => {
     console.error(`❌ ${error.response?.status || 'No status'} ${error.config?.url}`);
     
-    // Rediriger vers login si non authentifié (401)
-    if (error.response?.status === 401) {
+    // ⚠️ NE PAS rediriger pour les routes de reset-password
+    const currentPath = window.location.pathname;
+    const isResetPasswordRoute = currentPath.startsWith('/reset-password/');
+    
+    if (error.response?.status === 401 && !isResetPasswordRoute) {
       console.log('🔒 Session expirée, redirection vers login...');
-      // Vérifier si on est pas déjà sur la page de login
-      if (window.location.pathname !== '/login') {
+      if (currentPath !== '/login') {
         window.location.href = '/login';
       }
     }
     
-    // Gérer les erreurs de réseau
     if (!error.response) {
       console.error('🌐 Erreur réseau - Vérifiez votre connexion');
     }
