@@ -1,7 +1,8 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-import express, { urlencoded } from 'express'
+import express from 'express';
+import { urlencoded } from 'express';
 import cors from 'cors';
 
 import authRoutes from './routes/authroutes.js';
@@ -12,18 +13,23 @@ import './models/associations.js';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+
 // Global middlewares
 app.use(cookieParser());
-// CORS pour React (important pour les cookies)
+// CORS for React (important for cookies)
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173', // adapter apres au port de ton React
-    credentials: true, // autorise l'envoi de cookies
+    origin: process.env.CLIENT_URL || 'http://localhost:5173', // adapt to your React port if needed
+    credentials: true, // allow sending cookies
   })
 );
 app.use(express.json());
+app.use(urlencoded({ extended: true }));
+
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/conversations', conversationRoutes);
+
 
 
 // Health check route
@@ -34,18 +40,27 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// TODO: add routes (auth, posts, documents, search, etc.)
+// TODO: add more routes (posts, documents, search, etc.)
+
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal Server Error',
+  });
+});
+
+let server;
 
 async function start() {
   try {
-    // 1. Check DB connectivity
+    // Check DB connectivity
     await sequelize.authenticate();
     console.log('✅ Database connection established.');
 
-  
-
-    // 3. Start HTTP server
-    app.listen(PORT, () => {
+    // Start HTTP server
+    server = app.listen(PORT, () => {
       console.log(`🚀 Server listening on http://localhost:${PORT}`);
     });
   } catch (error) {
@@ -53,5 +68,24 @@ async function start() {
     process.exit(1);
   }
 }
+
+// Graceful shutdown
+function gracefulShutdown() {
+  console.log('\n🛑 Shutting down gracefully...');
+  if (server) {
+    server.close(() => {
+      console.log('HTTP server closed.');
+      sequelize.close().then(() => {
+        console.log('Database connection closed.');
+        process.exit(0);
+      });
+    });
+  } else {
+    process.exit(0);
+  }
+}
+
+process.on('SIGTERM', gracefulShutdown);
+process.on('SIGINT', gracefulShutdown);
 
 start();
