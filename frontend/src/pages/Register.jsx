@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./../styles/login.css";
-import { FiMail, FiLock , FiEye, FiEyeOff  } from "react-icons/fi";
+import { FiMail, FiEye, FiEyeOff } from "react-icons/fi";
 import registerImg from "../assets/login-illustration.png";
 import Input from "../components/input.jsx";
 import Button from "../components/button.jsx";
@@ -35,7 +35,6 @@ export default function Register() {
   const [successMessage, setSuccessMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-
   useEffect(() => {
     if (user) navigate("/", { replace: true });
   }, [user, navigate]);
@@ -43,30 +42,30 @@ export default function Register() {
   const validateField = (fieldName, value) => {
     switch (fieldName) {
       case "email":
-        if (!value) return "Email requis";
+        if (!value) return "Email required";
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-          return "Format d'email invalide";
+          return "Invalid email format";
         }
         return "";
         
       case "password":
-        if (!value) return "Mot de passe requis";
-        if (value.length < 6) return "Minimum 6 caractères";
+        if (!value) return "Password required";
+        if (value.length < 6) return "Minimum 6 characters";
         return "";
         
       case "secretCode":
-        if (!value) return "Code secret requis";
-        if (!/^\d{6}$/.test(value)) return "6 chiffres requis";
+        if (!value) return "Secret code required";
+        if (!/^\d{6}$/.test(value)) return "6 digits required";
         return "";
         
       case "nom":
       case "prenom":
-        if (!value) return "Champ requis";
-        if (value.length < 2) return "Minimum 2 caractères";
+        if (!value) return "Field required";
+        if (value.length < 2) return "Minimum 2 characters";
         return "";
         
       case "niveau":
-        if (!value) return "Niveau requis";
+        if (!value) return "Level required";
         return "";
         
       default:
@@ -82,14 +81,14 @@ export default function Register() {
       [field]: value
     }));
     
-    // Validation en temps réel
+    // Real-time validation
     const errorMsg = validateField(field, value);
     setFieldErrors(prev => ({
       ...prev,
       [field]: errorMsg
     }));
     
-    // Réinitialiser l'erreur générale quand l'utilisateur modifie un champ
+    // Reset general error when user modifies a field
     if (error) setError("");
   };
 
@@ -100,7 +99,7 @@ export default function Register() {
 
     const { nom, prenom, email, niveau, password, secretCode } = formData;
 
-    // Validation complète
+    // Complete validation
     const newErrors = {
       nom: validateField("nom", nom),
       prenom: validateField("prenom", prenom),
@@ -112,19 +111,19 @@ export default function Register() {
 
     setFieldErrors(newErrors);
 
-    // Vérifier s'il y a des erreurs
+    // Check for errors
     const hasErrors = Object.values(newErrors).some(err => err !== "");
     if (hasErrors) {
-      setError("Veuillez vérifier les informations saisies.");
+      setError("Please check the entered information.");
       return;
     }
 
-    // Convertir secretCode en nombre
+    // Convert secretCode to number
     const secretCodeNum = parseInt(secretCode);
     if (isNaN(secretCodeNum)) {
       setFieldErrors(prev => ({ 
         ...prev, 
-        secretCode: "Le code secret doit être un nombre." 
+        secretCode: "Secret code must be a number." 
       }));
       return;
     }
@@ -142,20 +141,20 @@ export default function Register() {
       });
 
       if (result.success) {
-        setSuccessMessage("Compte créé avec succès ! Redirection...");
+        setSuccessMessage("Account created successfully! Redirecting...");
         setTimeout(() => navigate("/login"), 2000);
       } else {
-        // 🎯 Message d'erreur personnalisé - Email déjà existant
-        setError(" Cet email est déjà enregistré. Veuillez utiliser un autre email ou vous connecter.");
+        // Custom error message - Email already exists
+        setError("This email is already registered. Please use another email or login.");
         setFieldErrors(prev => ({
           ...prev,
-          email: "Email déjà utilisé"
+          email: "Email already in use"
         }));
       }
     } catch (err) {
-      console.error("Erreur d'inscription:", err);
+      console.error("Registration error:", err);
       
-      // 🎯 Gestion des erreurs HTTP avec messages personnalisés
+      // HTTP error handling with custom messages
       const status = err.response?.status;
       const serverMessage = err.response?.data?.message || 
                            err.response?.data?.error || 
@@ -164,50 +163,49 @@ export default function Register() {
       console.log("Status:", status);
       console.log("Server message:", serverMessage);
       
-      // Analyse du message d'erreur pour détecter le type
+      // Analyze error message to detect type
       const errorLower = serverMessage.toLowerCase();
       
       if (
         status === 409 || 
         errorLower.includes("email") ||
         errorLower.includes("already") ||
-        errorLower.includes("existe") ||
-        errorLower.includes("duplicate") ||
-        errorLower.includes("déjà")
+        errorLower.includes("exists") ||
+        errorLower.includes("duplicate")
       ) {
-        // 📧 Email déjà existant
-        setError("Cet email est déjà enregistré. Veuillez utiliser un autre email ou vous connecter.");
+        // Email already exists
+        setError("This email is already registered. Please use another email or login.");
         setFieldErrors(prev => ({
           ...prev,
-          email: "Email déjà utilisé"
+          email: "Email already in use"
         }));
       } 
       else if (
         status === 400 &&
         (errorLower.includes("code") || errorLower.includes("secret"))
       ) {
-        // 🔐 Code secret invalide
-        setError(" Code secret invalide. Veuillez contacter l'administrateur pour obtenir le bon code.");
+        // Invalid secret code
+        setError("Invalid secret code. Please contact the administrator for the correct code.");
         setFieldErrors(prev => ({
           ...prev,
-          secretCode: "Code invalide"
+          secretCode: "Invalid code"
         }));
       }
       else if (status === 400) {
-        // ⚠️ Données invalides
-        setError(" Les informations saisies sont invalides. Veuillez vérifier tous les champs.");
+        // Invalid data
+        setError("The entered information is invalid. Please check all fields.");
       }
       else if (status === 500) {
-        // 🔧 Erreur serveur
-        setError(" Erreur du serveur. Veuillez réessayer dans quelques instants.");
+        // Server error
+        setError("Server error. Please try again in a few moments.");
       } 
       else if (err.message === "Network Error" || !navigator.onLine) {
-        // 🌐 Problème de connexion
-        setError(" Problème de connexion internet. Veuillez vérifier votre connexion.");
+        // Connection problem
+        setError("Internet connection problem. Please check your connection.");
       }
       else {
-        // ❌ Erreur générique
-        setError("Une erreur s'est produite lors de l'inscription. Veuillez réessayer.");
+        // Generic error
+        setError("An error occurred during registration. Please try again.");
       }
     } finally {
       setLoading(false);
@@ -226,24 +224,24 @@ export default function Register() {
         </div>
 
         <div className="login-right register-page">
-          <h2>Créer un Compte</h2>
-          <p className="subtitle">Bienvenue dans la communauté</p>
+          <h2>Create an Account</h2>
+          <p className="subtitle">Welcome to the community</p>
 
-          {error && <div className="error-text"> {error}</div>}
+          {error && <div className="error-text">⚠️ {error}</div>}
           {successMessage && <div className="success-text">✅ {successMessage}</div>}
 
           <form onSubmit={handleSubmit}>
             <Input
-              label="Nom"
-              placeholder="Entrez votre nom"
+              label="Last Name"
+              placeholder="Enter your last name"
               value={formData.nom}
               onChange={handleChange("nom")}
               error={fieldErrors.nom}
               required
             />
             <Input
-              label="Prénom"
-              placeholder="Entrez votre prénom"
+              label="First Name"
+              placeholder="Enter your first name"
               value={formData.prenom}
               onChange={handleChange("prenom")}
               error={fieldErrors.prenom}
@@ -252,7 +250,7 @@ export default function Register() {
             <Input
               label="Email"
               type="email"
-              placeholder="Entrez votre email"
+              placeholder="Enter your email"
               icon={<FiMail />}
               value={formData.email}
               onChange={handleChange("email")}
@@ -260,8 +258,8 @@ export default function Register() {
               required
             />
             <Input
-              label="Niveau"
-              placeholder="Entrez votre niveau"
+              label="Level"
+              placeholder="Enter your level"
               value={formData.niveau}
               onChange={handleChange("niveau")}
               error={fieldErrors.niveau}
@@ -269,10 +267,9 @@ export default function Register() {
             />
            <div style={{ position: 'relative', marginBottom: '1.2rem' }}>
               <Input
-                label="Mot de passe"
+                label="Password"
                 type={showPassword ? "text" : "password"}
-                placeholder="Entrez votre mot de passe"
-
+                placeholder="Enter your password"
                 value={formData.password}
                 onChange={handleChange("password")}
                 error={fieldErrors.password}
@@ -298,9 +295,9 @@ export default function Register() {
               </span>
             </div>
             <Input
-              label="Code Secret"
+              label="Secret Code"
               type="number"
-              placeholder="Entrez le code à 6 chiffres"
+              placeholder="Enter the 6-digit code"
               value={formData.secretCode}
               onChange={handleChange("secretCode")}
               error={fieldErrors.secretCode}
@@ -310,7 +307,7 @@ export default function Register() {
             />
 
             <Button
-              text={loading ? "CRÉATION EN COURS..." : "CRÉER UN COMPTE"}
+              text={loading ? "CREATING ACCOUNT..." : "CREATE ACCOUNT"}
               className="btn-create"
               type="submit"
               disabled={loading}
@@ -318,12 +315,12 @@ export default function Register() {
           </form>
 
           <p className="redirect">
-            Vous avez déjà un compte ?{" "}
+            Already have an account?{" "}
             <span
               onClick={() => navigate("/login")}
               style={{ cursor: "pointer" }} 
             >
-              Se connecter
+              Login
             </span>
           </p>
         </div>

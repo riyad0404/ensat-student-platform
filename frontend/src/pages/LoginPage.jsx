@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import "./../styles/login.css";
-import { FiMail, FiLock } from "react-icons/fi";
+import { FiMail,  FiEye, FiEyeOff } from "react-icons/fi"; // Ajout des icônes
 import loginImg from "../assets/login-illustration.png";
 import Input from "../components/input.jsx";
 import Button from "../components/button.jsx";
@@ -12,6 +12,7 @@ export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const [showForgotOptions, setShowForgotOptions] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // État pour visibilité
 
   const [formData, setFormData] = useState({
     email: "",
@@ -28,26 +29,25 @@ export default function LoginPage() {
 
   // Validation en temps réel pour login
   const validateLoginField = (name, value) => {
-  let error = "";
-  
-  switch (name) {
-    case "email":
-      if (!value) {
-        error = "Email required";
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-        error = "Invalid email format";
-      }
-      break;
-      
-    case "password":
-      if (!value) return "Password required";
-      if (value.length < 6) return "Minimum 6 characters";
-      return "";
-      
-  }
-  
-  return error;
-};
+    let error = "";
+    
+    switch (name) {
+      case "email":
+        if (!value) {
+          error = "Email required";
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+          error = "Invalid email format";
+        }
+        break;
+        
+      case "password":
+        if (!value) return "Password required";
+        if (value.length < 6) return "Minimum 6 characters";
+        return "";
+    }
+    
+    return error;
+  };
 
   const handleChange = (field) => (e) => {
     const value = e.target.value;
@@ -100,33 +100,33 @@ export default function LoginPage() {
 
     setLoading(true);
 
-  try {
-    const result = await login(formData);
+    try {
+      const result = await login(formData);
 
-    if (!result.success) {
-      // Generic message for login failure
-      setFormError("Incorrect login credentials. Please check your email and password.");
+      if (!result.success) {
+        // Generic message for login failure
+        setFormError("Incorrect login credentials. Please check your email and password.");
+        
+        // Optional: clear password for security
+        setFormData(prev => ({ ...prev, password: "" }));
+      }
+      // ✅ IF SUCCESS → automatic redirect via AuthContext
+    } catch (err) {
+      console.error(err);
       
-      // Optional: clear password for security
-      setFormData(prev => ({ ...prev, password: "" }));
+      // Error type detection
+      if (err.response?.status === 401) {
+        setFormError("Incorrect login credentials.");
+      } else if (err.response?.status === 404) {
+        setFormError("No account found with this email.");
+      } else if (err.response?.status >= 500) {
+        setFormError("Login service unavailable. Please try again later.");
+      } else {
+        setFormError("Connection error. Please check your network.");
+      }
+    } finally {
+      setLoading(false);
     }
-    // ✅ IF SUCCESS → automatic redirect via AuthContext
-  } catch (err) {
-    console.error(err);
-    
-    // Error type detection
-    if (err.response?.status === 401) {
-      setFormError("Incorrect login credentials.");
-    } else if (err.response?.status === 404) {
-      setFormError("No account found with this email.");
-    } else if (err.response?.status >= 500) {
-      setFormError("Login service unavailable. Please try again later.");
-    } else {
-      setFormError("Connection error. Please check your network.");
-    }
-  } finally {
-    setLoading(false);
-  }
   };
 
   return (
@@ -165,36 +165,56 @@ export default function LoginPage() {
               required
             />
 
-            <Input
-              label="PASSWORD"
-              type="password"
-              placeholder="Enter Your Password"
-              icon={<FiLock />}
-              value={formData.password}
-              onChange={handleChange("password")}
-              error={errors.password}
-              required
-            />
+            {/* Champ mot de passe avec icône d'œil */}
+            <div style={{ position: 'relative', marginBottom: '1.2rem' }}>
+              <Input
+                label="PASSWORD"
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter Your Password"
+                value={formData.password}
+                onChange={handleChange("password")}
+                error={errors.password}
+                required
+              />
+              <span 
+                onClick={() => setShowPassword(!showPassword)}
+                style={{ 
+                  position: 'absolute',
+                  right: '1rem',
+                  top: '2.3rem',
+                  cursor: 'pointer',
+                  color: '#666',
+                  display: 'flex',
+                  alignItems: 'center',
+                  zIndex: 10,
+                  transition: 'color 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#4a90e2'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#666'}
+              >
+                {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+              </span>
+            </div>
 
             <div className="forgot-wrapper">
-  <span
-    className="forgot"
-    onClick={() => setShowForgotOptions(prev => !prev)}
-  >
-    Forgot Password?
-  </span>
+              <span
+                className="forgot"
+                onClick={() => setShowForgotOptions(prev => !prev)}
+              >
+                Forgot Password?
+              </span>
 
-  {showForgotOptions && (
-    <div className="forgot-dropdown">
-      <div onClick={() => navigate("/resetByCode")}>
-        Reset by Code Secret
-      </div>
-      <div onClick={() => navigate("/resetByEmail")}>
-        Reset by Email Link
-      </div>
-    </div>
-  )}
-</div>
+              {showForgotOptions && (
+                <div className="forgot-dropdown">
+                  <div onClick={() => navigate("/resetByCode")}>
+                    Reset by Code Secret
+                  </div>
+                  <div onClick={() => navigate("/resetByEmail")}>
+                    Reset by Email Link
+                  </div>
+                </div>
+              )}
+            </div>
 
             <Button
               text={loading ? "LOGGING IN..." : "LOGIN"}     
