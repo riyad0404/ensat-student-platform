@@ -9,6 +9,8 @@ import authRoutes from './routes/authroutes.js';
 import sequelize from './database.js';
 import cookieParser from 'cookie-parser';
 import conversationRoutes from './routes/conversationRoutes.js';
+import reactionRoutes from "./routes/reactionroutes.js";
+import postRoutes from './routes/postroutes.js';
 import './models/associations.js';
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -28,6 +30,8 @@ app.use(urlencoded({ extended: true }));
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/posts', postRoutes);
+app.use("/api/reactions", reactionRoutes);
 app.use('/api/conversations', conversationRoutes);
 
 
