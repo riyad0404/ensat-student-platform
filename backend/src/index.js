@@ -3,12 +3,18 @@ dotenv.config();
 
 import express, { urlencoded } from 'express'
 import cors from 'cors';
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 import authRoutes from './routes/authroutes.js';
 import sequelize from './database.js';
 import cookieParser from 'cookie-parser';
 import conversationRoutes from './routes/conversationRoutes.js';
 import reactionRoutes from "./routes/reactionroutes.js";
+import documentRoutes from "./routes/documentRoutes.js";
 import postRoutes from './routes/postroutes.js';
 import './models/associations.js';
 const app = express();
@@ -23,10 +29,13 @@ app.use(
     credentials: true, // autorise l'envoi de cookies
   })
 );
+
+app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 app.use("/api/reactions", reactionRoutes);
+app.use("/api/documents", documentRoutes);
 app.use('/api/conversations', conversationRoutes);
 
 
