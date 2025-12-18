@@ -30,4 +30,12 @@ export default {
     url: process.env.DATABASE_URL,
     dialect: 'postgres',
   },
+  docker: {
+    username: process.env.DATABASE_USER || 'postgres',
+    password: process.env.DATABASE_PASSWORD || 'postgres',
+    database: process.env.DATABASE_NAME || 'ensa_platform',
+    host: process.env.DATABASE_HOST || 'postgres',
+    port: process.env.DATABASE_PORT || 5432,
+    dialect: 'postgres',
+  },
 };
