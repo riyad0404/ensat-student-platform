@@ -1,30 +1,56 @@
 import { Post } from "../models/post.js";
 import { User } from "../models/user.js";
+import { Document } from "../models/document.js";
 
-// CREATE post (TEXTE / LIEN / DOCUMENT)
-// Pour l’instant tu vas utiliser surtout TEXTE et LIEN
 export const createPost = async (req, res) => {
   try {
     const iduser = req.user.iduser;
-    const { contenu, typeContenu, isAnonymat = false } = req.body;
 
-    if (!contenu) {
-      return res.status(400).json({ message: "contenu obligatoire" });
+    // Postman en form-data => req.body = strings
+    let { contenu, typeContenu, isAnonymat = false, niveau } = req.body;
+
+    // convertir isAnonymat correctement (form-data => "true"/"false")
+    if (typeof isAnonymat === "string") {
+      isAnonymat = isAnonymat === "true";
+    }
+
+    // Si on upload un fichier, contenu peut être vide (selon ton besoin)
+    if (!contenu && !req.file) {
+      return res.status(400).json({ message: "contenu obligatoire " });
     }
     if (!typeContenu) {
       return res.status(400).json({ message: "typeContenu obligatoire" });
     }
-
-    // Ici on laisse passer DOCUMENT même si tu n’as pas encore AWS,
-    // mais tu ne vas pas l'utiliser maintenant (ou tu peux refuser si tu veux)
+    // 1) créer le post
     const post = await Post.create({
-      contenu,
-      typeContenu,
+      contenu: contenu || "",          // si fichier sans texte
+      typeContenu,                    // "TEXTE" | "LIEN" | "DOCUMENT"
       isAnonymat,
       iduser,
     });
 
-    return res.status(201).json(post);
+    // 2) si fichier => créer Document lié au post
+    let doc = null;
+
+    if (req.file) {
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
+      const url = `${baseUrl}/uploads/${req.file.filename}`;
+
+      doc = await Document.create({
+        filename: req.file.originalname,
+        url,
+        type: "DOCUMENT",     // ou tu peux déduire selon mimetype
+        niveau: niveau || req.user.niveau || "UNKNOWN",
+        idpost: post.idpost,
+        idcomment: null,
+        iduser,
+      });
+    }
+    // réponse finale
+    return res.status(201).json({
+      post,
+      document: doc,
+    });
   } catch (error) {
     console.error("createPost:", error);
     return res.status(500).json({ message: "Erreur lors de la création du publication" });

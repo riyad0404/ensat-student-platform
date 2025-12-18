@@ -21,9 +21,16 @@ const Reaction = sequelize.define(
       allowNull: false,
     },
 
+    // 🔹 pour réaction sur post
     idpost: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: true,
+    },
+
+    // 🔹 pour réaction sur commentaire
+    idcomment: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
     },
   },
   {

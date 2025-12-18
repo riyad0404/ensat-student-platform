@@ -16,6 +16,7 @@ import cookieParser from 'cookie-parser';
 import conversationRoutes from './routes/conversationRoutes.js';
 import reactionRoutes from "./routes/reactionroutes.js";
 import documentRoutes from "./routes/documentRoutes.js";
+import commentRoutes from "./routes/commentroutes.js";
 import postRoutes from './routes/postroutes.js';
 import './models/associations.js';
 const app = express();
@@ -39,8 +40,10 @@ app.use(urlencoded({ extended: true }));
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
+app.use('/api/comments', commentRoutes);
 app.use("/api/reactions", reactionRoutes);
 app.use("/api/documents", documentRoutes);
+
 app.use('/api/conversations', conversationRoutes);
 
 

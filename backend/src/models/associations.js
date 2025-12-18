@@ -38,6 +38,9 @@ Reaction.belongsTo(Post, { foreignKey: "idpost" });
 // Users and Reactions
 User.hasMany(Reaction, { foreignKey: "iduser" });
 Reaction.belongsTo(User, { foreignKey: "iduser" });
+Comment.hasMany(Reaction, { foreignKey: "idcomment", as: "reactions" });
+Reaction.belongsTo(Comment, { foreignKey: "idcomment", as: "comment" });
+
 // Post -> Comment
 Post.hasMany(Comment, { foreignKey: "idpost", as: "comments" });
 Comment.belongsTo(Post, { foreignKey: "idpost", as: "post" });
@@ -50,6 +53,15 @@ Comment.belongsTo(User, { foreignKey: "iduser", as: "auteur" });
 Comment.hasMany(Comment, { foreignKey: "idparent", as: "replies" });
 Comment.belongsTo(Comment, { foreignKey: "idparent", as: "parent" });
 
-// Comment -> Document (car documents.idcomment existe)
-Comment.hasMany(Document, { foreignKey: "idcomment", as: "documents" });
-Document.belongsTo(Comment, { foreignKey: "idcomment", as: "comment" });
+
+// Document -> User
+Document.belongsTo(User, { foreignKey: "iduser", as: "auteur" });
+User.hasMany(Document, { foreignKey: "iduser" });
+// Document -> Post (optionnel mais recommandé)
+Document.belongsTo(Post, { foreignKey: "idpost" });
+Post.hasMany(Document, { foreignKey: "idpost"});
+
+// Document -> Comment (optionnel mais recommandé)
+// Comment -> Documents
+Comment.hasMany(Document, {foreignKey: "idcomment",as: "documents",});
+Document.belongsTo(Comment, {foreignKey: "idcomment",as: "comment",});
