@@ -5,6 +5,9 @@ import Register from './pages/Register';
 import ResetPasswordCS from './pages/ResetPassword-CS';
 import ResetPasswordEmail from './pages/ResetPassword-email';
 import ResetPasswordToken from './pages/ResetPasswordToken';
+import ProfilePage from './pages/Profile';
+import Sidebar from './components/Sidebar';
+import EditProfile from './pages/EditProfile';
 
 // HOC pour protéger les routes
 const RequireAuth = ({ children }) => {
@@ -54,6 +57,31 @@ const RequireAuthLayout = () => {
   );
 };
 
+
+const MainLayout = () => {
+  return (
+    <div style={{ 
+      display: 'flex', 
+      minHeight: '100vh',
+      width: '100vw', // Force la largeur totale
+      overflowX: 'hidden' // Empêche le défilement horizontal
+    }}>
+      <Sidebar />
+      <div style={{ 
+        flex: 1, 
+        marginLeft: '270px',
+        backgroundColor: '#f5f5f5',
+        minHeight: '100vh',
+        padding: '20px 0px',
+        width: 'calc(100vw - 270px)',
+        overflowY: 'auto' // Permet le défilement vertical si besoin
+      }}>
+        <Outlet />
+      </div>
+    </div>
+  );
+};
+
 // Page d'accueil
 const HomePage = () => {
   const { user, logout } = useAuth();
@@ -85,21 +113,16 @@ const HomePage = () => {
   );
 };
 
-// Page de profil
-const ProfilePage = () => (
-  <div style={{ padding: '20px' }}>
-    <h1>👤 Profil</h1>
-    <p>Page protégée - Connecté avec succès!</p>
-  </div>
-);
-
 function App() {
   return (
     <Routes>
       {/* Routes protégées (nécessite authentification) */}
       <Route element={<RequireAuthLayout />}>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/profile" element={<ProfilePage />} />
+        <Route element={<MainLayout />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+           <Route path="/profile/edit" element={<EditProfile />} />
+        </Route>
       </Route>
       
       {/* Routes publiques (si déjà authentifié, redirige) */}
@@ -109,12 +132,9 @@ function App() {
         <Route path="/resetByemail" element={<ResetPasswordEmail />} />
         <Route path="/resetByCode" element={<ResetPasswordCS />} />
         <Route path="/reset-password/:token" element={<ResetPasswordToken />} />
-
-
       </Route>
     </Routes>
   );
 }
 
 export default App;
-
