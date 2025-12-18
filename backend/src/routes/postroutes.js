@@ -1,5 +1,6 @@
 import express from "express";
 import { authMiddleware } from "../middleware/authMiddleware.js";
+import {uploadSingle,uploadMany,multerErrorHandler} from "../middleware/uploadMiddleware.js";
 import {
   createPost,
   getAllPosts,
@@ -11,9 +12,10 @@ import {
 
 const router = express.Router();
 
-// Créer une publication
-router.post("/", authMiddleware, createPost);
-
+// Créer une publication (0 ou 1 fichier => champ: "file")
+router.post("/pubdoc", authMiddleware, uploadSingle, multerErrorHandler, createPost);
+// Créer une publication (plusieurs fichiers => champ: "files")
+router.post("/pldoc", authMiddleware, uploadMany, multerErrorHandler, createPost);
 // Mur des publications
 router.get("/", authMiddleware, getAllPosts);
 
@@ -24,7 +26,7 @@ router.get("/mesposts", authMiddleware, getMyPosts);
 router.get("/:idpost", authMiddleware, getPostById);
 
 // Modifier une publication
-router.put("/:idpost", authMiddleware, updatePost);
+router.patch("/:idpost", authMiddleware, updatePost);
 
 // Supprimer une publication
 router.delete("/:idpost", authMiddleware, deletePost);
