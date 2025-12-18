@@ -31,13 +31,19 @@ const Document = sequelize.define(
       allowNull: false,
     },
 
-    // doc lié à un post (cas 3) -> peut être NULL si doc vient d'un comment
+    // 🔹 NOUVEAU : utilisateur propriétaire du document
+    iduser: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+
+    // doc lié à un post
     idpost: {
       type: DataTypes.INTEGER,
       allowNull: true,
     },
 
-    // doc lié à un commentaire (cas 2) -> peut être NULL si doc vient d'un post
+    // doc lié à un commentaire
     idcomment: {
       type: DataTypes.INTEGER,
       allowNull: true,
