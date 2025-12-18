@@ -25,7 +25,7 @@ Message.belongsTo(Conversation, { foreignKey: 'idconversation' });
 User.hasMany(Message, { foreignKey: 'senderId' });
 Message.belongsTo(User, { foreignKey: 'senderId', as: 'sender' });
 
-export { User, Conversation, ConversationMember, Message };
+export { User, Conversation, ConversationMember, Message, Post, Document, Reaction, Comment };
 // Posts and Documents
 Post.hasMany(Document, { foreignKey: "idpost", as: "documents" });
 Document.belongsTo(Post, { foreignKey: "idpost", as: "post" });

@@ -14,19 +14,17 @@ export const AuthProvider = ({ children }) => {
     const checkAuth = async () => {
       try {
         console.log('🔄 Vérification de la session...');
-        
-        // Le backend vérifie automatiquement le cookie HTTP-only
         const response = await authAPI.verifyToken();
         
         if (response.user) {
-          console.log(' Utilisateur connecté:', response.user.email);
+          console.log('✅ Utilisateur connecté:', response.user.email);
           setUser(response.user);
         } else {
-          console.log(' Pas d\'utilisateur dans la réponse');
+          console.log('❌ Pas d\'utilisateur dans la réponse');
           setUser(null);
         }
       } catch (error) {
-        console.log(' Non connecté ou session expirée');
+        console.log('⚠️ Non connecté ou session expirée');
         setUser(null);
       } finally {
         setLoading(false);
@@ -36,60 +34,57 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
-  //  Connexion avec cookies HTTP-only
-  // Dans la fonction login de AuthContext.jsx
-const login = async (credentials) => {
-  try {
-    console.log('🎯 Tentative de connexion...');
-    const data = await authAPI.login(credentials);
-    
-    console.log('✅ Réponse backend login:', data);
-    
-    if (data.user) {
-      console.log('✅ Utilisateur connecté:', data.user.email);
-      setUser(data.user);
+  // ✅ Connexion
+  const login = async (credentials) => {
+    try {
+      console.log('🎯 Tentative de connexion...');
+      const data = await authAPI.login(credentials);
       
-      // ⚠️ Redirige APRÈS avoir mis à jour l'état
-      setTimeout(() => {
-        console.log('🔄 Redirection vers /...');
-        navigate('/', { replace: true });
-      }, 50); // Petit délai pour que React mette à jour l'état
+      console.log('✅ Réponse backend login:', data);
       
-      return { success: true };
-    } else {
-      console.error('❌ Pas d\'utilisateur dans la réponse');
-      return { success: false, error: 'Utilisateur non reçu' };
+      if (data.user) {
+        console.log('✅ Utilisateur connecté:', data.user.email);
+        setUser(data.user);
+        
+        setTimeout(() => {
+          console.log('🔄 Redirection vers /...');
+          navigate('/', { replace: true });
+        }, 50);
+        
+        return { success: true };
+      } else {
+        console.error('❌ Pas d\'utilisateur dans la réponse');
+        return { success: false, error: 'Utilisateur non reçu' };
+      }
+    } catch (error) {
+      console.error('❌ Erreur login dans contexte:', error);
+      
+      const errorMsg = error.response?.data?.error || 
+                      error.response?.data?.message || 
+                      error.message || 
+                      'Email ou mot de passe incorrect';
+      
+      return { success: false, error: errorMsg };
     }
-  } catch (error) {
-    console.error('❌ Erreur login dans contexte:', error);
-    
-    const errorMsg = error.response?.data?.error || 
-                    error.response?.data?.message || 
-                    error.message || 
-                    'Email ou mot de passe incorrect';
-    
-    return { success: false, error: errorMsg };
-  }
-};
+  };
 
-  //  Inscription
+  // ✅ Inscription
   const register = async (userData) => {
     try {
-      console.log(' Inscription en cours...');
+      console.log('📝 Inscription en cours...');
       const result = await authAPI.register(userData);
       
-      console.log(' Réponse inscription:', result);
+      console.log('✅ Réponse inscription:', result);
       
-      // Le backend retourne { message: 'Utilisateur créé avec succès', user: {...} }
       if (result.message) {
-        console.log(' Inscription réussie! Redirection vers login...');
+        console.log('✅ Inscription réussie! Redirection vers login...');
         navigate('/login');
         return { success: true, message: result.message };
       } else {
         return { success: false, error: result.error || 'Erreur inconnue' };
       }
     } catch (error) {
-      console.error(' Erreur inscription:', error);
+      console.error('❌ Erreur inscription:', error);
       return { 
         success: false, 
         error: error.response?.data?.error || 'Erreur d\'inscription' 
@@ -97,7 +92,7 @@ const login = async (credentials) => {
     }
   };
 
-  //  Déconnexion (le backend supprime le cookie)
+  // ✅ Déconnexion
   const logout = async () => {
     try {
       console.log('👋 Déconnexion en cours...');
@@ -105,9 +100,34 @@ const login = async (credentials) => {
     } catch (error) {
       console.error('⚠️ Erreur logout:', error);
     } finally {
-      
       setUser(null);
       navigate('/login');
+    }
+  };
+
+  // ✅ Mise à jour du profil (NOUVELLE FONCTION)
+  const updateProfile = async (updatedData) => {
+    try {
+      console.log('🔄 Mise à jour du profil...', updatedData);
+      
+      // Appel API pour mettre à jour
+      const response = await authAPI.updateProfile(updatedData);
+      
+      console.log('✅ Profil mis à jour:', response);
+      
+      if (response.user) {
+        // Mettre à jour l'utilisateur dans le contexte
+        setUser(response.user);
+        return { success: true, user: response.user };
+      } else {
+        return { success: false, error: 'Profil non mis à jour' };
+      }
+    } catch (error) {
+      console.error('❌ Erreur mise à jour profil:', error);
+      return { 
+        success: false, 
+        error: error.response?.data?.error || 'Erreur de mise à jour' 
+      };
     }
   };
 
@@ -117,6 +137,7 @@ const login = async (credentials) => {
       login, 
       logout, 
       register, 
+      updateProfile, // ✅ Ajouter cette fonction
       loading 
     }}>
       {children}

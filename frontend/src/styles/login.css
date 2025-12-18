@@ -1,3 +1,24 @@
+/* ===========================================
+   STYLE FINAL CORRIGÉ
+   =========================================== */
+
+/* RESET */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+html, body {
+  height: 100%;
+  background: #FFFFFF;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* PAGE PRINCIPALE - TAILLE RÉDUITE */
 .login-page {
   width: 100%;
   height: 100vh;
@@ -5,156 +26,528 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 15px; /* Réduit */
 }
 
+/* CARTE - TAILLE RÉDUITE */
 .login-card {
-  width: 950px;
-  min-height: 600px;
+  width: 900px; /* Réduit de 1000px */
+  min-height: 550px; /* Réduit de 600px */
   background: white;
-  border-radius: 0px;
+  border-radius: 0;
   display: flex;
   overflow: hidden;
-  box-shadow: 0 8px 25px rgba(240, 238, 238, 0.1);
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.06);
+  border: 1px solid #eaeaea;
 }
 
+/* SECTION GAUCHE - TAILLE RÉDUITE */
 .login-left {
   width: 45%;
   background: #fafafa;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 30px; /* évite que l'image touche les bords */
+  padding: 30px; /* Réduit */
 }
 
 .login-illustration {
-  width: 90%;
-  max-width: 350px;  /* empêche l'image d'être trop grande */
+  width: 100%;
+  max-width: 380px; /* Réduit de 420px */
   height: auto;
   object-fit: contain;
-  object-position: center;
 }
 
-
+/* SECTION DROITE - TAILLE RÉDUITE */
 .login-right {
   width: 55%;
-  padding: 60px 70px;
+  padding: 40px 50px; /* Réduit de 60px 70px */
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  justify-content: center;
 }
+
+/* ===========================================
+   TYPOGRAPHIE - COULEUR VIOLET DÉGRADÉ
+   =========================================== */
 
 h2 {
   margin: 0;
-  font-size: 28px;
+  font-size: 30px; /* Réduit */
   font-weight: 700;
+  background: linear-gradient(90deg, #E334FE,#A6048E); /* VIOLET */
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 6px;
 }
 
 .subtitle {
-  margin-top: -8px;
-  font-size: 14px;
-  color: #888;
+  margin-top: 0;
+  font-size: 14px; /* Réduit */
+  color: #888888; /* Gris clair */
+  margin-bottom: 30px; /* Réduit */
+  font-weight: 400;
 }
 
-.input-box {
-  position: relative;
-}
+/* ===========================================
+   CHAMPS DE FORMULAIRE
+   =========================================== */
 
-.input-box input {
+.input-group {
+  margin-bottom: 18px; /* Réduit de 24px */
   width: 100%;
-  height: 48px;
-  border-radius: 30px;
-  border: 1px solid #ccc;
-  padding: 0 45px 0 18px;
-  font-size: 15px;
 }
 
-.icon {
+.input-group label {
+  display: block;
+  font-size: 13px; /* Réduit */
+  font-weight: 600;
+  color: #060606; /* Gris moyen */
+  margin-bottom: 6px; /* Réduit */
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.input-group .input-box {
+  position: relative;
+  width: 100%;
+}
+
+.input-group .input-box input {
+  width: 100%;
+  height: 44px; /* Réduit de 48px */
+  border-radius: 6px;
+  border: 1.5px solid #e0e0e0;
+  padding: 0 16px;
+  font-size: 14px; /* Réduit */
+  background: #ffffff;
+  color: #333333;
+  transition: all 0.2s ease;
+}
+
+.input-group .input-box input:focus {
+  outline: none;
+  border-color: #E334FE;
+  box-shadow: 0 0 0 2px rgba(52, 96, 254, 0.1);
+}
+
+.input-group .input-box .icon {
   position: absolute;
   right: 16px;
   top: 50%;
   transform: translateY(-50%);
-  color: #555;
+  color: #999999;
+  font-size: 17px; /* Réduit */
 }
 
-label {
-  font-size: 13px;
+/* SELECT */
+.login-right select {
+  width: 100%;
+  height: 44px; /* Réduit */
+  border-radius: 6px;
+  border: 1.5px solid #e0e0e0;
+  padding: 0 16px;
+  font-size: 14px; /* Réduit */
+  background: #ffffff;
+  color: #333333;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
+
+.login-right select:focus {
+  outline: none;
+  border-color: #E334FE;
+  box-shadow: 0 0 0 2px rgba(227, 52, 254, 0.1);
+}
+
+/* ===========================================
+   BOUTONS - CORRIGÉS POUR LOGIN
+   =========================================== */
+
+/* BOUTON LOGIN (submit) */
+button.btn-login {
+  width: 100%;
+  height: 44px; /* Réduit */
+  border-radius: 25px;
+  border: none;
+  background: linear-gradient(90deg, #E334FE, #A6048E);
+  color: white;
+  font-size: 14px; /* Réduit */
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 8px;
+  letter-spacing: 0.5px;
+}
+
+/* BOUTON CREATE ACCOUNT (dans Register.jsx - submit) */
+button.btn-create {
+  width: 100%;
+  height: 44px; /* Réduit */
+  border-radius: 25px;
+  border: none;
+  background: linear-gradient(90deg, #E334FE, #A6048E);
+  color: white;
+  font-size: 14px; /* Réduit */
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 8px;
+  letter-spacing: 0.5px;
+}
+
+/* BOUTON CREATE AN ACCOUNT (dans LoginPage.jsx - navigation) */
+/* CE BOUTON DOIT AVOIR LA CLASSE "secondary" */
+button.btn-create.secondary {
+  background: transparent !important;
+  border: 2px solid #E334FE !important;
+  color: #E334FE !important;
+  margin-top: 15px;
+}
+
+/* Effets hover */
+button.btn-login:hover:not(:disabled),
+button.btn-create:hover:not(:disabled):not(.secondary) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(227, 52, 254, 0.25);
+}
+
+button.btn-create.secondary:hover:not(:disabled) {
+  background: linear-gradient(90deg, #E334FE, #A6048E) !important;
+  color: white !important;
+  border-color: transparent !important;
+}
+
+/* ===========================================
+   AUTRES ÉLÉMENTS
+   =========================================== */
+
+.forgot {
+  text-align: right;
+  margin-top: -4px;
+  margin-bottom: 18px; /* Réduit */
+  font-size: 12px; /* Réduit */
+  color: #4a0740; /* Violet */
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.forgot:hover {
+  color: #b548c4;
+  text-decoration: underline;
+}
+
+.redirect {
+  text-align: center;
+  font-size: 13px; /* Réduit */
+  color: #777777;
+  margin-top: 22px; /* Réduit */
+}
+
+.redirect a {
+  color: #E334FE; /* Violet */
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.redirect a:hover {
+  text-decoration: underline;
+}
+
+.error-message {
+  background: rgba(255, 71, 87, 0.06);
+  border-left: 3px solid #ff4757;
+  padding: 14px; /* Réduit */
+  border-radius: 5px;
+  margin-bottom: 18px; /* Réduit */
+  color: #ff4757;
+  font-size: 13px; /* Réduit */
+}
+
+.success-message {
+  background: rgba(46, 213, 115, 0.06);
+  border-left: 3px solid #2ed573;
+  padding: 14px; /* Réduit */
+  border-radius: 5px;
+  margin-bottom: 18px; /* Réduit */
+  color: #2ed573;
+  font-size: 13px; /* Réduit */
+}
+
+/* ===========================================
+   RESPONSIVE
+   =========================================== */
+
+@media (max-width: 768px) {
+  .login-page {
+    padding: 10px;
+  }
+  
+  .login-card {
+    flex-direction: column;
+    max-width: 450px; /* Réduit */
+    min-height: auto;
+  }
+  
+  .login-left,
+  .login-right {
+    width: 100%;
+  }
+  
+  .login-left {
+    padding: 25px;
+    min-height: 180px;
+  }
+  
+  .login-illustration {
+    max-width: 250px;
+  }
+  
+  .login-right {
+    padding: 35px;
+  }
+  
+  h2 {
+    font-size: 26px;
+  }
+  
+  .subtitle {
+    font-size: 13px;
+    margin-bottom: 25px;
+  }
+  
+  .input-group {
+    margin-bottom: 16px;
+  }
+  
+  button.btn-login,
+  button.btn-create {
+    height: 42px;
+    font-size: 13px;
+  }
+}
+.register-page button.btn-create {
+  height: 35px !important;     /* -6px par rapport à 44px */
+  font-size: 13px !important;  /* -1px */
+  margin-top: px !important;  /* -3px */
+}
+
+.register-page .input-group {
+  margin-bottom: 10px !important; /* -3px */
+}
+
+.register-page .subtitle {
+  margin-bottom: 10px !important; /* -8px */
+}
+
+/* Styles de validation */
+.input-error-message {
+  color: #ff4757;
+  font-size: 12px;
+  margin-top: 4px;
+  display: block;
+}
+
+.input-group .input-box input.input-error {
+  border-color: #ff4757 !important;
+}
+.required-star {
+  color: #ff4757;
   font-weight: bold;
+}
+
+/* Message d'erreur sous l'input (amélioré) */
+.input-error-message {
+  display: block;
+  font-size: 12px;
+  color: #ff4757;
+  margin-top: 5px;
+  font-weight: 500;
+  animation: slideDown 0.2s ease;
+}
+
+/* Input avec erreur (plus visible) */
+.input-group .input-box input.input-error {
+  border-color: #ff4757 !important;
+  background-color: #fff5f5 !important;
+}
+
+.input-group .input-box input.input-error:focus {
+  border-color: #ff4757 !important;
+  box-shadow: 0 0 0 2px rgba(255, 71, 87, 0.1) !important;
+}
+
+/* Animation pour les messages d'erreur */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* ===========================================
+   STYLES POUR LES PAGES RESET PASSWORD
+   =========================================== */
+
+/* Uniformiser toutes les pages reset */
+.reset-page .login-card {
+  min-height: 520px !important;
+}
+
+.reset-page .login-right {
+  padding: 40px 50px !important;
+}
+
+.reset-page h2 {
+  font-size: 28px !important;
+  margin-bottom: 5px !important;
+}
+
+.reset-page .subtitle {
+  font-size: 14px !important;
+  margin-bottom: 25px !important;
+  color: #666666 !important;
+}
+
+/* Bouton reset */
+.reset-page button.btn-create {
+  height: 44px !important;
+  border-radius: 25px !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  margin-top: 10px !important;
+}
+
+/* Espacement des champs pour reset */
+.reset-page .input-group {
+  margin-bottom: 18px !important;
+}
+
+/* Correction de l'erreur dans .register-page */
+.register-page button.btn-create {
+  height: 35px !important;
+  font-size: 13px !important;
+  margin-top: 5px !important; /* ⭐ CORRIGÉ : ajoutez 5px */
+}
+
+/* ===========================================
+   UNIFORMISATION DES LIENS
+   =========================================== */
+
+/* Tous les liens "Login" en bleu */
+.redirect a,
+.redirect span {
+  color: #007bff !important;
+  text-decoration: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.redirect a:hover,
+.redirect span:hover {
+  text-decoration: underline;
+  color: #0056b3 !important;
+}
+
+/* Spécifique pour le span dans Register.jsx */
+.login-right span[onclick] {
+  color: #007bff !important;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.login-right span[onclick]:hover {
+  text-decoration: underline;
+  color: #0056b3 !important;
+}
+
+
+/* ===========================================
+   STYLE DU MENU FORGOT PASSWORD
+   =========================================== */
+
+.forgot-wrapper {
+  position: relative;
+  display: inline-block;
+  width: 100%;
 }
 
 .forgot {
   text-align: right;
-  margin-top: -8px;
-  font-size: 12px;
-  color: #666;
+  display: block;
+  font-size: 13px;
+  color: #E334FE;
   cursor: pointer;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  font-weight: 500;
+  margin-bottom: 20px;
 }
 
-.btn-login {
-  margin-top: 8px;
-  height: 45px;
-  border-radius: 30px;
-  border: none;
-  background: linear-gradient(90deg, #E334FE, #A6048E);
-  color: white;
-  font-size: 15px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.btn-create {
-  height: 45px;
-  border-radius: 30px;
-  border: none;
-  background: linear-gradient(90deg, #E334FE, #A6048E);
-  color: white; /* texte blanc sur fond violet gradient */
-  font-weight: bold;
-  cursor: pointer;
-  margin-top: 10px;
-}
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.forgot-wrapper {
-  position: relative;
-  text-align: right;
+.forgot:hover {
+  color: #A6048E;
+  text-decoration: underline;
 }
 
 .forgot-dropdown {
   position: absolute;
+  top: 100%;
   right: 0;
-  top: 22px;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
-  width: 190px;
-  z-index: 20;
+  background: white;
+  border: 1px solid #E334FE;
+  border-radius: 8px;
+  padding: 8px 0;
+  width: 220px;
+  z-index: 1000;
+  box-shadow: 0 4px 15px rgba(227, 52, 254, 0.15);
+  animation: fadeIn 0.2s ease;
 }
 
-.dropdown-item {
-  width: 100%;
-  padding: 12px 15px;
-  background: none;
-  border: none;
-  text-align: left;
-  font-size: 13px;
+.forgot-dropdown div {
+  padding: 10px 20px;
   cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
 }
 
-.dropdown-item:hover {
-  background: #f4f4f4;
+.forgot-dropdown div:hover {
+  background: rgba(227, 52, 254, 0.08);
+  color: #E334FE;
+  border-left: 3px solid #E334FE;
 }
 
+.forgot-dropdown div:first-child {
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+}
 
+.forgot-dropdown div:last-child {
+  border-bottom-left-radius: 4px;
+  border-bottom-right-radius: 4px;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
