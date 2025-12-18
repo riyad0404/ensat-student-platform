@@ -28,7 +28,7 @@ app.use(cookieParser());
 // CORS for React (important for cookies)
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173', // adapt to your React port if needed
+    origin:process.env.FRONTEND_URL || 'http://localhost:5173', // adapt to your React port if needed
     credentials: true, // allow sending cookies
   })
 );
