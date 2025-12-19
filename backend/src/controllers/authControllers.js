@@ -268,4 +268,81 @@ export const resetPasswordWithSecretCode = async (req, res) => {
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+// Edit profile controller
+export const editProfile = async (req, res) => {
+  const userId = req.user.iduser;
+  const { nom, prenom, email, niveau, bio, photo, currentPassword, newPassword } = req.body;
+
+  try {
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    let changed = false;
+    // Email change
+    if (email && email !== user.email) {
+      const existing = await User.findOne({ where: { email } });
+      if (existing) {
+        return res.status(400).json({ message: "L'email est déjà utilisé." });
+      }
+      user.email = email;
+      changed = true;
+    }
+    // Name changes
+    if (nom && nom !== user.nom) {
+      user.nom = nom;
+      changed = true;
+    }
+    if (prenom && prenom !== user.prenom) {
+      user.prenom = prenom;
+      changed = true;
+    }
+    // Niveau
+    if (niveau && niveau !== user.niveau) {
+      user.niveau = niveau;
+      changed = true;
+    }
+    // Bio
+    if (bio !== undefined && bio !== user.bio) {
+      user.bio = bio;
+      changed = true;
+    }
+    // Photo
+    if (photo !== undefined && photo !== user.photo) {
+      user.photo = photo;
+      changed = true;
+    }
+    // Password change
+    if (currentPassword || newPassword) {
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: 'Both currentPassword and newPassword are required to change password.' });
+      }
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return res.status(401).json({ message: 'Mot de passe actuel incorrect' });
+      }
+      const hashed = await bcrypt.hash(newPassword, 10);
+      if (hashed === user.password) {
+        return res.status(400).json({ message: 'Le nouveau mot de passe doit être différent de l\'ancien.' });
+      }
+      user.password = hashed;
+      changed = true;
+    }
+
+    if (!changed) {
+      return res.status(200).json({ message: 'Aucune modification détectée.' });
+    }
+
+    await user.save();
+    const userData = user.toJSON();
+    delete userData.password;
+    delete userData.resetPasswordToken;
+    delete userData.resetPasswordExpires;
+    return res.status(200).json({ message: 'Profil mis à jour avec succès', user: userData });
+  } catch (error) {
+    console.error('editProfile error:', error);
+    return res.status(500).json({ message: 'Erreur du serveur', error: error.message });
+  }
+};
 

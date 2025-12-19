@@ -7,9 +7,14 @@ import {
   forgotPasswordByEmail,
   resetPasswordWithToken,
   resetPasswordWithSecretCode,
+  editProfile,
 } from '../controllers/authControllers.js';
 import {authMiddleware} from '../middleware/authMiddleware.js'
 const router=express.Router();
+// Edit profile route (protected)
+router.put('/edit-profile', authMiddleware, editProfile);
+
+
 
 // Route pour l'inscription
 router.post('/signup',register);
