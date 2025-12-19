@@ -1,6 +1,5 @@
 import dotenv from 'dotenv';
 dotenv.config();
-
 import express from 'express';
 import { urlencoded } from 'express';
 import cors from 'cors';
@@ -15,6 +14,7 @@ import sequelize from './database.js';
 import cookieParser from 'cookie-parser';
 import conversationRoutes from './routes/conversationRoutes.js';
 import reactionRoutes from "./routes/reactionroutes.js";
+import userRoutes from './routes/userRoutes.js';
 import documentRoutes from "./routes/documentRoutes.js";
 import commentRoutes from "./routes/commentroutes.js";
 import postRoutes from './routes/postroutes.js';
@@ -43,7 +43,7 @@ app.use('/api/posts', postRoutes);
 app.use('/api/comments', commentRoutes);
 app.use("/api/reactions", reactionRoutes);
 app.use("/api/documents", documentRoutes);
-
+app.use("/api/users", userRoutes);
 app.use('/api/conversations', conversationRoutes);
 
 

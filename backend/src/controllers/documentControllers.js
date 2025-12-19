@@ -60,3 +60,29 @@ export const uploadDocument = async (req, res) => {
     });
   }
 };
+// =========================
+// GET DOCUMENTS BY NIVEAU (BIBLIOTHÈQUE)
+// =========================
+export const getAllDocuments = async (req, res) => {
+  try {
+    const { niveau } = req.query;
+
+    if (!niveau) {
+      return res.status(400).json({
+        message: "Le paramètre 'niveau' est obligatoire",
+      });
+    }
+
+    const documents = await Document.findAll({
+      where: { niveau },
+      order: [["createdAt", "DESC"]],
+    });
+
+    return res.json(documents);
+  } catch (error) {
+    console.error("getAllDocuments:", error);
+    return res.status(500).json({
+      message: "Erreur récupération bibliothèque",
+    });
+  }
+};

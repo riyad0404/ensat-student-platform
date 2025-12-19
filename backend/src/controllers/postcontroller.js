@@ -21,6 +21,13 @@ export const createPost = async (req, res) => {
     if (!typeContenu) {
       return res.status(400).json({ message: "typeContenu obligatoire" });
     }
+    // si un fichier est uploadé, le niveau est obligatoire
+if (req.file && !niveau) {
+  return res.status(400).json({
+    message: "Le niveau est obligatoire pour un document",
+  });
+}
+
     // 1) créer le post
     const post = await Post.create({
       contenu: contenu || "",          // si fichier sans texte

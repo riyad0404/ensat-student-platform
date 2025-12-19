@@ -54,5 +54,4 @@ const Document = sequelize.define(
     timestamps: true,
   }
 );
-
 export { Document };
