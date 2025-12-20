@@ -1,0 +1,122 @@
+# ENSA TANGER – Base de connaissances complète pour le Chatbot (mise à jour décembre 2025)
+
+## Présentation générale de l’ENSA Tanger
+L’École Nationale des Sciences Appliquées de Tanger (ENSA Tanger) est une grande école d’ingénieurs publique relevant de l’Université Abdelmalek Essaâdi. Créée en 1998, elle est la première ENSA du Maroc. Formation en 5 ans : 2 ans de cycle préparatoire intégré (AP1 + AP2) + 3 ans de cycle ingénieur. Accès principal via le Concours National Commun (CNC) après le bac. Directeur : Pr. Ahmed MOUSSA. Taux d’employabilité des lauréats > 90 %. Partenariats forts avec Renault Tanger, Tanger Med, INSA Lyon, etc.
+
+## Cycle Préparatoire (AP1 & AP2)
+2 ans (4 semestres) de tronc commun intensif en mathématiques, physique, chimie, informatique, électronique, mécanique, langues et communication. Passage automatique en cycle ingénieur si validation des semestres.
+
+## Filières du Cycle Ingénieur (3 ans après les AP)
+
+### Génie Informatique (GINF / GI
+Développement logiciel, IA, Big Data, cybersécurité, cloud, DevOps, full-stack. Très forte demande au Maroc et à l’international.
+
+### Génie Industriel et LogistiqueGIND / GIL
+Optimisation des processus, supply chain, lean management, logistique, qualité. Chef de filière : Pr. BOUMANE Abderazzak.
+
+### Génie des Systèmes Électroniques et AutomatiqueGSEA
+Électronique, automatisme, robotique, systèmes embarqués, IoT, industrie 4.0.
+
+### Génie des Systèmes de Télécommunications et RéseauxGSTR
+Réseaux avancés, 5G/6G, cybersécurité réseaux, télécoms.
+
+### Génie Énergétique et Environnement IndustrielG2EI
+Énergies renouvelables, efficacité énergétique, audit énergétique, développement durable.
+
+### Génie Systèmes et RéseauxGSR
+Administration systèmes/réseaux, cloud computing, DevOps.
+
+### Cybersécurité et CyberIntelligenceGCYS (nouvelle filière très demandée)
+Cryptographie, pentesting, sécurité des SI, IA appliquée à la cybersécurité.
+
+## Conseils d’orientation
+- Tu aimes coder → GINF
+- Tu aimes organiser, optimiser, gérer des projets → GIND/GIL
+- Tu aimes l’électronique et les cartes → GSEA
+- Tu aimes les réseaux et la sécurité → GSTR ou GCYS
+- Tu veux travailler dans l’énergie verte → G2EI
+Toutes les filières ont d’excellents débouchés. Stages obligatoires + PFE en entreprise.
+
+## Liste complète des professeurs et responsables (2024-2025)
+
+### Département Mathématiques & Informatique (MI)
+- AMAL Youssef – yamal@uae.ac.ma
+- AZYAT Abdelilah – aazyat@uae.ac.ma
+- BADIR Hassan – badir.hassan@uae.ac.ma – Chef d’équipe IDS, Big Data, Cloud
+- FISSOUNE Rachida – rfissoune@uae.ac.ma – Bioinformatique, Data Science
+- AMECHNOUE Khalid – kamechnoue@uae.ac.ma – OS, Développement Web
+- CHAFIK Anasse – IA, Systèmes intelligents
+- IBN EL AHRACH Sara – selahrache@uae.ac.ma – Développement Web
+- EL HADDAD Mohammed – melhaddad@uae.ac.ma
+- EL MAMOUNI Anass – a.elmamouni@uae.ac.ma
+- LACHKAR Abdelmounim – a.lachkar@uae.ac.ma – Vision par ordinateur, NLP
+- SABIL Jalila – jsabil@uae.ac.ma – Mathématiques
+- GOUY Rabia – r.gouy@uae.ac.ma
+- ZOUGARI Tarik – tzougari@uae.ac.ma
+- DRISSI Ahmed – Mathématiques & Cryptologie
+
+### Département Génie Électrique & Industriel (GEI)
+- BOUMANE Abderazzak – aboumane@uae.ac.ma – Chef de filière Génie Industriel & Logistique (GIL)
+- TOUHAMI Fakhita – ftouhami@uae.ac.ma – Électronique, Hyperfréquences
+- BOURKANE Abderrahim – a.bourkane@uae.ac.ma
+- BRITEL Mohammed Reda – mbritel@hotmail.com
+- CHATER Youness – ychater@uae.ac.ma
+- BEN SAID AMRANI Nabil – nbensaidamrani@uae.ac.ma
+- BOUAJAJ Adel – a.bouajaj@uae.ac.ma
+
+### Autres professeurs connus
+- JOUILEL Naima – njouilel@uae.ac.ma
+- KADI Ilham – i.kadi@uae.ac.ma
+- GHAILANI Mohamed – mghilani@uae.ac.ma
+- SAMADI Hassan – hsamadi@uae.ac.ma
+- CHAKKOR Saad – s.chakkor@uae.ac.ma
+- MOUSSA Ahmed – Directeur de l’ENSA Tanger
+
+## Application – Cahier des charges complet (FAQ intégrée)
+
+### Contexte & Objectifs
+Plateforme web interne pour tous les étudiants ENSA Tanger (AP1 → 3e année ingénieur, toutes filières : GINF, GIND, GSR, G2EI, GSTR, GSEA, GCYS, etc.). Objectif : partager cours, documents, conseils, questions, trouver facilement des étudiants, communiquer de manière sécurisée.
+
+### 1. Authentification & Inscription
+- Création de compte : Nom, Prénom, Email, Mot de passe, Filière, Niveau (1 à 5), Photo (optionnelle)
+- Connexion : email + mot de passe
+- Mot de passe oublié → 2 options :
+  a) Lien de réinitialisation par email
+  b) Code secret défini à l’inscription
+- Modification profil : mot de passe, photo, filière, niveau, bio
+
+### 2. Profil utilisateur
+Affiche : photo, nom, filière, niveau, bio + liste des posts publics + section privée pour voir uniquement ses propres posts anonymes.
+
+### 3. Mur de publications (Feed)
+- Publier du texte, image, document
+- Mode normal (nom visible) ou anonyme
+- Commenter en normal ou anonyme
+- Flux chronologique des derniers posts
+
+### 4. Bibliothèque de documents
+- Documents classés par niveau (AP1, AP2, 1A, 2A, 3A GINF/GIL/etc.)
+- Ajout direct ou automatique depuis posts/commentaires/groupes
+- Formats acceptés : PDF, Word, PowerPoint, images, etc.
+
+### 5. Synchronisation automatique des documents
+Tout document uploadé (post, commentaire, ajout direct, groupe) est automatiquement ajouté à la bibliothèque selon le niveau choisi.
+
+### 6. Recherche d’étudiants
+Barre de recherche : soit par nom + prénom, soit par niveau uniquement (un critère à la fois).
+
+### 7. Messagerie privée (optionnelle)
+Messages directs entre étudiants + historique des conversations.
+
+### 8. Groupes privés (optionnels)
+Création de groupe avec nom + description, invitations, acceptation/refus.
+
+## Règles du chatbot
+Tu es un assistant sympa et précis pour les étudiants de l’ENSA Tanger. Tu réponds uniquement aux questions sur :
+- les filières et l’orientation
+- les professeurs et responsables
+- l’utilisation de la plateforme (cette appli)
+- les questions ailleurs aussi tu peux donner leurs repnses
+Tu réponds toujours selon la langue que l'utilisateur utilise, de façon claire et concise. Si la question est hors sujet → « Désolé, je ne peux répondre qu’aux questions sur l’ENSA Tanger, les filières, les profs et l’utilisation de l’application. »
+
+# Fin du document de connaissances
