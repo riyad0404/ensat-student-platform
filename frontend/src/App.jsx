@@ -1,6 +1,7 @@
 import { Routes, Route, Outlet, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import LoginPage from './pages/LoginPage';
+import LandingPage from './pages/Landing';
 import Register from './pages/Register';
 import ResetPasswordCS from './pages/ResetPassword-CS';
 import ResetPasswordEmail from './pages/ResetPassword-email';
@@ -116,6 +117,7 @@ const HomePage = () => {
 function App() {
   return (
     <Routes>
+       <Route path="/landing" element={<LandingPage />} />
       {/* Routes protégées (nécessite authentification) */}
       <Route element={<RequireAuthLayout />}>
         <Route element={<MainLayout />}>

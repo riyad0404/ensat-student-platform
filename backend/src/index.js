@@ -23,6 +23,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 
+
 // Global middlewares
 app.use(cookieParser());
 // CORS for React (important for cookies)

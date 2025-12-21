@@ -8,6 +8,15 @@ import Input from "../components/input.jsx";
 import Button from "../components/button.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
 
+const SIGNUP_LOCK_UNTIL_KEY = "signup_lock_until_ms";
+
+const formatMMSS = (seconds) => {
+  const s = Math.max(0, Math.floor(seconds));
+  const mm = String(Math.floor(s / 60)).padStart(2, "0");
+  const ss = String(s % 60).padStart(2, "0");
+  return `${mm}:${ss}`;
+};
+
 export default function Register() {
   const { user, register } = useAuth();
   const navigate = useNavigate();
@@ -18,113 +27,148 @@ export default function Register() {
     email: "",
     niveau: "",
     password: "",
-    secretCode: ""
+    secretCode: "",
   });
-  
+
   const [fieldErrors, setFieldErrors] = useState({
     nom: "",
     prenom: "",
     email: "",
     niveau: "",
     password: "",
-    secretCode: ""
+    secretCode: "",
   });
-  
-  const [error, setError] = useState("");
+
+  const [formError, setFormError] = useState("");
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  // ✅ persisted lock
+  const [lockUntilMs, setLockUntilMs] = useState(() => {
+    const v = localStorage.getItem(SIGNUP_LOCK_UNTIL_KEY);
+    const n = v ? Number(v) : 0;
+    return Number.isFinite(n) ? n : 0;
+  });
+
+  const now = Date.now();
+  const isLocked = lockUntilMs > now;
+  const remainingSeconds = isLocked ? Math.ceil((lockUntilMs - now) / 1000) : 0;
 
   useEffect(() => {
     if (user) navigate("/", { replace: true });
   }, [user, navigate]);
 
+  // ✅ countdown
+  useEffect(() => {
+    if (!isLocked) return;
+
+    const interval = setInterval(() => {
+      const stored = Number(localStorage.getItem(SIGNUP_LOCK_UNTIL_KEY) || 0);
+      if (!stored || stored <= Date.now()) {
+        localStorage.removeItem(SIGNUP_LOCK_UNTIL_KEY);
+        setLockUntilMs(0);
+        setFormError("");
+      } else {
+        setLockUntilMs(stored);
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isLocked]);
+
+  // ✅ on mount, show correct message if locked
+  useEffect(() => {
+    if (isLocked) {
+      setFormError(
+        `Too many signup attempts. Please try again in ${formatMMSS(remainingSeconds)}.`
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const validateField = (fieldName, value) => {
     switch (fieldName) {
       case "email":
         if (!value) return "Email required";
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-          return "Invalid email format";
-        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Invalid email format";
         return "";
-        
+
       case "password":
         if (!value) return "Password required";
         if (value.length < 6) return "Minimum 6 characters";
         return "";
-        
+
       case "secretCode":
         if (!value) return "Secret code required";
         if (!/^\d{6}$/.test(value)) return "6 digits required";
         return "";
-        
+
       case "nom":
       case "prenom":
         if (!value) return "Field required";
         if (value.length < 2) return "Minimum 2 characters";
         return "";
-        
+
       case "niveau":
         if (!value) return "Level required";
         return "";
-        
+
       default:
         return "";
     }
   };
 
   const handleChange = (field) => (e) => {
+    if (isLocked) return;
+
     const value = e.target.value;
-    
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value
-    }));
-    
-    // Real-time validation
+
+    setFormData((prev) => ({ ...prev, [field]: value }));
+
     const errorMsg = validateField(field, value);
-    setFieldErrors(prev => ({
-      ...prev,
-      [field]: errorMsg
-    }));
-    
-    // Reset general error when user modifies a field
-    if (error) setError("");
+    setFieldErrors((prev) => ({ ...prev, [field]: errorMsg }));
+
+    if (formError) setFormError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+
+    if (isLocked) {
+      setFormError(
+        `Too many signup attempts. Please try again in ${formatMMSS(remainingSeconds)}.`
+      );
+      return;
+    }
+
+    setFormError("");
     setSuccessMessage("");
 
     const { nom, prenom, email, niveau, password, secretCode } = formData;
 
-    // Complete validation
+    // full validation
     const newErrors = {
       nom: validateField("nom", nom),
       prenom: validateField("prenom", prenom),
       email: validateField("email", email),
       niveau: validateField("niveau", niveau),
       password: validateField("password", password),
-      secretCode: validateField("secretCode", secretCode)
+      secretCode: validateField("secretCode", secretCode),
     };
 
     setFieldErrors(newErrors);
 
-    // Check for errors
-    const hasErrors = Object.values(newErrors).some(err => err !== "");
+    const hasErrors = Object.values(newErrors).some((x) => x !== "");
     if (hasErrors) {
-      setError("Please check the entered information.");
+      setFormError("Please check the entered information.");
       return;
     }
 
-    // Convert secretCode to number
-    const secretCodeNum = parseInt(secretCode);
-    if (isNaN(secretCodeNum)) {
-      setFieldErrors(prev => ({ 
-        ...prev, 
-        secretCode: "Secret code must be a number." 
-      }));
+    const secretCodeNum = parseInt(secretCode, 10);
+    if (Number.isNaN(secretCodeNum)) {
+      setFieldErrors((prev) => ({ ...prev, secretCode: "Secret code must be a number." }));
+      setFormError("Please check the entered information.");
       return;
     }
 
@@ -137,100 +181,90 @@ export default function Register() {
         email,
         niveau,
         password,
-        secretCode: secretCodeNum
+        secretCode: secretCodeNum,
       });
 
-      if (result.success) {
+      // ✅ SUCCESS
+      if (result?.success) {
         setSuccessMessage("Account created successfully! Redirecting...");
         setTimeout(() => navigate("/login"), 2000);
-      } else {
-        // Custom error message - Email already exists
-        setError("This email is already registered. Please use another email or login.");
-        setFieldErrors(prev => ({
-          ...prev,
-          email: "Email already in use"
-        }));
+        return;
       }
-    } catch (err) {
-      console.error("Registration error:", err);
-      
-      // HTTP error handling with custom messages
-      const status = err.response?.status;
-      const serverMessage = err.response?.data?.message || 
-                           err.response?.data?.error || 
-                           err.message || "";
-      
-      console.log("Status:", status);
-      console.log("Server message:", serverMessage);
-      
-      // Analyze error message to detect type
-      const errorLower = serverMessage.toLowerCase();
-      
-      if (
-        status === 409 || 
-        errorLower.includes("email") ||
-        errorLower.includes("already") ||
-        errorLower.includes("exists") ||
-        errorLower.includes("duplicate")
-      ) {
-        // Email already exists
-        setError("This email is already registered. Please use another email or login.");
-        setFieldErrors(prev => ({
-          ...prev,
-          email: "Email already in use"
-        }));
-      } 
-      else if (
-        status === 400 &&
-        (errorLower.includes("code") || errorLower.includes("secret"))
-      ) {
-        // Invalid secret code
-        setError("Invalid secret code. Please contact the administrator for the correct code.");
-        setFieldErrors(prev => ({
-          ...prev,
-          secretCode: "Invalid code"
-        }));
+
+      // ✅ 429 LOCK HERE (THIS is the key)
+      if (result?.status === 429) {
+        const retryAfterSeconds = Number(result.retryAfterSeconds) || 120;
+        const until = Date.now() + retryAfterSeconds * 1000;
+
+        localStorage.setItem(SIGNUP_LOCK_UNTIL_KEY, String(until));
+        setLockUntilMs(until);
+
+        // clear email field error (avoid illogical "email in use")
+        setFieldErrors((prev) => ({ ...prev, email: "" }));
+
+        setFormError(
+          `Too many signup attempts. Please try again in ${formatMMSS(retryAfterSeconds)}.`
+        );
+        return;
       }
-      else if (status === 400) {
-        // Invalid data
-        setError("The entered information is invalid. Please check all fields.");
+
+      // ✅ other errors
+      const msgLower = String(result?.error || "").toLowerCase();
+
+      const isDuplicate =
+        result?.status === 409 ||
+        (msgLower.includes("email") &&
+          (msgLower.includes("already") || msgLower.includes("exists") || msgLower.includes("duplicate")));
+
+      if (isDuplicate) {
+        setFormError("This email is already registered. Please use another email or login.");
+        setFieldErrors((prev) => ({ ...prev, email: "Email already in use" }));
+        return;
       }
-      else if (status === 500) {
-        // Server error
-        setError("Server error. Please try again in a few moments.");
-      } 
-      else if (err.message === "Network Error" || !navigator.onLine) {
-        // Connection problem
-        setError("Internet connection problem. Please check your connection.");
+
+      if (result?.status === 400 && (msgLower.includes("code") || msgLower.includes("secret"))) {
+        setFormError("Invalid secret code. Please contact the administrator for the correct code.");
+        setFieldErrors((prev) => ({ ...prev, secretCode: "Invalid code" }));
+        return;
       }
-      else {
-        // Generic error
-        setError("An error occurred during registration. Please try again.");
-      }
+
+      setFormError(result?.error || "Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  const disabledAll = loading || isLocked;
+
+  const buttonText = isLocked
+    ? `TRY AGAIN IN ${formatMMSS(remainingSeconds)}`
+    : loading
+      ? "CREATING ACCOUNT..."
+      : "CREATE ACCOUNT";
+
   return (
     <div className="login-page">
       <div className="login-card">
         <div className="login-left">
-          <img
-            src={registerImg}
-            alt="Register Illustration"
-            className="login-illustration"
-          />
+          <img src={registerImg} alt="Register Illustration" className="login-illustration" />
         </div>
 
         <div className="login-right register-page">
           <h2>Create an Account</h2>
           <p className="subtitle">Welcome to the community</p>
 
-          {error && <div className="error-text">⚠️ {error}</div>}
+          {/* ✅ same design as login (red) */}
+          {formError && (
+            <div className="error-message">
+              {isLocked
+                ? `Too many signup attempts. Please try again in ${formatMMSS(remainingSeconds)}.`
+                : formError}
+            </div>
+          )}
+
           {successMessage && <div className="success-text">✅ {successMessage}</div>}
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             <Input
               label="Last Name"
               placeholder="Enter your last name"
@@ -238,7 +272,9 @@ export default function Register() {
               onChange={handleChange("nom")}
               error={fieldErrors.nom}
               required
+              disabled={disabledAll}
             />
+
             <Input
               label="First Name"
               placeholder="Enter your first name"
@@ -246,7 +282,9 @@ export default function Register() {
               onChange={handleChange("prenom")}
               error={fieldErrors.prenom}
               required
+              disabled={disabledAll}
             />
+
             <Input
               label="Email"
               type="email"
@@ -256,7 +294,9 @@ export default function Register() {
               onChange={handleChange("email")}
               error={fieldErrors.email}
               required
+              disabled={disabledAll}
             />
+
             <Input
               label="Level"
               placeholder="Enter your level"
@@ -264,8 +304,10 @@ export default function Register() {
               onChange={handleChange("niveau")}
               error={fieldErrors.niveau}
               required
+              disabled={disabledAll}
             />
-           <div style={{ position: 'relative', marginBottom: '1.2rem' }}>
+
+            <div style={{ position: "relative", marginBottom: "1.2rem" }}>
               <Input
                 label="Password"
                 type={showPassword ? "text" : "password"}
@@ -274,26 +316,27 @@ export default function Register() {
                 onChange={handleChange("password")}
                 error={fieldErrors.password}
                 required
+                disabled={disabledAll}
               />
-              <span 
-                onClick={() => setShowPassword(!showPassword)}
-                style={{ 
-                  position: 'absolute',
-                  right: '1rem',
-                  top: '2.3rem',
-                  cursor: 'pointer',
-                  color: '#666',
-                  display: 'flex',
-                  alignItems: 'center',
+              <span
+                onClick={() => !disabledAll && setShowPassword(!showPassword)}
+                style={{
+                  position: "absolute",
+                  right: "1rem",
+                  top: "2.3rem",
+                  cursor: disabledAll ? "not-allowed" : "pointer",
+                  color: "#666",
+                  display: "flex",
+                  alignItems: "center",
                   zIndex: 10,
-                  transition: 'color 0.2s'
+                  opacity: disabledAll ? 0.5 : 1,
+                  pointerEvents: disabledAll ? "none" : "auto",
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.color = '#4a90e2'}
-                onMouseLeave={(e) => e.currentTarget.style.color = '#666'}
               >
                 {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
               </span>
             </div>
+
             <Input
               label="Secret Code"
               type="number"
@@ -304,22 +347,20 @@ export default function Register() {
               required
               min="100000"
               max="999999"
+              disabled={disabledAll}
             />
 
             <Button
-              text={loading ? "CREATING ACCOUNT..." : "CREATE ACCOUNT"}
+              text={buttonText}
               className="btn-create"
               type="submit"
-              disabled={loading}
+              disabled={disabledAll}
             />
           </form>
 
           <p className="redirect">
             Already have an account?{" "}
-            <span
-              onClick={() => navigate("/login")}
-              style={{ cursor: "pointer" }} 
-            >
+            <span onClick={() => navigate("/login")} style={{ cursor: "pointer" }}>
               Login
             </span>
           </p>
