@@ -29,7 +29,8 @@ export const createComment = async (req, res) => {
     const lien = (req.body.lien ?? "").trim();
     const isAnonymat =
       req.body.isAnonymat === true || req.body.isAnonymat === "true";
-
+ 
+        const niveau = (req.body.niveau ?? "").trim();
     // Récupérer tous les fichiers possibles
     const files = [];
     if (Array.isArray(req.files)) files.push(...req.files);
@@ -41,7 +42,11 @@ export const createComment = async (req, res) => {
         message: "Un commentaire doit contenir texte, lien ou fichier.",
       });
     }
-
+  if (files.length > 0 && !niveau) {
+      return res.status(400).json({
+        message: "Le niveau est obligatoire pour un document.",
+      });
+    }
     // Créer le commentaire
     const comment = await Comment.create({
       contenu: contenu || null,
@@ -62,7 +67,7 @@ export const createComment = async (req, res) => {
             filename: f.originalname,
             url: `${baseUrl}/uploads/${f.filename}`,
             type: guessDocType(f.mimetype, f.originalname),
-            niveau: req.user.niveau ?? "UNKNOWN",
+            niveau,
             idpost: null,
             idcomment: comment.idcomment,
             iduser,

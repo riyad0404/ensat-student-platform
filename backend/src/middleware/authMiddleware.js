@@ -9,7 +9,7 @@ export const authMiddleware = (req, res, next) => {
 
   try {
     const payload = verifyAccessToken(token); // throws if invalid/expired
-    // Attach user data from token to request object
+    // Attach user data from token to recd quest object
     req.user = payload;
     return next();
   } catch (error) {
