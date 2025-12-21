@@ -1,175 +1,287 @@
-import { Link } from "react-router-dom";
+import React from "react";
+import { useNavigate } from "react-router-dom";
 
-export default function Landing() {
+const Landing = () => {
+  const navigate = useNavigate();
+
   return (
-    <div style={styles.container}>
-      {/* NAVBAR */}
-      <header style={styles.navbar}>
-        <h2 style={styles.logo}>Docentra</h2>
-        <div>
-          <Link to="/login" style={styles.link}>Login</Link>
-          <Link to="/register" style={styles.registerBtn}>Get Started</Link>
+    <>
+      <style>{`
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+          font-family: 'Inter', 'Segoe UI', sans-serif;
+        }
+
+        body {
+          background: #fcfbff;
+          color: #1f2937;
+        }
+
+        /* ================= HEADER ================= */
+        header {
+          height: 72px;
+          padding: 0 96px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          background: white;
+          border-bottom: 1px solid #eee;
+        }
+
+        .logo {
+          font-size: 28px;
+          font-weight: 800;
+          color: #7c3aed;
+          letter-spacing: 1px;
+        }
+
+        .nav-actions {
+          display: flex;
+          gap: 16px;
+        }
+
+        .btn-outline {
+          background: transparent;
+          border: 1.5px solid #7c3aed;
+          color: #7c3aed;
+          padding: 10px 22px;
+          border-radius: 12px;
+          cursor: pointer;
+          font-weight: 500;
+        }
+
+        .btn-primary {
+          background: linear-gradient(90deg, #7c3aed, #a855f7);
+          border: none;
+          color: white;
+          padding: 10px 22px;
+          border-radius: 12px;
+          cursor: pointer;
+          font-weight: 500;
+        }
+
+        /* ================= HERO ================= */
+        .hero {
+          padding: 120px 96px;
+          background: linear-gradient(180deg, #ffffff, #f4f2ff);
+        }
+
+        .hero-inner {
+          max-width: 720px;
+        }
+
+        .hero h1 {
+          font-size: 56px;
+          line-height: 1.15;
+          margin-bottom: 24px;
+        }
+
+        .hero p {
+          font-size: 18px;
+          color: #4b5563;
+          margin-bottom: 36px;
+        }
+
+        .hero button {
+          padding: 14px 34px;
+          font-size: 16px;
+          border-radius: 14px;
+          border: none;
+          background: #7c3aed;
+          color: white;
+          cursor: pointer;
+        }
+
+        /* ================= SECTION ================= */
+        section {
+          padding: 120px 96px;
+        }
+
+        .section-title {
+          font-size: 40px;
+          margin-bottom: 90px;
+          color: #6d28d9;
+        }
+
+        /* ================= FEATURE ================= */
+        .feature {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 80px;
+          align-items: center;
+          margin-bottom: 140px;
+        }
+
+        .feature.reverse {
+          direction: rtl;
+        }
+
+        .feature.reverse * {
+          direction: ltr;
+        }
+
+        .feature h3 {
+          font-size: 28px;
+          margin-bottom: 16px;
+        }
+
+        .feature p {
+          font-size: 17px;
+          line-height: 1.7;
+          color: #4b5563;
+        }
+
+        .visual {
+          height: 280px;
+          border-radius: 28px;
+          background: linear-gradient(135deg, #ede9fe, #f8f7ff);
+          box-shadow: 0 30px 60px rgba(124,58,237,0.12);
+        }
+
+        /* ================= CTA ================= */
+        .cta {
+          background: #f4f2ff;
+          text-align: center;
+          padding: 120px 96px;
+        }
+
+        .cta h2 {
+          font-size: 38px;
+          margin-bottom: 20px;
+        }
+
+        .cta p {
+          font-size: 18px;
+          color: #4b5563;
+          margin-bottom: 36px;
+        }
+
+        /* ================= FOOTER ================= */
+        footer {
+          background: #faf9ff;
+          text-align: center;
+          padding: 28px;
+          color: #6b7280;
+          font-size: 14px;
+        }
+
+        @media (max-width: 900px) {
+          header, section, .hero, .cta {
+            padding: 64px 28px;
+          }
+
+          .feature {
+            grid-template-columns: 1fr;
+          }
+
+          .hero h1 {
+            font-size: 40px;
+          }
+        }
+      `}</style>
+
+      {/* HEADER */}
+      <header>
+        <div className="logo">DOCENTRA</div>
+        <div className="nav-actions">
+          <button className="btn-outline" onClick={() => navigate("/login")}>
+            Login
+          </button>
+          <button className="btn-primary" onClick={() => navigate("/register")}>
+            Create Account
+          </button>
         </div>
       </header>
 
-      {/* HERO SECTION */}
-      <section style={styles.hero}>
-        <h1 style={styles.title}>
-          One place to <span style={styles.highlight}>share</span>,{" "}
-          <span style={styles.highlight}>learn</span> &{" "}
-          <span style={styles.highlight}>collaborate</span>
-        </h1>
-
-        <p style={styles.subtitle}>
-          Docentra is a student platform designed for ENSAT students to share
-          documents, ask questions, publish posts and help each other succeed.
-        </p>
-
-        <div style={styles.actions}>
-          <Link to="/register" style={styles.primaryBtn}>
-            Create an account
-          </Link>
-          <Link to="/login" style={styles.secondaryBtn}>
-            I already have an account
-          </Link>
+      {/* HERO */}
+      <div className="hero">
+        <div className="hero-inner">
+          <h1>
+            Une plateforme académique
+            <br />
+            conçue pour les étudiants ENSA
+          </h1>
+          <p>
+            Docentra centralise les documents, facilite la recherche
+            d’étudiants, la gestion des profils, les publications anonymes
+            et la collaboration académique.
+          </p>
+          <button onClick={() => navigate("/register")}>
+            Commencer maintenant
+          </button>
         </div>
-      </section>
+      </div>
 
       {/* FEATURES */}
-      <section style={styles.features}>
-        <div style={styles.featureCard}>
-          <h3>📚 Document Library</h3>
-          <p>Access shared documents classified by academic level.</p>
+      <section>
+        <h2 className="section-title">Fonctionnalités clés</h2>
+
+        <div className="feature">
+          <div>
+            <h3>Recherche & profils étudiants</h3>
+            <p>
+              Recherchez des étudiants par nom ou niveau et consultez leurs
+              profils publics contenant leurs publications visibles.
+            </p>
+          </div>
+          <div className="visual" />
         </div>
 
-        <div style={styles.featureCard}>
-          <h3>💬 Posts & Comments</h3>
-          <p>Ask questions, publish posts and interact with classmates.</p>
+        <div className="feature reverse">
+          <div>
+            <h3>Profil personnel & publications anonymes</h3>
+            <p>
+              Chaque étudiant dispose d’un espace personnel lui permettant
+              de consulter ses posts normaux et ses publications anonymes,
+              visibles uniquement par lui.
+            </p>
+          </div>
+          <div className="visual" />
         </div>
 
-        <div style={styles.featureCard}>
-          <h3>🎓 ENSAT Community</h3>
-          <p>A collaborative space built by students, for students.</p>
+        <div className="feature">
+          <div>
+            <h3>Mur collaboratif & bibliothèque</h3>
+            <p>
+              Partagez des documents, des ressources et des questions.
+              Tous les fichiers sont automatiquement classés par niveau.
+            </p>
+          </div>
+          <div className="visual" />
+        </div>
+
+        <div className="feature reverse">
+          <div>
+            <h3>Discussions, groupes & chatbot</h3>
+            <p>
+              Collaborez à travers des discussions thématiques, des groupes
+              privés et bénéficiez d’un chatbot d’assistance académique.
+            </p>
+          </div>
+          <div className="visual" />
         </div>
       </section>
 
+      {/* CTA */}
+      <div className="cta">
+        <h2>Rejoignez Docentra</h2>
+        <p>
+          Une plateforme claire, moderne et pensée pour la réussite
+          académique.
+        </p>
+        <button onClick={() => navigate("/register")}>
+          Créer un compte
+        </button>
+      </div>
+
       {/* FOOTER */}
-      <footer style={styles.footer}>
-        <p>© {new Date().getFullYear()} Docentra — ENSAT Student Platform</p>
+      <footer>
+        © {new Date().getFullYear()} Docentra — ENSA Tanger
       </footer>
-    </div>
+    </>
   );
-}
-
-const styles = {
-  container: {
-    minHeight: "100vh",
-    backgroundColor: "#ffffff",
-    fontFamily: "Arial, sans-serif",
-    display: "flex",
-    flexDirection: "column",
-  },
-
-  navbar: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: "20px 60px",
-    borderBottom: "1px solid #eee",
-  },
-
-  logo: {
-    color: "#a020f0",
-    fontWeight: "bold",
-  },
-
-  link: {
-    marginRight: "20px",
-    textDecoration: "none",
-    color: "#555",
-    fontWeight: "500",
-  },
-
-  registerBtn: {
-    textDecoration: "none",
-    padding: "10px 18px",
-    background: "linear-gradient(90deg, #d633ff, #a020f0)",
-    color: "#fff",
-    borderRadius: "20px",
-    fontWeight: "bold",
-  },
-
-  hero: {
-    textAlign: "center",
-    padding: "80px 20px",
-    maxWidth: "900px",
-    margin: "0 auto",
-  },
-
-  title: {
-    fontSize: "42px",
-    marginBottom: "20px",
-    color: "#222",
-  },
-
-  highlight: {
-    color: "#a020f0",
-  },
-
-  subtitle: {
-    fontSize: "18px",
-    color: "#666",
-    marginBottom: "40px",
-    lineHeight: 1.6,
-  },
-
-  actions: {
-    display: "flex",
-    justifyContent: "center",
-    gap: "20px",
-    flexWrap: "wrap",
-  },
-
-  primaryBtn: {
-    padding: "14px 26px",
-    background: "linear-gradient(90deg, #d633ff, #a020f0)",
-    color: "#fff",
-    borderRadius: "25px",
-    textDecoration: "none",
-    fontWeight: "bold",
-  },
-
-  secondaryBtn: {
-    padding: "14px 26px",
-    border: "2px solid #a020f0",
-    color: "#a020f0",
-    borderRadius: "25px",
-    textDecoration: "none",
-    fontWeight: "bold",
-  },
-
-  features: {
-    display: "flex",
-    justifyContent: "center",
-    gap: "30px",
-    padding: "60px 40px",
-    flexWrap: "wrap",
-  },
-
-  featureCard: {
-    width: "260px",
-    padding: "25px",
-    borderRadius: "15px",
-    backgroundColor: "#fafafa",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-    textAlign: "center",
-  },
-
-  footer: {
-    marginTop: "auto",
-    padding: "20px",
-    textAlign: "center",
-    color: "#999",
-    fontSize: "14px",
-  },
 };
+
+export default Landing;

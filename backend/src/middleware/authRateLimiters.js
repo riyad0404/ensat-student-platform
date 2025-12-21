@@ -12,8 +12,8 @@ export const loginLimiter = rateLimit({
 });
 //Sign Up
 export const signupLimiter = rateLimit({
-  windowMs: 2* 60 * 1000, // 2 minutes
-  max: 2,                  // 5 inscriptions max
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 3,                  // 3 inscriptions max
   standardHeaders: true,
   legacyHeaders: false,
   message: {

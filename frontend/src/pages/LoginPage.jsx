@@ -282,7 +282,7 @@ export default function LoginPage() {
             <Button
               text={
                 isLocked
-                  ? `TRY AGAIN IN ${formatMMSS(remainingSeconds)}`
+                  ? "TRY AGAIN IN 2 MINUTES" // ✅ SEULE MODIFICATION: texte statique, sans compteur
                   : loading
                   ? "LOGGING IN..."
                   : "LOGIN"

@@ -1,5 +1,5 @@
 // src/pages/Register.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "./../styles/login.css";
 import { FiMail, FiEye, FiEyeOff } from "react-icons/fi";
@@ -8,12 +8,13 @@ import Input from "../components/input.jsx";
 import Button from "../components/button.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
 
-const SIGNUP_LOCK_UNTIL_KEY = "signup_lock_until_ms";
+const SIGNUP_LOCK_KEY = "signup_lock_until_ms";
 
-const formatMMSS = (seconds) => {
-  const s = Math.max(0, Math.floor(seconds));
+
+const formatMMSS = (totalSeconds) => {
+  const s = Math.max(0, Number(totalSeconds) || 0);
   const mm = String(Math.floor(s / 60)).padStart(2, "0");
-  const ss = String(s % 60).padStart(2, "0");
+  const ss = String(Math.floor(s % 60)).padStart(2, "0");
   return `${mm}:${ss}`;
 };
 
@@ -39,53 +40,58 @@ export default function Register() {
     secretCode: "",
   });
 
-  const [formError, setFormError] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  // ✅ persisted lock
-  const [lockUntilMs, setLockUntilMs] = useState(() => {
-    const v = localStorage.getItem(SIGNUP_LOCK_UNTIL_KEY);
-    const n = v ? Number(v) : 0;
-    return Number.isFinite(n) ? n : 0;
-  });
+  // ✅ Lock state (persistant)
+  const [signupLockedUntilMs, setSignupLockedUntilMs] = useState(null);
+  const [signupRemainingSec, setSignupRemainingSec] = useState(0);
 
-  const now = Date.now();
-  const isLocked = lockUntilMs > now;
-  const remainingSeconds = isLocked ? Math.ceil((lockUntilMs - now) / 1000) : 0;
+  const isSignupLocked = useMemo(() => {
+    return !!signupLockedUntilMs && Date.now() < signupLockedUntilMs;
+  }, [signupLockedUntilMs]);
 
   useEffect(() => {
     if (user) navigate("/", { replace: true });
   }, [user, navigate]);
 
-  // ✅ countdown
+  // ✅ Charger lock depuis localStorage au montage
   useEffect(() => {
-    if (!isLocked) return;
-
-    const interval = setInterval(() => {
-      const stored = Number(localStorage.getItem(SIGNUP_LOCK_UNTIL_KEY) || 0);
-      if (!stored || stored <= Date.now()) {
-        localStorage.removeItem(SIGNUP_LOCK_UNTIL_KEY);
-        setLockUntilMs(0);
-        setFormError("");
-      } else {
-        setLockUntilMs(stored);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [isLocked]);
-
-  // ✅ on mount, show correct message if locked
-  useEffect(() => {
-    if (isLocked) {
-      setFormError(
-        `Too many signup attempts. Please try again in ${formatMMSS(remainingSeconds)}.`
-      );
+    const raw = localStorage.getItem(SIGNUP_LOCK_KEY);
+    const until = raw ? Number(raw) : null;
+    if (until && !Number.isNaN(until) && until > Date.now()) {
+      setSignupLockedUntilMs(until);
+      setSignupRemainingSec(Math.ceil((until - Date.now()) / 1000));
+    } else {
+      localStorage.removeItem(SIGNUP_LOCK_KEY);
+      setSignupLockedUntilMs(null);
+      setSignupRemainingSec(0);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ✅ Décompte (continue même après refresh/retour page)
+  useEffect(() => {
+    if (!signupLockedUntilMs) return;
+
+    const tick = () => {
+      const diff = signupLockedUntilMs - Date.now();
+      if (diff <= 0) {
+        setSignupLockedUntilMs(null);
+        setSignupRemainingSec(0);
+        localStorage.removeItem(SIGNUP_LOCK_KEY);
+        // Optionnel: effacer le message d’erreur quand c’est débloqué
+        setError("");
+        return;
+      }
+      setSignupRemainingSec(Math.ceil(diff / 1000));
+    };
+
+    tick();
+    const id = setInterval(tick, 250);
+    return () => clearInterval(id);
+  }, [signupLockedUntilMs]);
 
   const validateField = (fieldName, value) => {
     switch (fieldName) {
@@ -120,34 +126,36 @@ export default function Register() {
   };
 
   const handleChange = (field) => (e) => {
-    if (isLocked) return;
+    // ✅ si lock actif, on ignore la saisie
+    if (isSignupLocked) return;
 
     const value = e.target.value;
 
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
 
     const errorMsg = validateField(field, value);
-    setFieldErrors((prev) => ({ ...prev, [field]: errorMsg }));
+    setFieldErrors((prev) => ({
+      ...prev,
+      [field]: errorMsg,
+    }));
 
-    if (formError) setFormError("");
+    if (error) setError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (isLocked) {
-      setFormError(
-        `Too many signup attempts. Please try again in ${formatMMSS(remainingSeconds)}.`
-      );
-      return;
-    }
+    // ✅ si lock actif, on ne soumet pas
+    if (isSignupLocked) return;
 
-    setFormError("");
+    setError("");
     setSuccessMessage("");
 
     const { nom, prenom, email, niveau, password, secretCode } = formData;
 
-    // full validation
     const newErrors = {
       nom: validateField("nom", nom),
       prenom: validateField("prenom", prenom),
@@ -159,16 +167,15 @@ export default function Register() {
 
     setFieldErrors(newErrors);
 
-    const hasErrors = Object.values(newErrors).some((x) => x !== "");
+    const hasErrors = Object.values(newErrors).some((err) => err !== "");
     if (hasErrors) {
-      setFormError("Please check the entered information.");
+      setError("Please check the entered information.");
       return;
     }
 
     const secretCodeNum = parseInt(secretCode, 10);
     if (Number.isNaN(secretCodeNum)) {
       setFieldErrors((prev) => ({ ...prev, secretCode: "Secret code must be a number." }));
-      setFormError("Please check the entered information.");
       return;
     }
 
@@ -184,63 +191,59 @@ export default function Register() {
         secretCode: secretCodeNum,
       });
 
-      // ✅ SUCCESS
-      if (result?.success) {
+      // ✅ 1) PRIORITÉ: cas 429 (RATE LIMIT) → lock + compteur + champs bloqués
+      if (!result.success && result.errorCode === "RATE_LIMIT") {
+        const seconds = Number(result.retryAfterSeconds);
+        const untilMs =
+          Number.isFinite(seconds) && seconds > 0
+            ? Date.now() + seconds * 1000
+            : Date.now() + 10 * 60 * 1000; // fallback 10 min si le backend n’envoie pas retry-after
+
+        localStorage.setItem(SIGNUP_LOCK_KEY, String(untilMs));
+        setSignupLockedUntilMs(untilMs);
+        setSignupRemainingSec(Math.ceil((untilMs - Date.now()) / 1000));
+
+        // ✅ Message rouge + compteur comme login
+        setError(`Too many signup attempts. Please try again in ${formatMMSS(Math.ceil((untilMs - Date.now()) / 1000))}.`);
+        return;
+      }
+
+      // ✅ 2) succès
+      if (result.success) {
         setSuccessMessage("Account created successfully! Redirecting...");
         setTimeout(() => navigate("/login"), 2000);
         return;
       }
 
-      // ✅ 429 LOCK HERE (THIS is the key)
-      if (result?.status === 429) {
-        const retryAfterSeconds = Number(result.retryAfterSeconds) || 120;
-        const until = Date.now() + retryAfterSeconds * 1000;
+      // ✅ 3) autres erreurs (ex: email déjà utilisé)
+      const msg = (result.error || "").toLowerCase();
 
-        localStorage.setItem(SIGNUP_LOCK_UNTIL_KEY, String(until));
-        setLockUntilMs(until);
-
-        // clear email field error (avoid illogical "email in use")
-        setFieldErrors((prev) => ({ ...prev, email: "" }));
-
-        setFormError(
-          `Too many signup attempts. Please try again in ${formatMMSS(retryAfterSeconds)}.`
-        );
-        return;
-      }
-
-      // ✅ other errors
-      const msgLower = String(result?.error || "").toLowerCase();
-
-      const isDuplicate =
-        result?.status === 409 ||
-        (msgLower.includes("email") &&
-          (msgLower.includes("already") || msgLower.includes("exists") || msgLower.includes("duplicate")));
-
-      if (isDuplicate) {
-        setFormError("This email is already registered. Please use another email or login.");
+      if (result.status === 409 || msg.includes("email") || msg.includes("already") || msg.includes("exists") || msg.includes("duplicate")) {
+        setError("This email is already registered. Please use another email or login.");
         setFieldErrors((prev) => ({ ...prev, email: "Email already in use" }));
         return;
       }
 
-      if (result?.status === 400 && (msgLower.includes("code") || msgLower.includes("secret"))) {
-        setFormError("Invalid secret code. Please contact the administrator for the correct code.");
+      if (result.status === 400 && (msg.includes("code") || msg.includes("secret"))) {
+        setError("Invalid secret code. Please contact the administrator for the correct code.");
         setFieldErrors((prev) => ({ ...prev, secretCode: "Invalid code" }));
         return;
       }
 
-      setFormError(result?.error || "Registration failed. Please try again.");
+      setError(result.error || "Registration failed. Please try again.");
+    } catch (err) {
+      console.error("Registration error:", err);
+      setError("Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const disabledAll = loading || isLocked;
-
-  const buttonText = isLocked
-    ? `TRY AGAIN IN ${formatMMSS(remainingSeconds)}`
-    : loading
-      ? "CREATING ACCOUNT..."
-      : "CREATE ACCOUNT";
+  // ✅ Quand lock actif, on met à jour le message d’erreur avec le compteur (comme login)
+  useEffect(() => {
+    if (!isSignupLocked) return;
+    setError(`Too many signup attempts. Please try again in ${formatMMSS(signupRemainingSec)}.`);
+  }, [isSignupLocked, signupRemainingSec]);
 
   return (
     <div className="login-page">
@@ -253,15 +256,8 @@ export default function Register() {
           <h2>Create an Account</h2>
           <p className="subtitle">Welcome to the community</p>
 
-          {/* ✅ same design as login (red) */}
-          {formError && (
-            <div className="error-message">
-              {isLocked
-                ? `Too many signup attempts. Please try again in ${formatMMSS(remainingSeconds)}.`
-                : formError}
-            </div>
-          )}
-
+          {/* ✅ même design d’erreur que login (box rouge) */}
+          {error && <div className="error-message">{error}</div>}
           {successMessage && <div className="success-text">✅ {successMessage}</div>}
 
           <form onSubmit={handleSubmit} noValidate>
@@ -272,9 +268,8 @@ export default function Register() {
               onChange={handleChange("nom")}
               error={fieldErrors.nom}
               required
-              disabled={disabledAll}
+              disabled={isSignupLocked || loading}
             />
-
             <Input
               label="First Name"
               placeholder="Enter your first name"
@@ -282,9 +277,8 @@ export default function Register() {
               onChange={handleChange("prenom")}
               error={fieldErrors.prenom}
               required
-              disabled={disabledAll}
+              disabled={isSignupLocked || loading}
             />
-
             <Input
               label="Email"
               type="email"
@@ -294,9 +288,8 @@ export default function Register() {
               onChange={handleChange("email")}
               error={fieldErrors.email}
               required
-              disabled={disabledAll}
+              disabled={isSignupLocked || loading}
             />
-
             <Input
               label="Level"
               placeholder="Enter your level"
@@ -304,7 +297,7 @@ export default function Register() {
               onChange={handleChange("niveau")}
               error={fieldErrors.niveau}
               required
-              disabled={disabledAll}
+              disabled={isSignupLocked || loading}
             />
 
             <div style={{ position: "relative", marginBottom: "1.2rem" }}>
@@ -316,21 +309,21 @@ export default function Register() {
                 onChange={handleChange("password")}
                 error={fieldErrors.password}
                 required
-                disabled={disabledAll}
+                disabled={isSignupLocked || loading}
               />
               <span
-                onClick={() => !disabledAll && setShowPassword(!showPassword)}
+                onClick={() => !isSignupLocked && setShowPassword(!showPassword)}
                 style={{
                   position: "absolute",
                   right: "1rem",
                   top: "2.3rem",
-                  cursor: disabledAll ? "not-allowed" : "pointer",
+                  cursor: isSignupLocked ? "not-allowed" : "pointer",
                   color: "#666",
                   display: "flex",
                   alignItems: "center",
                   zIndex: 10,
-                  opacity: disabledAll ? 0.5 : 1,
-                  pointerEvents: disabledAll ? "none" : "auto",
+                  transition: "color 0.2s",
+                  opacity: isSignupLocked ? 0.5 : 1,
                 }}
               >
                 {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
@@ -347,15 +340,22 @@ export default function Register() {
               required
               min="100000"
               max="999999"
-              disabled={disabledAll}
+              disabled={isSignupLocked || loading}
             />
 
-            <Button
-              text={buttonText}
-              className="btn-create"
-              type="submit"
-              disabled={disabledAll}
-            />
+           <Button
+  text={
+    isSignupLocked
+      ? "TRY AGAIN IN 10 MINUTES"
+      : loading
+      ? "CREATING ACCOUNT..."
+      : "CREATE ACCOUNT"
+  }
+  className="btn-create"
+  type="submit"
+  disabled={loading || isSignupLocked}
+/>
+
           </form>
 
           <p className="redirect">
