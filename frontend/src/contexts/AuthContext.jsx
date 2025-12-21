@@ -106,30 +106,89 @@ export const AuthProvider = ({ children }) => {
   };
 
   // ✅ Mise à jour du profil (NOUVELLE FONCTION)
-  const updateProfile = async (updatedData) => {
-    try {
-      console.log('🔄 Mise à jour du profil...', updatedData);
-      
-      // Appel API pour mettre à jour
-      const response = await authAPI.updateProfile(updatedData);
-      
-      console.log('✅ Profil mis à jour:', response);
-      
-      if (response.user) {
-        // Mettre à jour l'utilisateur dans le contexte
-        setUser(response.user);
-        return { success: true, user: response.user };
+// ✅ Mise à jour du profil
+const updateProfile = async (updatedData) => {
+  try {
+    console.log('🔄 Mise à jour du profil - Données reçues:', updatedData);
+    
+    // Log spécifique pour les photos
+    if (updatedData.photo) {
+      if (updatedData.photo === '') {
+        console.log('🗑️ Suppression de photo demandée');
       } else {
-        return { success: false, error: 'Profil non mis à jour' };
+        console.log('🖼️ Photo envoyée, taille:', updatedData.photo.length, 'caractères');
+        console.log('🖼️ Type photo:', updatedData.photo.substring(0, 50) + '...');
       }
-    } catch (error) {
-      console.error('❌ Erreur mise à jour profil:', error);
+    }
+    
+    const response = await authAPI.updateProfile(updatedData);
+    
+    console.log('✅ Réponse du backend:', response);
+    
+    if (response.user) {
+      setUser(response.user);
+      return { 
+        success: true, 
+        user: response.user,
+        message: response.message || 'Profil mis à jour avec succès'
+      };
+    } else if (response.message) {
+      // Rafraîchir les données utilisateur après mise à jour
+      try {
+        const userResponse = await authAPI.verifyToken();
+        if (userResponse.user) {
+          setUser(userResponse.user);
+        }
+      } catch (refreshError) {
+        console.log('⚠️ Impossible de rafraîchir les données utilisateur:', refreshError);
+      }
+      
+      return { 
+        success: true,
+        message: response.message
+      };
+    } else {
       return { 
         success: false, 
-        error: error.response?.data?.error || 'Erreur de mise à jour' 
+        error: response.error || response.message || 'Profil non mis à jour' 
       };
     }
-  };
+  } catch (error) {
+    console.error('❌ ERREUR DÉTAILLÉE updateProfile:');
+    console.error('Message:', error.message);
+    console.error('Stack:', error.stack);
+    
+    if (error.response) {
+      console.error('Status:', error.response.status);
+      console.error('Status Text:', error.response.statusText);
+      console.error('Data:', error.response.data);
+      console.error('Headers:', error.response.headers);
+      
+      const errorMessage = error.response.data?.error || 
+                          error.response.data?.message || 
+                          error.response.data?.details ||
+                          'Erreur de mise à jour';
+      
+      return { 
+        success: false, 
+        error: errorMessage,
+        status: error.response.status
+      };
+    } else if (error.request) {
+      console.error('Request:', error.request);
+      return { 
+        success: false, 
+        error: 'Pas de réponse du serveur' 
+      };
+    } else {
+      console.error('Error:', error.message);
+      return { 
+        success: false, 
+        error: error.message || 'Erreur de connexion' 
+      };
+    }
+  }
+};
 
   return (
     <AuthContext.Provider value={{ 

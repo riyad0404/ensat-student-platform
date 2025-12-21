@@ -9,6 +9,8 @@ import ProfilePage from './pages/Profile';
 import Sidebar from './components/Sidebar';
 import EditProfile from './pages/EditProfile';
 
+
+
 // HOC pour protéger les routes
 const RequireAuth = ({ children }) => {
   const { user, loading } = useAuth();
@@ -58,23 +60,27 @@ const RequireAuthLayout = () => {
 };
 
 
+// Dans App.js - MainLayout
 const MainLayout = () => {
+  // On n'a plus besoin d'état ici puisque Sidebar gère son propre état
+  
   return (
     <div style={{ 
       display: 'flex', 
       minHeight: '100vh',
-      width: '100vw', // Force la largeur totale
-      overflowX: 'hidden' // Empêche le défilement horizontal
+      width: '100vw',
+      overflowX: 'hidden'
     }}>
       <Sidebar />
       <div style={{ 
         flex: 1, 
-        marginLeft: '270px',
+        marginLeft: '270px', // Largeur initiale
         backgroundColor: '#f5f5f5',
         minHeight: '100vh',
-        padding: '20px 0px',
+        padding: '20px',
         width: 'calc(100vw - 270px)',
-        overflowY: 'auto' // Permet le défilement vertical si besoin
+        overflowY: 'auto',
+        transition: 'margin-left 0.3s ease, width 0.3s ease'
       }}>
         <Outlet />
       </div>

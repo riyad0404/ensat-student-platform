@@ -1,20 +1,24 @@
-/* profile.css - LinkedIn Style avec séparation claire */
+/* profile.css - Version finale avec sidebar collapsible */
 .profile-container {
     width: 100%;
     min-height: 100vh;
     background: #f5f5f5;
     position: relative;
+    margin: 0;
+    padding: 0;
 }
 
 /* Bannière avec icône caméra */
 .profile-banner {
-    width: 100%;
-    height: 350px; /* Hauteur réduite */
+    width: calc(100% + 17px);
+    height: 350px;
     background: linear-gradient(90deg, #fdfcfd 0%, #7b787a 100%);
     background-size: cover;
     background-position: center;
     position: relative;
     border-bottom: 2px solid #e0e0e0;
+    margin-left: -12px;
+   
 }
 
 /* Icône caméra pour bannière - style LinkedIn */
@@ -44,66 +48,87 @@
     transform: scale(1.1);
 }
 
-/* Menu déroulant pour bannière (comme LinkedIn) */
-.banner-dropdown-menu {
+/* Menu déroulant pour bannière */
+.dropdown-menu {
     position: absolute;
-    bottom: 70px;
-    right: 20px;
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    min-width: 180px;
-    z-index: 100;
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    min-width: 200px;
+    z-index: 1000;
     display: none;
     border: 1px solid #e0e0e0;
+    overflow: hidden;
+    animation: slideIn 0.2s ease-out;
 }
 
-.banner-dropdown-menu.show {
+.dropdown-menu.show {
     display: block;
 }
 
-.banner-dropdown-item {
-    padding: 12px 16px;
+.dropdown-item {
+    padding: 14px 18px;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 10px;
     color: #333;
-    font-size: 0.95rem;
-    border-bottom: 1px solid #f0f0f0;
-    transition: background 0.2s;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    border-bottom: 1px solid #f5f5f5;
 }
 
-.banner-dropdown-item:last-child {
+.dropdown-item:last-child {
     border-bottom: none;
 }
 
-.banner-dropdown-item:hover {
+.dropdown-item:hover {
     background: #f8f9fa;
+    color: #007bff;
 }
 
-.banner-dropdown-item.delete {
+.dropdown-item.delete:hover {
+    background: #dc3545;
+    color: white;
+}
+
+.dropdown-item.delete {
     color: #dc3545;
 }
 
-/* Conteneur principal */
+/* Conteneur principal - AJUSTÉ pour sidebar */
 .profile-content {
     max-width: 1000px;
     margin: 0 auto;
-    padding: 0 5px;
+    padding: 0 20px;
     position: relative;
     margin-top: -20px;
+    transition: all 0.3s ease;
 }
 
-/* Section info principale */
+/* Quand sidebar est collapsed, élargir le contenu */
+.sidebar-container.collapsed ~ div .profile-content {
+    max-width: 1200px;
+    padding: 0 30px;
+}
+
 .profile-info-section {
     background: white;
     padding: 80px 40px 30px 40px;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     margin-top: 18px;
-    margin-bottom: 20px;
+    margin-bottom: 5px;
     border: 1px solid #e0e0e0;
+    width: calc(100% + 82px)!important; 
+    margin-left: -42px !important;
+}
+
+/* Quand sidebar est collapsed, ajuster la largeur */
+.sidebar-container.collapsed ~ div .profile-info-section {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* Avatar avec icône caméra */
@@ -157,48 +182,6 @@
     transform: scale(1.1);
 }
 
-/* Menu déroulant pour avatar */
-.avatar-dropdown-menu {
-    position: absolute;
-    bottom: -120px;
-    left: 0;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    min-width: 200px;
-    z-index: 100;
-    display: none;
-    border: 1px solid #e0e0e0;
-}
-
-.avatar-dropdown-menu.show {
-    display: block;
-}
-
-.avatar-dropdown-item {
-    padding: 12px 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: #333;
-    font-size: 0.95rem;
-    border-bottom: 1px solid #f0f0f0;
-    transition: background 0.2s;
-}
-
-.avatar-dropdown-item:last-child {
-    border-bottom: none;
-}
-
-.avatar-dropdown-item:hover {
-    background: #f8f9fa;
-}
-
-.avatar-dropdown-item.delete {
-    color: #dc3545;
-}
-
 /* En-tête profil */
 .profile-header {
     display: flex;
@@ -240,7 +223,7 @@
 /* ICON EDIT SEULEMENT - repositionnée */
 .edit-profile-icon {
     position: absolute;
-    top:-70px;
+    top: -70px;
     right: -10px;
     background: white;
     border: 2px solid #E334FE;
@@ -271,8 +254,17 @@
     padding: 25px 30px;
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    margin-top: 20px;
+    margin-top: 10px;
     border: 1px solid #e0e0e0;
+    width: calc(100% + 82px)!important; 
+     margin-left: -42px !important;
+}
+
+/* Quand sidebar est collapsed, ajuster les posts */
+.sidebar-container.collapsed ~ div .posts-section {
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .posts-title {
@@ -377,4 +369,180 @@
     height: 60px;
     color: #6c757d;
     opacity: 0.7;
+}
+
+/* Animation de rotation */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Style pour la modal d'image */
+.image-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.image-modal-content {
+    position: relative;
+    max-width: 90vw;
+    max-height: 90vh;
+}
+
+.image-modal img {
+    max-width: 100%;
+    max-height: 90vh;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+.image-modal-close {
+    position: absolute;
+    top: -40px;
+    right: -10px;
+    background: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    transition: all 0.2s;
+}
+
+.image-modal-close:hover {
+    background: #f8f9fa;
+    transform: scale(1.1);
+}
+
+/* Hover effect sur l'avatar */
+.profile-avatar:hover .avatar-overlay {
+    opacity: 1;
+}
+
+.avatar-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    border-radius: 50%;
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+    .profile-content {
+        max-width: 95%;
+        padding: 0 15px;
+    }
+    
+    .sidebar-container.collapsed ~ div .profile-content {
+        max-width: 98%;
+        padding: 0 20px;
+    }
+    
+    .profile-info-section {
+        padding: 80px 30px 30px 30px;
+    }
+}
+
+@media (max-width: 768px) {
+    .profile-content {
+        max-width: 100%;
+        padding: 0 10px;
+    }
+    
+    .sidebar-container.collapsed ~ div .profile-content {
+        padding: 0 15px;
+    }
+    
+    .profile-banner {
+        height: 250px;
+    }
+    
+    .profile-avatar-container {
+        width: 120px;
+        height: 120px;
+        top: -60px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    
+    .profile-info-section {
+        padding: 60px 20px 20px 20px;
+    }
+    
+    .posts-section {
+        padding: 20px;
+    }
+    
+    .profile-name {
+        font-size: 1.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-info-section {
+        padding: 50px 15px 15px 15px;
+    }
+    
+    .profile-avatar-container {
+        width: 100px;
+        height: 100px;
+        top: -50px;
+    }
+    
+    .posts-section {
+        padding: 15px;
+    }
+    
+    .post {
+        padding: 15px;
+    }
+}
+
+/* Supprimer les anciens styles spécifiques */
+.banner-dropdown-menu,
+.avatar-dropdown-menu,
+.banner-dropdown-item,
+.avatar-dropdown-item {
+    display: none !important;
 }

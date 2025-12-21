@@ -4,7 +4,9 @@
     background: #f5f5f5;
     display: flex;
     flex-direction: column;
-    padding-top: 300px;
+    padding-top: 350px;
+    margin-left: -32px; /* Même correction que profile */
+    width: calc(100% + 60px); 
 }
 
 .edit-profile-container {
@@ -62,20 +64,20 @@
     border: 1px solid #faf8f8;
     border-radius: 4px;
     font-size: 0.95rem;
-    color: #888;
-    background: rgb(252, 250, 250);
+    color: #666;
+    background:#f8f9fa;
     font-family: inherit;
 }
 
 .form-input::placeholder,
 .form-textarea::placeholder {
-    color: #888;
+    color: #666;
     font-size: 0.9rem;
 }
 
 .form-input:focus, .form-textarea:focus {
     outline: none;
-    border-color: #A6048E;
+    border-color: #faf8f8;
 }
 
 .form-textarea {
@@ -148,3 +150,136 @@
         padding: 20px 15px;
     }
 }
+
+/* Messages de statut - AJOUTEZ CE BLOC */
+.edit-message {
+    padding: 12px 20px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    animation: fadeIn 0.3s ease;
+}
+
+.edit-message.success {
+    background: rgba(46, 213, 115, 0.1);
+    border-left: 3px solid #2ed573;
+    color: #2ed573;
+}
+
+.edit-message.error {
+    background: rgba(255, 71, 87, 0.1);
+    border-left: 3px solid #ff4757;
+    color: #ff4757;
+}
+
+.edit-message.info {
+    background: rgba(52, 152, 219, 0.1);
+    border-left: 3px solid #3498db;
+    color: #3498db;
+}
+
+/* Animation pour les messages - AJOUTEZ */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Message d'erreur mot de passe - AJOUTEZ */
+.error-message {
+    color: #ff4757;
+    font-size: 0.9rem;
+    margin-top: 10px;
+    padding: 10px;
+    background: rgba(255, 71, 87, 0.1);
+    border-radius: 4px;
+}
+
+/* Info texte - AJOUTEZ */
+.edit-info {
+    margin-top: -15px;  /* Remonte le texte pour être sous le titre */
+    margin-bottom: 25px; /* Espace avant le formulaire */
+    padding: 10px 15px;
+   background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 3px solid #E334FE;
+}
+
+.edit-info p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+/* Désactiver les boutons pendant le chargement - AJOUTEZ */
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+
+/* Section mot de passe - CORRIGÉ */
+.password-section {
+    margin-top: 20px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #faf8f8; /* Ajoute une bordure pour mieux voir */
+}
+
+/* Titre de la section mot de passe */
+.password-section h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* Texte d'information dans la section mot de passe */
+.password-info {
+    margin-bottom: 20px;
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+/* Ajustement des groupes de formulaire DANS la section mot de passe */
+.password-section .form-group {
+    margin-bottom: 20px; /* Espacement entre les champs */
+}
+
+.password-section .form-row {
+    margin-bottom: 15px; /* Espacement entre les lignes */
+}
+
+/* Ajustement spécifique pour les champs de mot de passe */
+.password-section .form-input {
+    background: white; /* Fond blanc pour mieux voir */
+    border-color: #ddd; /* Bordure plus visible */
+}
+
+/* Note sous la section mot de passe */
+.password-note {
+    margin-top: 15px;
+    font-size: 0.85rem;
+    color: #666;
+    font-style: italic;
+}
+
+/* Pour que les champs ne soient pas trop collés */
+.password-section .form-row .form-group {
+    margin-bottom: 0; /* Retire la marge inférieure des groupes dans les rows */
+}
+
+/* Ajustement responsive pour la section mot de passe */
+@media (max-width: 768px) {
+    .password-section {
+        padding: 15px;
+    }
+    
+    .password-section .form-row {
+        margin-bottom: 0;
+    }
+}
+
