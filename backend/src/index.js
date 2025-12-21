@@ -15,7 +15,7 @@ import './models/associations.js';
 import chatRoutes from './routes/chatRoutes.js';
 const app = express();
 const PORT = process.env.PORT || 5000;
-app.use('/api/chat', chatRoutes);
+
 
 
 // Global middlewares
@@ -23,7 +23,7 @@ app.use(cookieParser());
 // CORS for React (important for cookies)
 app.use(
   cors({
-    origin:process.env.FRONTEND_URL || 'http://localhost:5173', // adapt to your React port if needed
+    origin:'http://localhost:5173', // adapt to your React port if needed
     credentials: true, // allow sending cookies
   })
 );
@@ -35,6 +35,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 app.use("/api/reactions", reactionRoutes);
 app.use('/api/conversations', conversationRoutes);
+app.use('/api/chat', chatRoutes);
 
 
 

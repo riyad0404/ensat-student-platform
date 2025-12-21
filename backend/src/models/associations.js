@@ -6,6 +6,9 @@ import { Comment } from "./comment.js";
 import { Conversation } from './conversation.js';
 import { ConversationMember } from './conversationMember.js';
 import { Message } from './message.js';
+import { ConversationChat } from './ConversationChat.js';
+import { MessageChat } from './MessageChat.js';
+
 
 // Conversation created by a User
 User.hasMany(Conversation, { foreignKey: 'createdBy' });
@@ -53,3 +56,28 @@ Comment.belongsTo(Comment, { foreignKey: "idparent", as: "parent" });
 // Comment -> Document (car documents.idcomment existe)
 Comment.hasMany(Document, { foreignKey: "idcomment", as: "documents" });
 Document.belongsTo(Comment, { foreignKey: "idcomment", as: "comment" });
+// Chat Associations
+User.hasMany(ConversationChat, { 
+  foreignKey: 'userId', 
+  as: 'chatConversations',
+  onDelete: 'CASCADE' 
+});
+
+ConversationChat.belongsTo(User, { 
+  foreignKey: 'userId', 
+  as: 'user' 
+});
+
+// Relations ConversationChat <-> MessageChat
+ConversationChat.hasMany(MessageChat, { 
+  foreignKey: 'idConvChat', 
+  as: 'chatMessages',
+  onDelete: 'CASCADE' 
+});
+
+MessageChat.belongsTo(ConversationChat, { 
+  foreignKey: 'idConvChat', 
+  as: 'conversationChat' 
+});
+export { ConversationChat, MessageChat };
+
