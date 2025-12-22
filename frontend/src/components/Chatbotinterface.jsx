@@ -867,7 +867,7 @@ export default function ChatbotInterface() {
                 <Sparkles color="white" size={24} />
               </div>
               <div>
-                <h1 style={styles.title}>ENSA Chatbot</h1>
+                <h1 style={styles.title}>DocentraBot</h1>
                 <div style={styles.statusContainer}>
                   <div style={styles.statusDot} />
                   <p style={styles.status}>En ligne</p>
