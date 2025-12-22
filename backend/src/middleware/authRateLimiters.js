@@ -20,3 +20,23 @@ export const signupLimiter = rateLimit({
     message: "Too many signup attempts. Please try again later.",
   },
 });
+// Forgot password (email request)
+export const forgotPasswordLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 10 minutes
+  max: 3,                  // 3 demandes max
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    message: "Too many password reset requests. Please try again later.",
+  },
+});
+// Reset password (token OR secret code)
+export const resetPasswordLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 3,                 // 3 tentatives de saisie
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    message: "Too many reset attempts. Please try again later.",
+  },
+});

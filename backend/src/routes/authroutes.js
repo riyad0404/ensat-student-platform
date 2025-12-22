@@ -10,13 +10,10 @@ import {
   editProfile,
 } from '../controllers/authControllers.js';
 import {authMiddleware} from '../middleware/authMiddleware.js'
-import { loginLimiter ,signupLimiter} from "../middleware/authRateLimiters.js";
+import { loginLimiter ,signupLimiter,forgotPasswordLimiter, resetPasswordLimiter,} from "../middleware/authRateLimiters.js";
 const router=express.Router();
 // Edit profile route (protected)
 router.put('/edit-profile', authMiddleware, editProfile);
-
-
-
 // Route pour l'inscription
 router.post('/signup', signupLimiter, register);
 // Route pour la connexion
@@ -30,10 +27,9 @@ router.get('/me', authMiddleware, (req, res) => {
   return res.status(200).json({ user: req.user });
 });
 // Password reset by email link
-router.post('/forgot-password', forgotPasswordByEmail);
-router.post('/reset-password-token', resetPasswordWithToken);
-
+router.post('/forgot-password', forgotPasswordLimiter,forgotPasswordByEmail);
+router.post('/reset-password-token', resetPasswordLimiter, resetPasswordWithToken);
 // Password reset using secretCode
-router.post('/reset-password-secret', resetPasswordWithSecretCode);
+router.post('/reset-password-secret', resetPasswordLimiter, resetPasswordWithSecretCode);
 
 export default router;

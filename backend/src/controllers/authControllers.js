@@ -3,6 +3,8 @@ import { User } from '../models/user.js';  // Importer le modèle User
 import { generateTokens } from '../utils/generateTokens.js';
 import { getResetPasswordEmailTemplate } from '../utils/emailTemplates.js';
 import { verifyAccessToken,verifyRefreshToken } from '../utils/generateTokens.js';
+import { validatePassword } from "../utils/passwordPolicy.js";
+
 import { sendEmail } from '../utils/sendEmail.js';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
@@ -41,6 +43,10 @@ export const register = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({ message: "L'email est déjà utilisé." });
     }
+  const check = validatePassword(password);
+if (!check.ok) {
+  return res.status(400).json({ message: check.message });
+}
 
     // Hash du mot de passe
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -222,6 +228,10 @@ export const resetPasswordWithToken = async (req, res) => {
     ) {
       return res.status(400).json({ message: 'Token is invalid or has expired' });
     }
+const check = validatePassword(newPassword);
+if (!check.ok) {
+  return res.status(400).json({ message: check.message });
+}
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
@@ -255,6 +265,10 @@ export const resetPasswordWithSecretCode = async (req, res) => {
     if (Number(secretCode) !== user.secretCode) {
       return res.status(400).json({ message: 'Invalid secret code' });
     }
+const check = validatePassword(newPassword);
+if (!check.ok) {
+  return res.status(400).json({ message: check.message });
+}
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
@@ -314,21 +328,36 @@ export const editProfile = async (req, res) => {
       changed = true;
     }
     // Password change
-    if (currentPassword || newPassword) {
-      if (!currentPassword || !newPassword) {
-        return res.status(400).json({ message: 'Both currentPassword and newPassword are required to change password.' });
-      }
-      const isMatch = await bcrypt.compare(currentPassword, user.password);
-      if (!isMatch) {
-        return res.status(401).json({ message: 'Mot de passe actuel incorrect' });
-      }
-      const hashed = await bcrypt.hash(newPassword, 10);
-      if (hashed === user.password) {
-        return res.status(400).json({ message: 'Le nouveau mot de passe doit être différent de l\'ancien.' });
-      }
-      user.password = hashed;
-      changed = true;
-    }
+   if (currentPassword || newPassword) {
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({
+      message: "Both currentPassword and newPassword are required to change password.",
+    });
+  }
+
+  const isMatch = await bcrypt.compare(currentPassword, user.password);
+  if (!isMatch) {
+    return res.status(401).json({ message: "Mot de passe actuel incorrect" });
+  }
+
+  // ✅ Vérifier la force du nouveau mot de passe
+  const check = validatePassword(newPassword);
+  if (!check.ok) {
+    return res.status(400).json({ message: check.message });
+  }
+
+  // ✅ Vérifier que le nouveau password est différent de l'ancien
+  const sameAsOld = await bcrypt.compare(newPassword, user.password);
+  if (sameAsOld) {
+    return res.status(400).json({
+      message: "Le nouveau mot de passe doit être différent de l'ancien.",
+    });
+  }
+
+  const hashed = await bcrypt.hash(newPassword, 10);
+  user.password = hashed;
+  changed = true;
+}
 
     if (!changed) {
       return res.status(200).json({ message: 'Aucune modification détectée.' });
