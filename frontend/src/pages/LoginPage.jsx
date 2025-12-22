@@ -1,100 +1,153 @@
 // src/pages/LoginPage.jsx
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import "./../styles/login.css";
-import { FiMail,  FiEye, FiEyeOff } from "react-icons/fi"; // Ajout des icônes
+import { FiMail, FiEye, FiEyeOff } from "react-icons/fi";
 import loginImg from "../assets/login-illustration.png";
 import Input from "../components/input.jsx";
 import Button from "../components/button.jsx";
 
+const LOGIN_LOCK_KEY = "auth_login_lock_until";        // timestamp ms
+const LOGIN_LOCK_ACTIVE_KEY = "auth_login_lock_active"; // "1" or "0"
+
+const formatMMSS = (totalSeconds) => {
+  const s = Math.max(0, Math.floor(totalSeconds || 0));
+  const mm = String(Math.floor(s / 60)).padStart(2, "0");
+  const ss = String(s % 60).padStart(2, "0");
+  return `${mm}:${ss}`;
+};
+
 export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
+
   const [showForgotOptions, setShowForgotOptions] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // État pour visibilité
+  const [showPassword, setShowPassword] = useState(false);
 
-  const [formData, setFormData] = useState({
-    email: "",
-    password: ""
-  });
-
-  const [errors, setErrors] = useState({
-    email: "",
-    password: ""
-  });
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [errors, setErrors] = useState({ email: "", password: "" });
 
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState("");
 
-  // Validation en temps réel pour login
+  // ✅ Lock state persisted (ms timestamp)
+  const [lockUntil, setLockUntil] = useState(() => {
+    const raw = localStorage.getItem(LOGIN_LOCK_KEY);
+    const v = raw ? Number(raw) : 0;
+    return Number.isFinite(v) ? v : 0;
+  });
+
+  const now = Date.now();
+  const isLocked = lockUntil && lockUntil > now;
+
+  const remainingSeconds = useMemo(() => {
+    if (!isLocked) return 0;
+    return Math.ceil((lockUntil - Date.now()) / 1000);
+  }, [isLocked, lockUntil]);
+
+  // ✅ On mount: if still locked -> show red message immediately (persist like signup)
+  useEffect(() => {
+    const rawUntil = localStorage.getItem(LOGIN_LOCK_KEY);
+    const until = rawUntil ? Number(rawUntil) : 0;
+
+    const active = localStorage.getItem(LOGIN_LOCK_ACTIVE_KEY) === "1";
+
+    if (active && Number.isFinite(until) && until > Date.now()) {
+      setLockUntil(until);
+      const secs = Math.ceil((until - Date.now()) / 1000);
+      setFormError(`Too many login attempts. Please try again in ${formatMMSS(secs)}.`);
+    } else {
+      // cleanup if expired
+      localStorage.removeItem(LOGIN_LOCK_KEY);
+      localStorage.removeItem(LOGIN_LOCK_ACTIVE_KEY);
+      setLockUntil(0);
+      setFormError("");
+    }
+  }, []);
+
+  // ✅ Tick: keep message visible + update it every second while locked
+  useEffect(() => {
+    if (!isLocked) return;
+
+    const intervalId = setInterval(() => {
+      const rawUntil = localStorage.getItem(LOGIN_LOCK_KEY);
+      const until = rawUntil ? Number(rawUntil) : 0;
+
+      if (!Number.isFinite(until) || until <= Date.now()) {
+        // unlock
+        localStorage.removeItem(LOGIN_LOCK_KEY);
+        localStorage.removeItem(LOGIN_LOCK_ACTIVE_KEY);
+        setLockUntil(0);
+        setFormError("");
+        return;
+      }
+
+      setLockUntil(until);
+      const secs = Math.ceil((until - Date.now()) / 1000);
+      setFormError(`Too many login attempts. Please try again in ${formatMMSS(secs)}.`);
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [isLocked]);
+
+  // Validation
   const validateLoginField = (name, value) => {
-    let error = "";
-    
     switch (name) {
       case "email":
-        if (!value) {
-          error = "Email required";
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-          error = "Invalid email format";
-        }
-        break;
-        
+        if (!value) return "Email required";
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Invalid email format";
+        return "";
+
       case "password":
         if (!value) return "Password required";
         if (value.length < 6) return "Minimum 6 characters";
         return "";
+
+      default:
+        return "";
     }
-    
-    return error;
   };
 
   const handleChange = (field) => (e) => {
     const value = e.target.value;
-    
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-    
-    // Validation en temps réel
-    const error = validateLoginField(field, value);
-    setErrors(prev => ({
-      ...prev,
-      [field]: error
-    }));
-    
-    // Effacer l'erreur générale si on corrige
-    if (error === "" && formError) {
-      setFormError("");
-    }
+
+    setFormData((prev) => ({ ...prev, [field]: value }));
+
+    const err = validateLoginField(field, value);
+    setErrors((prev) => ({ ...prev, [field]: err }));
+
+    // ✅ Do not auto-clear the lock message when locked
+    if (!isLocked && err === "" && formError) setFormError("");
   };
 
   const validateAllFields = () => {
     const newErrors = {
       email: validateLoginField("email", formData.email),
-      password: validateLoginField("password", formData.password)
+      password: validateLoginField("password", formData.password),
     };
-    
     setErrors(newErrors);
-    
-    // Vérifier s'il y a des erreurs
-    return !Object.values(newErrors).some(error => error !== "");
+    return !Object.values(newErrors).some((e) => e !== "");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // ✅ If locked, keep the message (do not send request)
+    if (isLocked) {
+      setFormError(`Too many login attempts. Please try again in ${formatMMSS(remainingSeconds)}.`);
+      return;
+    }
+
     setFormError("");
 
-    // Valider tous les champs
     if (!validateAllFields()) {
       setFormError("Please correct the errors above.");
       return;
     }
 
-    // Vérifier si tous les champs sont remplis
     if (!formData.email || !formData.password) {
-      setFormError("Please fill in all fields");
+      setFormError("Please fill in all fields.");
       return;
     }
 
@@ -104,17 +157,36 @@ export default function LoginPage() {
       const result = await login(formData);
 
       if (!result.success) {
-        // Generic message for login failure
-        setFormError("Incorrect login credentials. Please check your email and password.");
-        
-        // Optional: clear password for security
-        setFormData(prev => ({ ...prev, password: "" }));
+        // ✅ RATE LIMIT -> persist lock + persist message visibility
+        if (result.errorCode === "RATE_LIMIT") {
+          const seconds = Number.isFinite(result.retryAfterSeconds)
+            ? Math.max(1, result.retryAfterSeconds)
+            : 120; // fallback only if backend doesn't send headers
+
+          const until = Date.now() + seconds * 1000;
+
+          localStorage.setItem(LOGIN_LOCK_KEY, String(until));
+          localStorage.setItem(LOGIN_LOCK_ACTIVE_KEY, "1");
+
+          setLockUntil(until);
+          setFormError(`Too many login attempts. Please try again in ${formatMMSS(seconds)}.`);
+
+          // clear password
+          setFormData((prev) => ({ ...prev, password: "" }));
+          return;
+        }
+
+        // other errors
+        setFormError(
+          result.error ||
+            "Incorrect login credentials. Please check your email and password."
+        );
+
+        setFormData((prev) => ({ ...prev, password: "" }));
       }
-      // ✅ IF SUCCESS → automatic redirect via AuthContext
     } catch (err) {
       console.error(err);
-      
-      // Error type detection
+
       if (err.response?.status === 401) {
         setFormError("Incorrect login credentials.");
       } else if (err.response?.status === 404) {
@@ -132,14 +204,9 @@ export default function LoginPage() {
   return (
     <div className="login-page">
       <div className="login-card">
-
         {/* IMAGE */}
         <div className="login-left">
-          <img
-            src={loginImg}
-            alt="Login Illustration"
-            className="login-illustration"
-          />
+          <img src={loginImg} alt="Login Illustration" className="login-illustration" />
         </div>
 
         {/* FORM */}
@@ -147,11 +214,8 @@ export default function LoginPage() {
           <h2>Welcome Back!</h2>
           <p className="subtitle">Sign in to continue</p>
 
-          {formError && (
-            <div className="error-message">
-              {formError}
-            </div>
-          )}
+          {/* ✅ SAME LOGIN DESIGN: red banner stays visible while locked */}
+          {formError && <div className="error-message">{formError}</div>}
 
           <form onSubmit={handleSubmit} noValidate>
             <Input
@@ -163,10 +227,10 @@ export default function LoginPage() {
               onChange={handleChange("email")}
               error={errors.email}
               required
+              disabled={loading || isLocked}
             />
 
-            {/* Champ mot de passe avec icône d'œil */}
-            <div style={{ position: 'relative', marginBottom: '1.2rem' }}>
+            <div style={{ position: "relative", marginBottom: "1.2rem" }}>
               <Input
                 label="PASSWORD"
                 type={showPassword ? "text" : "password"}
@@ -175,22 +239,25 @@ export default function LoginPage() {
                 onChange={handleChange("password")}
                 error={errors.password}
                 required
+                disabled={loading || isLocked}
               />
-              <span 
-                onClick={() => setShowPassword(!showPassword)}
-                style={{ 
-                  position: 'absolute',
-                  right: '1rem',
-                  top: '2.3rem',
-                  cursor: 'pointer',
-                  color: '#666',
-                  display: 'flex',
-                  alignItems: 'center',
+
+              <span
+                onClick={() => !isLocked && setShowPassword(!showPassword)}
+                style={{
+                  position: "absolute",
+                  right: "1rem",
+                  top: "2.3rem",
+                  cursor: isLocked ? "not-allowed" : "pointer",
+                  color: "#666",
+                  display: "flex",
+                  alignItems: "center",
                   zIndex: 10,
-                  transition: 'color 0.2s'
+                  transition: "color 0.2s",
+                  opacity: isLocked ? 0.5 : 1,
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.color = '#4a90e2'}
-                onMouseLeave={(e) => e.currentTarget.style.color = '#666'}
+                onMouseEnter={(e) => !isLocked && (e.currentTarget.style.color = "#4a90e2")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#666")}
               >
                 {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
               </span>
@@ -199,28 +266,30 @@ export default function LoginPage() {
             <div className="forgot-wrapper">
               <span
                 className="forgot"
-                onClick={() => setShowForgotOptions(prev => !prev)}
+                onClick={() => setShowForgotOptions((prev) => !prev)}
               >
                 Forgot Password?
               </span>
 
               {showForgotOptions && (
                 <div className="forgot-dropdown">
-                  <div onClick={() => navigate("/resetByCode")}>
-                    Reset by Code Secret
-                  </div>
-                  <div onClick={() => navigate("/resetByEmail")}>
-                    Reset by Email Link
-                  </div>
+                  <div onClick={() => navigate("/resetByCode")}>Reset by Code Secret</div>
+                  <div onClick={() => navigate("/resetByEmail")}>Reset by Email Link</div>
                 </div>
               )}
             </div>
 
             <Button
-              text={loading ? "LOGGING IN..." : "LOGIN"}     
+              text={
+                isLocked
+                  ? "TRY AGAIN IN 2 MINUTES" // ✅ SEULE MODIFICATION: texte statique, sans compteur
+                  : loading
+                  ? "LOGGING IN..."
+                  : "LOGIN"
+              }
               className="btn-login"
               type="submit"
-              disabled={loading}
+              disabled={loading || isLocked}
             />
           </form>
 

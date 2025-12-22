@@ -100,7 +100,50 @@ export const authAPI = {
       // Même en cas d'erreur, on considère l'utilisateur déconnecté côté front
       return { success: false };
     }
+  },
+ //  Mettre à jour le profil
+  updateProfile: async (userData) => {
+    try {
+      console.log('🔄 Tentative de mise à jour du profil...');
+      
+      // Log des données envoyées
+      console.log('📤 Données envoyées:', JSON.stringify(userData, null, 2));
+      
+      const response = await axiosInstance.put('/auth/update-profile', userData);
+      
+      console.log('✅ Profil mis à jour:', response.data);
+      return response.data;
+      
+    } catch (error) {
+      console.error('❌ ERREUR DÉTAILLÉE updateProfile:');
+      
+      if (error.response) {
+        // Le serveur a répondu avec un statut d'erreur
+        console.error('Status:', error.response.status);
+        console.error('Data:', error.response.data);
+        
+        const errorMessage = error.response.data?.error || 
+                            error.response.data?.message || 
+                            error.response.data?.details ||
+                            'Erreur de mise à jour du profil';
+        
+        console.error('Message d\'erreur:', errorMessage);
+        
+        throw {
+          message: errorMessage,
+          status: error.response.status,
+          data: error.response.data
+        };
+      } else if (error.request) {
+        // La requête a été faite mais pas de réponse
+        console.error('Request:', error.request);
+        throw { message: 'Pas de réponse du serveur' };
+      } else {
+        // Erreur de configuration
+        console.error('Error:', error.message);
+        throw { message: error.message };
+      }
+    }
   }
-
  
 };    

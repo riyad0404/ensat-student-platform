@@ -14,7 +14,7 @@ const Comment = sequelize.define(
     // contenu texte du commentaire (question, réponse, explication...)
     contenu: {
       type: DataTypes.TEXT,
-      allowNull: false,
+      allowNull: true,
     },
 
     // Même logique que Post : le commentaire peut être texte / lien / document
