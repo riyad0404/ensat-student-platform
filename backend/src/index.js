@@ -19,6 +19,7 @@ import documentRoutes from "./routes/documentRoutes.js";
 import commentRoutes from "./routes/commentroutes.js";
 import postRoutes from './routes/postroutes.js';
 import './models/associations.js';
+import chatRoutes from './routes/chatRoutes.js';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
@@ -29,7 +30,7 @@ app.use(cookieParser());
 // CORS for React (important for cookies)
 app.use(
   cors({
-    origin:process.env.FRONTEND_URL || 'http://localhost:5173', // adapt to your React port if needed
+    origin:'http://localhost:5173', // adapt to your React port if needed
     credentials: true, // allow sending cookies
   })
 );
@@ -46,6 +47,7 @@ app.use("/api/reactions", reactionRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/users", userRoutes);
 app.use('/api/conversations', conversationRoutes);
+app.use('/api/chat', chatRoutes);
 
 
 
