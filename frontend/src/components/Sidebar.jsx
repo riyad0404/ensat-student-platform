@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import './../styles/sidebar.css';
 
 const Sidebar = () => {
     const location = useLocation();
-    const { user, logout } = useAuth();
+    const { logout } = useAuth();
+    const [isCollapsed, setIsCollapsed] = useState(false);
 
     const navItems = [
         { path: '/', label: 'Home', icon: 'home' },
@@ -17,18 +18,48 @@ const Sidebar = () => {
         { path: '/profile', label: 'Profile', icon: 'person' },
     ];
 
+    const toggleSidebar = () => {
+        setIsCollapsed(!isCollapsed);
+    };
+
     return (
-        <div className="sidebar-container">
+        <div className={`sidebar-container ${isCollapsed ? 'collapsed' : ''}`}>
+            {/* Section logo avec bouton À DROITE */}
             <div className="logo-section">
-                <div className="logo">EnsatAI</div>
+                {/* Logo centré */}
+                <div className="logo">{isCollapsed ? 'DC' : 'Docentra'}</div>
+                
+                {/* Bouton collapse À DROITE quand sidebar ouverte */}
+                {!isCollapsed && (
+                    <button 
+                        onClick={toggleSidebar}
+                        className="collapse-btn"
+                        title="Collapse sidebar"
+                    >
+                        <span className="material-icons">chevron_left</span>
+                    </button>
+                )}
+                
+                {/* Bouton collapse CENTRÉ quand sidebar collapsed */}
+                {isCollapsed && (
+                    <button 
+                        onClick={toggleSidebar}
+                        className="collapse-btn"
+                        title="Expand sidebar"
+                    >
+                        <span className="material-icons">chevron_right</span>
+                    </button>
+                )}
             </div>
             
+            {/* Navigation */}
             <div className="nav-links">
                 {navItems.map((item) => (
                     <Link
                         key={item.path}
                         to={item.path}
                         className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
+                        title={isCollapsed ? item.label : ''}
                     >
                         <span className="material-icons">{item.icon}</span>
                         <span className="nav-label">{item.label}</span>
@@ -36,13 +67,15 @@ const Sidebar = () => {
                 ))}
             </div>
             
+            {/* Logout */}
             <div className="bottom-section">
                 <button 
                     onClick={logout} 
                     className="logout-btn"
-                    title="Logout" 
+                    title={isCollapsed ? "Logout" : ""}
                 >
                     <span className="material-icons">logout</span>
+                    {!isCollapsed && <span className="logout-label">Logout</span>}
                 </button>
             </div>
         </div>
