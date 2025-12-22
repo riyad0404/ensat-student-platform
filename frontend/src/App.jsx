@@ -13,8 +13,6 @@ import EditProfile from './pages/EditProfile';
 import ChatbotPage from "./pages/ChatbotPage";
 import ChatbotButton from "./components/ChatbotButton";
 
-
-
 // HOC pour protéger les routes
 const RequireAuth = ({ children }) => {
   const { user, loading } = useAuth()
@@ -52,40 +50,18 @@ const AlreadyAuthLayout = () => {
   )
 }
 
-const RequireAuthLayout = () => {
+
+// Layout with Sidebar for authenticated routes
+const AuthenticatedLayout = () => {
   return (
     <RequireAuth>
-      <Outlet />
-    </RequireAuth>
-  );
-};
-
-
-// Dans App.js - MainLayout
-const MainLayout = () => {
-  // On n'a plus besoin d'état ici puisque Sidebar gère son propre état
-  
-  return (
-    <div style={{ 
-      display: 'flex', 
-      minHeight: '100vh',
-      width: '100vw',
-      overflowX: 'hidden'
-    }}>
-      <Sidebar />
-      <div style={{ 
-        flex: 1, 
-        marginLeft: '270px', // Largeur initiale
-        backgroundColor: '#f5f5f5',
-        minHeight: '100vh',
-        padding: '20px',
-        width: 'calc(100vw - 270px)',
-        overflowY: 'auto',
-        transition: 'margin-left 0.3s ease, width 0.3s ease'
-      }}>
-        <Outlet />
+      <div style={{ display: 'flex' }}>
+        <Sidebar />
+        <div style={{ flex: 1 }}>
+          <Outlet />
+        </div>
       </div>
-    </div>
+    </RequireAuth>
   );
 };
 
@@ -131,10 +107,11 @@ function App() {
     <>
       <Routes>
         <Route path="/landing" element={<LandingPage />} />
-        {/* Routes protégées (nécessite authentification) */}
-        <Route element={<RequireAuthLayout />}>
+        {/* Routes protégées (nécessite authentification) avec Sidebar */}
+        <Route element={<AuthenticatedLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile/edit" element={<EditProfile />} />
           <Route path="/chatbot" element={<ChatbotPage />} />
         </Route>
 
@@ -154,3 +131,4 @@ function App() {
 }
 
 export default App
+
