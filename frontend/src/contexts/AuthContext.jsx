@@ -246,12 +246,13 @@ const register = async (userData) => {
     try {
       console.log("🔄 Mise à jour du profil...", updatedData);
       const response = await authAPI.updateProfile(updatedData);
-
       console.log("✅ Profil mis à jour:", response);
 
-      if (response.user) {
-        setUser(response.user);
-        return { success: true, user: response.user };
+      // Always fetch latest user data from backend after update
+      const me = await authAPI.verifyToken();
+      if (me.user) {
+        setUser(me.user);
+        return { success: true, user: me.user };
       } else {
         return { success: false, error: "Profile not updated" };
       }

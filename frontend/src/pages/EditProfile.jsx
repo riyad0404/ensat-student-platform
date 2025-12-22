@@ -11,7 +11,7 @@ const EditProfile = () => {
         firstName: user.prenom ,
         lastName: user.nom ,
         level: user.niveau ,
-        about: user.description || 'Short personal description',
+        about: user.bio || 'Short personal description',
         email: user.email ,
         secretCode: '',
         password: ''
@@ -33,7 +33,7 @@ const EditProfile = () => {
                 prenom: formData.firstName,
                 nom: formData.lastName,
                 niveau: formData.level,
-                description: formData.about,
+                bio: formData.about,
                 email: formData.email
             });
             

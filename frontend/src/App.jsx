@@ -50,13 +50,20 @@ const AlreadyAuthLayout = () => {
   )
 }
 
-const RequireAuthLayout = () => {
+
+// Layout with Sidebar for authenticated routes
+const AuthenticatedLayout = () => {
   return (
     <RequireAuth>
-      <Outlet />
+      <div style={{ display: 'flex' }}>
+        <Sidebar />
+        <div style={{ flex: 1 }}>
+          <Outlet />
+        </div>
+      </div>
     </RequireAuth>
-  )
-}
+  );
+};
 
 const HomePage = () => {
   const { user, logout } = useAuth()
@@ -100,10 +107,11 @@ function App() {
     <>
       <Routes>
         <Route path="/landing" element={<LandingPage />} />
-        {/* Routes protégées (nécessite authentification) */}
-        <Route element={<RequireAuthLayout />}>
+        {/* Routes protégées (nécessite authentification) avec Sidebar */}
+        <Route element={<AuthenticatedLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile/edit" element={<EditProfile />} />
           <Route path="/chatbot" element={<ChatbotPage />} />
         </Route>
 

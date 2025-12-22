@@ -232,11 +232,11 @@ const Profile = () => {
                         <div className="profile-text">
                             <h1 className="profile-name">{fullName}</h1>
                             <span className="profile-program">{program}</span>
-                            {user.description && (
-                               <p className="profile-description">
-                               {user.description}
-                               </p>
-                            )}
+                                     {user.bio && (
+                                         <p className="profile-description">
+                                         {user.bio}
+                                         </p>
+                                     )}
                         </div>
                         
                         {/* ICON EDIT */}
