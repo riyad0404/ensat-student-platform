@@ -90,12 +90,7 @@ const HomePage = () => {
   )
 }
 
-const ProfilePage = () => (
-  <div style={{ padding: "20px" }}>
-    <h1>👤 Profil</h1>
-    <p>Page protégée - Connecté avec succès!</p>
-  </div>
-)
+// Removed duplicate ProfilePage declaration
 
 function App() {
   const navigate = useNavigate()
