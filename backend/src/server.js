@@ -1,4 +1,5 @@
 // src/server.js
+import "./models/associations.js";
 import dotenv from "dotenv";
 dotenv.config();
 

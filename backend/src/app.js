@@ -17,7 +17,7 @@ import documentRoutes from "./routes/documentRoutes.js";
 import commentRoutes from "./routes/commentroutes.js";
 import postRoutes from "./routes/postroutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
-import "./models/associations.js";
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
