@@ -4,9 +4,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
-    "test": "jest",
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "set NODE_ENV=test&& jest --runInBand",
     "lint": "eslint src --ext .js",
     "migrate": "node src/migrate-runner.js"
   },
