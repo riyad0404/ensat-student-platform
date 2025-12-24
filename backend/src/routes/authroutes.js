@@ -20,7 +20,7 @@ router.put('/edit-profile', authMiddleware, editProfile);
 // Route pour l'inscription
 router.post('/signup', signupLimiter, register);
 // Route pour la connexion
-router.post("/login",loginLimiter,login);
+router.post("/login" ,loginLimiter,login);
 
 router.post('/refresh-token', refreshToken);
 router.post('/logout', logout);
