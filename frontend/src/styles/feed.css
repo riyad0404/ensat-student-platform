@@ -1,0 +1,16 @@
+/* feed.css - Version pleine largeur */
+
+.feed {
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+@media (max-width: 768px) {
+  .feed {
+    gap: 0;
+  }
+}

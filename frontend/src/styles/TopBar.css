@@ -1,0 +1,79 @@
+/* TopBar.css */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 40px;
+  background-color: white;
+  border-bottom: 1px solid #e5e5e5;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  width: 100%;
+  margin: 0;
+}
+
+.search-input {
+  flex: 1;
+  max-width: 600px;
+  padding: 12px 20px;
+  border-radius: 30px;
+  border: 1px solid #e0e0e0;
+  font-size: 14px;
+  color: #666;
+  background-color: #f9f9f9;
+  transition: all 0.3s ease;
+}
+
+.search-input::placeholder {
+  color: #999;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #a855f7;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+}
+
+.add-post-btn {
+  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 30px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(168, 85, 247, 0.3);
+}
+
+.add-post-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
+}
+
+.add-post-btn:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .topbar {
+    padding: 12px 15px;
+    gap: 10px;
+  }
+  
+  .search-input {
+    max-width: none;
+    font-size: 13px;
+  }
+  
+  .add-post-btn {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+}

@@ -1,0 +1,76 @@
+/* MainLayout.css - Version finale corrigée */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  background-color: white;
+  overflow-x: hidden;
+  height: 100%;
+  /* IMPORTANT: Enlever ces propriétés si elles existent */
+  display: block !important;
+  justify-content: flex-start !important;
+  align-items: flex-start !important;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  display: block;
+}
+
+.layout {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  background-color: white;
+  margin: 0;
+  padding: 0;
+}
+
+/* Zone principale après la sidebar */
+.main-content {
+  flex: 1;
+  margin-left: 250px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: white;
+  width: calc(100% - 250px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-width: none !important;
+}
+
+/* Page wrapper pour le contenu */
+.page-container {
+  flex: 1;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  background-color: white;
+  max-width: none !important;
+}
+
+.content-wrapper {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: white;
+  max-width: none !important;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  .page-container {
+    padding: 0;
+  }
+}
