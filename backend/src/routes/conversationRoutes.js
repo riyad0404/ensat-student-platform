@@ -9,10 +9,17 @@ import {
   leaveConversation,
   addMember,
   removeMember,
+  deleteConversation,
+  transferOwnership,
 } from '../controllers/conversationController.js';
 
-const router = express.Router();
 
+const router = express.Router();
+// Delete conversation (OWNER only)
+router.delete('/:id', authMiddleware, deleteConversation);
+
+// Transfer ownership
+router.post('/:id/transfer', authMiddleware, transferOwnership);
 // Conversations list
 router.get('/', authMiddleware, getMyConversations);
 

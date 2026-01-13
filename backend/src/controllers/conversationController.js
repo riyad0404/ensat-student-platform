@@ -1,3 +1,59 @@
+/**
+ * 9) DELETE /api/conversations/:id
+ * OWNER can delete the conversation (hard delete)
+ */
+export const deleteConversation = async (req, res) => {
+  try {
+    const myUserId = req.user.iduser;
+    const idconversation = Number(req.params.id);
+    // Fetch conversation to check type
+    const conv = await Conversation.findByPk(idconversation);
+    if (!conv) return res.status(404).json({ message: 'Conversation not found' });
+    if (conv.type !== 'GROUP') {
+      return res.status(403).json({ message: 'Direct messages cannot be deleted' });
+    }
+    // Now check owner
+    const owner = await requireOwner(idconversation, myUserId);
+    if (!owner) return res.status(403).json({ message: 'Only owner can delete the conversation' });
+    // Delete conversation (cascades to members/messages)
+    await Conversation.destroy({ where: { idconversation } });
+    return res.status(200).json({ message: 'Conversation deleted' });
+  } catch (error) {
+    console.error('deleteConversation error:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+/**
+ * 10) POST /api/conversations/:id/transfer
+ * OWNER can transfer ownership to another member
+ * Body: { newOwnerId }
+ */
+export const transferOwnership = async (req, res) => {
+  try {
+    const myUserId = req.user.iduser;
+    const idconversation = Number(req.params.id);
+    const { newOwnerId } = req.body;
+    if (!newOwnerId || Number(newOwnerId) === myUserId) {
+      return res.status(400).json({ message: 'Invalid new owner' });
+    }
+    // Must be owner
+    const owner = await requireOwner(idconversation, myUserId);
+    if (!owner) return res.status(403).json({ message: 'Only owner can transfer ownership' });
+    // New owner must be a member
+    const newOwner = await requireMembership(idconversation, newOwnerId);
+    if (!newOwner) return res.status(404).json({ message: 'New owner must be a member' });
+    // Update roles
+    owner.role = 'MEMBER';
+    await owner.save();
+    newOwner.role = 'OWNER';
+    await newOwner.save();
+    return res.status(200).json({ message: 'Ownership transferred' });
+  } catch (error) {
+    console.error('transferOwnership error:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
 import { Conversation, ConversationMember, Message, User } from '../models/associations.js';
 import { Op } from 'sequelize';
 import sequelize from '../database.js';
