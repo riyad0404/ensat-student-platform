@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Users, Plus, Search, X, Camera } from 'lucide-react';
 import conversationAPI from '../api/conversationAPI';
 import '../styles/conversations.css';
+import { useAuth } from '../contexts/AuthContext';
 
 const GroupsPage = () => {
   const [groups, setGroups] = useState([]);
@@ -17,9 +18,14 @@ const GroupsPage = () => {
   const [creating, setCreating] = useState(false);
 
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const currentUserId = user?.iduser || user?.id;
 
   useEffect(() => {
     loadGroups();
+    // Polling pour mettre à jour la liste et les notifications
+    const interval = setInterval(loadGroups, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   // Fonctions utilitaires pour gérer les différents formats de données possibles du backend
@@ -105,114 +111,152 @@ const GroupsPage = () => {
   };
 
   return (
-    <div className="whatsapp-layout" style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#fff' }}>
-      {/* Header WhatsApp Style */}
-      <div style={{ 
-        padding: '10px 16px', 
-        background: '#f0f2f5', 
-        display: 'flex', 
-        justifyContent: 'flex-end', 
-        alignItems: 'center',
-        borderBottom: '1px solid #e0e0e0'
-      }}>
+    <div className="groups-page" style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto', minHeight: '100vh' }}>
+      {/* Header Moderne */}
+      <div style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+        <div>
+          <h1 style={{ fontSize: '28px', fontWeight: '800', color: '#111827', marginBottom: '8px', marginTop: 0 }}>Work Groups</h1>
+          <p style={{ color: '#6b7280', margin: 0 }}>Join groups and collaborate with your peers.</p>
+        </div>
         <button 
           onClick={() => setShowModal(true)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#54656f' }}
-          title="New Group"
+          style={{ 
+            background: '#7c3aed', 
+            color: 'white', 
+            border: 'none', 
+            padding: '12px 24px', 
+            borderRadius: '12px', 
+            fontWeight: '600', 
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            boxShadow: '0 4px 12px rgba(124, 58, 237, 0.2)',
+            transition: 'transform 0.2s'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
         >
-          <Plus size={24} />
+          <Plus size={20} /> New Group
         </button>
       </div>
 
       {/* Search Bar */}
-      <div style={{ padding: '8px 12px', borderBottom: '1px solid #f0f2f5' }}>
-        <div style={{ 
-          background: '#f0f2f5', 
-          borderRadius: '8px', 
-          padding: '8px 12px', 
-          display: 'flex', 
-          alignItems: 'center' 
-        }}>
-          <Search size={18} color="#54656f" style={{ marginRight: '10px' }} />
-          <input 
-            type="text" 
-            placeholder="Search groups..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ 
-              border: 'none', 
-              background: 'transparent', 
-              width: '100%', 
-              outline: 'none', 
-              fontSize: '15px' 
-            }}
-          />
-        </div>
+      <div style={{ marginBottom: '30px', position: 'relative' }}>
+        <Search size={20} color="#9ca3af" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
+        <input 
+          type="text" 
+          placeholder="Search for a group..." 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ 
+            width: '100%', 
+            padding: '14px 14px 14px 50px', 
+            borderRadius: '16px', 
+            border: '1px solid #e5e7eb', 
+            fontSize: '16px',
+            outline: 'none',
+            background: 'white',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+            transition: 'border-color 0.2s'
+          }}
+          onFocus={(e) => e.target.style.borderColor = '#7c3aed'}
+          onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
+        />
       </div>
 
-      {/* List */}
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      {/* Grid Layout */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
+        gap: '24px',
+        paddingBottom: '40px'
+      }}>
         {loading && <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>Loading...</div>}
         {error && <div style={{ padding: '20px', textAlign: 'center', color: 'red' }}>{error}</div>}
 
         {!loading && !error && filteredGroups.map((group, index) => {
           const groupName = getGroupName(group);
           const groupId = getGroupId(group);
+          
+          // Logique de notification (Non lu)
+          const lastRead = localStorage.getItem(`lastRead_${groupId}`);
+          const lastMsgDate = group.lastMessage?.sentAt;
+          const hasUnread = lastMsgDate && (!lastRead || new Date(lastMsgDate) > new Date(lastRead));
 
           return (
           <div 
             key={groupId || index} 
             onClick={() => groupId ? navigate(`/conversations/${groupId}`) : console.error("ID manquant pour le groupe", group)}
             style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              padding: '12px 16px', 
+              background: 'white',
+              borderRadius: '20px',
+              padding: '24px',
               cursor: 'pointer',
-              borderBottom: '1px solid #f0f2f5',
-              transition: 'background 0.2s'
+              border: '1px solid #f3f4f6',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              flexDirection: 'column',
+              position: 'relative'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.background = '#f5f6f6'}
-            onMouseLeave={(e) => e.currentTarget.style.background = '#fff'}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-4px)';
+              e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.05)';
+            }}
           >
-            {/* Avatar Placeholder */}
-            <div style={{ 
-              width: '48px', 
-              height: '48px', 
-              borderRadius: '50%', 
-              background: '#dfe3e5', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center',
-              marginRight: '15px',
-              color: '#fff'
-            }}>
-              <Users size={24} color="#8696a0" />
+            {/* Indicateur de message non lu (Badge) */}
+            {hasUnread && (
+              <div style={{ position: 'absolute', top: '15px', right: '15px', minWidth: '20px', height: '20px', background: '#25D366', borderRadius: '50%', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '11px', fontWeight: 'bold' }}>
+                1
+              </div>
+            )}
+
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+              <div style={{ 
+                width: '56px', height: '56px', borderRadius: '16px', 
+                background: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#7c3aed', marginRight: '16px'
+              }}>
+                <Users size={28} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#1f2937', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {groupName}
+                </h3>
+                <span style={{ fontSize: '14px', color: '#6b7280' }}>
+                  {group.members?.length || 0} members
+                </span>
+              </div>
             </div>
             
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ 
-                fontSize: '17px', 
-                color: '#111b21', 
-                fontWeight: '400', 
-                marginBottom: '4px',
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis'
-              }}>
-                {groupName}
-              </div>
-              {group.description && (
-                <div style={{ 
-                  fontSize: '14px', 
-                  color: '#667781', 
-                  whiteSpace: 'nowrap', 
-                  overflow: 'hidden', 
-                  textOverflow: 'ellipsis' 
-                }}>
-                  {group.description}
-                </div>
-              )}
-            </div>
+            <p style={{ 
+              color: hasUnread ? '#111' : '#4b5563', 
+              fontSize: '14px', lineHeight: '1.5', margin: 0, 
+              display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+              flex: 1,
+              fontWeight: hasUnread ? '600' : '400'
+            }}>
+              {(() => {
+                if (group.lastMessage) {
+                   const senderId = group.lastMessage.senderId;
+                   const isMe = String(senderId) === String(currentUserId);
+                   let senderName = "Unknown";
+                   if (isMe) {
+                     senderName = "You";
+                   } else {
+                     const sender = group.members?.find(m => String(m.iduser) === String(senderId));
+                     if (sender) senderName = sender.prenom || sender.nom || "User";
+                   }
+                   return <>{senderName}: {group.lastMessage.content}</>;
+                }
+                return group.description || "No description available.";
+              })()}
+            </p>
           </div>
           );
         })}
@@ -259,7 +303,7 @@ const GroupsPage = () => {
               <div style={{ marginBottom: '16px' }}>
                 <input
                   type="text"
-                  placeholder="Group Subject (Name)"
+                  placeholder="Group Name"
                   value={newGroup.name}
                   onChange={(e) => setNewGroup({...newGroup, name: e.target.value, nom: e.target.value})}
                   style={{ 

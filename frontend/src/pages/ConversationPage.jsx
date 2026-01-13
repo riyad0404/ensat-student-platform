@@ -30,6 +30,7 @@ const ConversationPage = () => {
   const [memberToRemove, setMemberToRemove] = useState(null);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [memberToTransfer, setMemberToTransfer] = useState(null);
+  const [commonGroups, setCommonGroups] = useState([]);
 
   const { user } = useAuth();
   // Supporte id ou iduser selon ce que le backend renvoie dans le token
@@ -45,6 +46,13 @@ const ConversationPage = () => {
 
     return () => clearInterval(interval);
   }, [id]);
+
+  // Marquer comme lu quand on ouvre la conversation ou reçoit un message
+  useEffect(() => {
+    if (id) {
+      localStorage.setItem(`lastRead_${id}`, new Date().toISOString());
+    }
+  }, [id, messages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -100,6 +108,14 @@ const ConversationPage = () => {
     try {
       const msgsData = await conversationAPI.getMessages(id);
       const msgs = Array.isArray(msgsData) ? msgsData : (msgsData?.data || []);
+      
+      // Jouer un son si un nouveau message arrive et qu'il n'est pas de moi
+      if (msgs.length > messages.length) {
+        const lastMsg = msgs[msgs.length - 1];
+        if (String(lastMsg.senderId) !== String(currentUserId)) {
+          new Audio('/notification.mp3').play().catch(() => {}); // Assurez-vous d'avoir un fichier notification.mp3 dans public/
+        }
+      }
       setMessages(msgs);
     } catch (error) {
       // Erreur silencieuse pour ne pas gêner l'utilisateur
@@ -127,7 +143,8 @@ const ConversationPage = () => {
       fetchData(); // Rafraîchir pour voir le fichier (message système ou autre)
     } catch (error) {
       console.error("Erreur envoi fichier", error);
-      alert("Erreur lors de l'envoi du fichier");
+      const msg = error.response?.data?.message || "Erreur lors de l'envoi du fichier";
+      alert(msg);
     }
   };
 
@@ -252,10 +269,10 @@ const ConversationPage = () => {
   if (!conversation) return <div className="conv-empty">Conversation introuvable</div>;
 
   const isGroup = conversation.type === 'GROUP';
-  // Vérification robuste du propriétaire (supporte plusieurs formats de noms de colonnes)
-  // Ajout de 'createdBy' car c'est ce que votre backend renvoie
-  const ownerId = conversation.createdBy || conversation.ownerId || conversation.owner_id || conversation.creatorId || conversation.creator_id || conversation.adminId;
-  const isOwner = currentUserId && ownerId && String(ownerId) === String(currentUserId);
+  // Déterminer si l'utilisateur est propriétaire (Admin)
+  const currentMember = conversation.members?.find(m => String(m.iduser) === String(currentUserId));
+  // Fallback sur createdBy car le backend n'envoie pas encore le rôle dans la liste des membres
+  const isOwner = (currentMember?.role === 'OWNER') || (conversation.createdBy && String(conversation.createdBy) === String(currentUserId));
 
   // Fonction pour récupérer le nom du groupe de manière robuste
   const getConvName = () => conversation.name || conversation.nom || conversation.title || conversation.sujet || "Conversation";
@@ -271,6 +288,26 @@ const ConversationPage = () => {
   // Récupérer l'image du groupe
   const groupIcon = conversation.icon || conversation.photo;
 
+  const handleHeaderClick = () => {
+    setShowGroupInfo(true);
+    if (!isGroup && conversation?.otherUser) {
+      loadCommonGroups();
+    }
+  };
+
+  const loadCommonGroups = async () => {
+    try {
+      const allConvs = await conversationAPI.getConversations();
+      const otherId = conversation.otherUser?.iduser;
+      if (Array.isArray(allConvs) && otherId) {
+        const common = allConvs.filter(c => c.type === 'GROUP' && c.members?.some(m => m.iduser === otherId));
+        setCommonGroups(common);
+      }
+    } catch (e) {
+      console.error("Erreur chargement groupes communs", e);
+    }
+  };
+
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden' }}>
       
@@ -279,8 +316,8 @@ const ConversationPage = () => {
       {/* Header WhatsApp Style */}
       <div 
         className="conv-header" 
-        style={{ padding: '10px 16px', background: '#f0f2f5', display: 'flex', alignItems: 'center', borderBottom: '1px solid #d1d7db', boxShadow: 'none', cursor: 'pointer' }}
-        onClick={() => isGroup && setShowGroupInfo(true)}
+        style={{ padding: '10px 16px', background: '#f0f2f5', display: 'flex', alignItems: 'center', borderBottom: '1px solid #d1d7db', boxShadow: 'none', cursor: 'pointer', zIndex: 10 }}
+        onClick={handleHeaderClick}
       >
         <button onClick={() => navigate(-1)} style={{ marginRight: '10px', background: 'none', border: 'none', cursor: 'pointer' }}>
           <ArrowLeft size={24} color="#54656f" />
@@ -303,7 +340,7 @@ const ConversationPage = () => {
           )}
         </div>
 
-        {isGroup && (
+        {(
           <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px' }}>
             <MoreVertical size={20} color="#54656f" />
           </button>
@@ -328,7 +365,7 @@ const ConversationPage = () => {
                }}>
             {isGroup && msg.senderId !== currentUserId && (
               <div className="message-sender" style={{ fontSize: '12px', color: '#e542a3', fontWeight: '500', marginBottom: '2px' }}>
-                {msg.senderName}
+                {msg.senderName || (msg.sender ? `${msg.sender.prenom} ${msg.sender.nom}` : 'Unknown')}
               </div>
             )}
             {isImageMessage(msg.content) ? (
@@ -369,14 +406,14 @@ const ConversationPage = () => {
       </div>
 
       {/* Group Info Sidebar (WhatsApp Style) */}
-      {showGroupInfo && isGroup && (
+      {showGroupInfo && (
         <div style={{ width: '350px', background: '#f0f2f5', borderLeft: '1px solid #d1d7db', display: 'flex', flexDirection: 'column', height: '100%' }}>
           {/* Sidebar Header */}
           <div style={{ padding: '16px', background: '#f0f2f5', display: 'flex', alignItems: 'center', borderBottom: '1px solid #d1d7db' }}>
             <button onClick={() => setShowGroupInfo(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', marginRight: '15px' }}>
               <X size={24} color="#54656f" />
             </button>
-            <h3 style={{ margin: 0, fontSize: '16px', color: '#111b21' }}>Group Info</h3>
+            <h3 style={{ margin: 0, fontSize: '16px', color: '#111b21' }}>{isGroup ? "Group Info" : "Contact Info"}</h3>
           </div>
 
           {/* Notification Area */}
@@ -395,6 +432,7 @@ const ConversationPage = () => {
 
           <div style={{ overflowY: 'auto', flex: 1 }}>
             {/* Group Profile */}
+            {isGroup ? (
             <div style={{ background: 'white', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
               <div style={{ position: 'relative', width: '150px', height: '150px', marginBottom: '15px' }}>
                 <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: '#dfe3e5', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
@@ -409,6 +447,21 @@ const ConversationPage = () => {
               <p style={{ color: '#667781', fontSize: '14px', textAlign: 'center' }}>{conversation.description || "No description"}</p>
               <p style={{ color: '#667781', fontSize: '13px', marginTop: '5px' }}>Group · {conversation.members?.length} members</p>
             </div>
+            ) : (
+              /* Direct Chat Profile */
+              <div style={{ background: 'white', padding: '20px', display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                <div style={{ width: '150px', height: '150px', borderRadius: '50%', background: '#dfe3e5', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '15px', overflow: 'hidden' }}>
+                  {conversation.otherUser?.photo ? (
+                    <img src={conversation.otherUser.photo} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <User size={80} color="#fff" />
+                  )}
+                </div>
+                <h2 style={{ fontSize: '22px', color: '#111b21', margin: '0 0 5px 0' }}>{getConvName()}</h2>
+                <p style={{ color: '#667781', fontSize: '14px', textAlign: 'center' }}>{conversation.otherUser?.niveau || "Student"}</p>
+                <p style={{ color: '#667781', fontSize: '13px', marginTop: '5px' }}>{conversation.otherUser?.email}</p>
+              </div>
+            )}
 
             {/* Media, Links and Docs */}
             <div style={{ background: 'white', padding: '15px 20px', marginBottom: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
@@ -430,7 +483,7 @@ const ConversationPage = () => {
             </div>
 
             {/* Add Member (Admin only) */}
-            {isOwner && (
+            {isGroup && isOwner && (
               <div style={{ background: 'white', padding: '10px 0', marginBottom: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
                 {!showAddMember ? (
                   <>
@@ -480,7 +533,7 @@ const ConversationPage = () => {
             )}
 
             {/* Members List */}
-            <div style={{ background: 'white', padding: '10px 0', marginBottom: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+            {isGroup && (<div style={{ background: 'white', padding: '10px 0', marginBottom: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
               <div style={{ padding: '10px 20px', color: '#667781', fontSize: '14px', fontWeight: '500' }}>
                 {conversation.members?.length} participants
               </div>
@@ -498,7 +551,7 @@ const ConversationPage = () => {
                   <div key={member.iduser} style={{ padding: '10px 20px', display: 'flex', alignItems: 'center', borderBottom: '1px solid #f0f2f5' }}>
                     <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#dfe3e5', marginRight: '15px', overflow: 'hidden', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                       {memberImage ? (
-                        <img src={memberImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={memberImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                       ) : (
                         <Users size={20} color="#fff" />
                       )}
@@ -507,7 +560,7 @@ const ConversationPage = () => {
                       <div style={{ color: '#111b21', fontSize: '16px' }}>
                         {member.prenom} {member.nom} {String(member.iduser) === String(currentUserId) && "(You)"}
                       </div>
-                      {(member.role === 'OWNER' || String(member.iduser) === String(ownerId)) && <span style={{ fontSize: '12px', color: '#00a884', background: '#e7fce3', padding: '2px 6px', borderRadius: '4px', marginTop: '2px', display: 'inline-block' }}>Group Admin</span>}
+                      {member.role === 'OWNER' && <span style={{ fontSize: '12px', color: '#00a884', background: '#e7fce3', padding: '2px 6px', borderRadius: '4px', marginTop: '2px', display: 'inline-block' }}>Group Admin</span>}
                     </div>
                     
                     {/* Bouton Supprimer Membre (Admin seulement, pas sur soi-même) */}
@@ -525,16 +578,40 @@ const ConversationPage = () => {
                 );
               })}
             </div>
+            )}
+
+            {/* Common Groups (Direct only) */}
+            {!isGroup && commonGroups.length > 0 && (
+              <div style={{ background: 'white', padding: '10px 0', marginBottom: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+                <div style={{ padding: '10px 20px', color: '#667781', fontSize: '14px', fontWeight: '500' }}>
+                  {commonGroups.length} groupes en commun
+                </div>
+                {commonGroups.map(g => (
+                  <div key={g.idconversation} onClick={() => navigate(`/conversations/${g.idconversation}`)} style={{ padding: '10px 20px', display: 'flex', alignItems: 'center', borderBottom: '1px solid #f0f2f5', cursor: 'pointer' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#dfe3e5', marginRight: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Users size={20} color="#fff" />
+                    </div>
+                    <div style={{ color: '#111b21', fontSize: '16px' }}>{g.title || g.name}</div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Actions */}
             <div style={{ background: 'white', padding: '10px 0', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-              <button onClick={handleLeaveGroupClick} style={{ width: '100%', padding: '15px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'none', border: 'none', cursor: 'pointer', color: '#ea0038', fontSize: '16px', textAlign: 'left' }}>
-                <LogOut size={20} /> Exit group
-              </button>
+              {isGroup ? (
+                <button onClick={handleLeaveGroupClick} style={{ width: '100%', padding: '15px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'none', border: 'none', cursor: 'pointer', color: '#ea0038', fontSize: '16px', textAlign: 'left' }}>
+                  <LogOut size={20} /> Exit group
+                </button>
+              ) : (
+                <button onClick={() => alert("Block feature coming soon")} style={{ width: '100%', padding: '15px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'none', border: 'none', cursor: 'pointer', color: '#ea0038', fontSize: '16px', textAlign: 'left' }}>
+                  <Ban size={20} /> Block {conversation.otherUser?.prenom}
+                </button>
+              )}
               
-              {isOwner && (
+              {(isOwner || !isGroup) && (
                 <button onClick={handleDeleteGroupClick} style={{ width: '100%', padding: '15px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'none', border: 'none', cursor: 'pointer', color: '#ea0038', fontSize: '16px', textAlign: 'left' }}>
-                  <Trash2 size={20} /> Delete group
+                  <Trash2 size={20} /> {isGroup ? 'Delete group' : 'Delete chat'}
                 </button>
               )}
             </div>
@@ -574,6 +651,11 @@ const ConversationPage = () => {
                 <p style={{ color: '#667781', marginBottom: '20px', fontSize: '14px' }}>
                   Are you sure you want to exit "{getConvName()}"?
                 </p>
+                {isOwner && (
+                  <p style={{ color: '#ea0038', fontSize: '13px', fontWeight: 'bold', marginBottom: '15px' }}>
+                    ⚠️ You are the group admin. You must transfer ownership to another member before you can leave.
+                  </p>
+                )}
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
                   <button 
                     onClick={() => setShowLeaveModal(false)}

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MessageCircle, Search } from 'lucide-react';
+import { Search, User } from 'lucide-react';
 import conversationAPI from '../api/conversationAPI';
 import '../styles/conversations.css';
 
@@ -12,6 +12,9 @@ const MessagesPage = () => {
 
   useEffect(() => {
     loadConversations();
+    // Actualisation automatique toutes les 3 secondes
+    const interval = setInterval(loadConversations, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   const loadConversations = async () => {
@@ -27,10 +30,11 @@ const MessagesPage = () => {
   const handleSearch = async (e) => {
     const query = e.target.value;
     setSearchQuery(query);
-    if (query.length > 2) {
+    if (query.length > 1) {
       try {
         const results = await conversationAPI.searchUsers(query);
-        setSearchResults(results);
+        const users = Array.isArray(results) ? results : (results.data || []);
+        setSearchResults(users);
       } catch (error) {
         console.error("Erreur recherche", error);
       }
@@ -42,7 +46,8 @@ const MessagesPage = () => {
   const startConversation = async (userId) => {
     try {
       const conv = await conversationAPI.createDirect(userId);
-      navigate(`/conversations/${conv.id}`);
+      const convId = conv.id || conv.idconversation;
+      navigate(`/conversations/${convId}`);
     } catch (error) {
       console.error("Erreur création conversation", error);
     }
@@ -68,7 +73,7 @@ const MessagesPage = () => {
                   onClick={() => startConversation(user.iduser)}
                   style={{ padding: '10px', cursor: 'pointer', borderBottom: '1px solid #eee' }}
                 >
-                  {user.firstname} {user.lastname}
+                  {user.prenom || user.firstname} {user.nom || user.lastname}
                 </div>
               ))}
             </div>
@@ -77,17 +82,62 @@ const MessagesPage = () => {
       </div>
 
       <div className="conversations-list">
-        {conversations.map(conv => (
-          <div key={conv.id} className="conv-item" onClick={() => navigate(`/conversations/${conv.id}`)}>
+        {conversations.map(conv => {
+          const convId = conv.id || conv.idconversation;
+          
+          // Logique de notification (Non lu)
+          const lastRead = localStorage.getItem(`lastRead_${convId}`);
+          const lastMsgDate = conv.lastMessage?.sentAt;
+          const hasUnread = lastMsgDate && (!lastRead || new Date(lastMsgDate) > new Date(lastRead));
+
+          // Avatar
+          const otherUser = conv.otherUser;
+          let avatarSrc = null;
+          
+          // 1. Essayer localStorage (pour tests locaux)
+          if (otherUser?.iduser) {
+             avatarSrc = localStorage.getItem(`profile_image_${otherUser.iduser}`);
+          }
+          // 2. Sinon photo du backend
+          if (!avatarSrc && otherUser?.photo) {
+             avatarSrc = otherUser.photo;
+          }
+
+          return (
+          <div key={convId} className="conv-item" onClick={() => navigate(`/conversations/${convId}`)}>
+            {/* Avatar Section */}
+            <div style={{ marginRight: '15px', position: 'relative' }}>
+                <div style={{ 
+                  width: '50px', height: '50px', borderRadius: '50%', 
+                  background: '#e1e4e8', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  overflow: 'hidden'
+                }}>
+                  {avatarSrc ? (
+                    <img src={avatarSrc} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <User size={24} color="#666" />
+                  )}
+                </div>
+                {hasUnread && (
+                  <div style={{ position: 'absolute', top: -2, right: -2, minWidth: '18px', height: '18px', backgroundColor: '#25D366', borderRadius: '50%', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '10px', fontWeight: 'bold' }}>
+                    1
+                  </div>
+                )}
+            </div>
+
             <div className="conv-meta">
-              <div className="conv-title">{conv.name || "User"}</div>
-              <div className="conv-desc">{conv.lastMessage?.content || "No messages"}</div>
+              <div className="conv-title" style={{ fontWeight: hasUnread ? '700' : '600' }}>
+                {conv.title || conv.name || "User"}
+              </div>
+              <div className="conv-desc" style={{ fontWeight: hasUnread ? '600' : '400', color: hasUnread ? '#111' : '#666' }}>
+                {conv.lastMessage?.content || "No messages"}
+              </div>
             </div>
             <div className="conv-last">
-               {conv.lastMessage && new Date(conv.lastMessage.createdAt).toLocaleDateString()}
+               {conv.lastMessage && new Date(conv.lastMessage.sentAt || conv.lastMessage.createdAt).toLocaleDateString()}
             </div>
           </div>
-        ))}
+        )})}
         {conversations.length === 0 && <div className="conv-empty">No conversations yet. Search for someone to chat!</div>}
       </div>
     </div>
