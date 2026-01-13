@@ -12,6 +12,9 @@ import Sidebar from './components/Sidebar';
 import EditProfile from './pages/EditProfile';
 import ChatbotPage from "./pages/ChatbotPage";
 import ChatbotButton from "./components/ChatbotButton";
+import MessagesPage from './pages/MessagesPage';
+import GroupsPage from './pages/GroupsPage';
+import ConversationPage from './pages/ConversationPage';
 
 // HOC pour protéger les routes
 const RequireAuth = ({ children }) => {
@@ -137,6 +140,10 @@ function App() {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/profile/edit" element={<EditProfile />} />
           <Route path="/chatbot" element={<ChatbotPage />} />
+          <Route path="/messages" element={<MessagesPage />} />
+          <Route path="/groups" element={<GroupsPage />} />
+          <Route path="/groupes" element={<Navigate to="/groups" replace />} />
+          <Route path="/conversations/:id" element={<ConversationPage />} />
         </Route>
         </Route>
 
@@ -156,4 +163,3 @@ function App() {
 }
 
 export default App
-
