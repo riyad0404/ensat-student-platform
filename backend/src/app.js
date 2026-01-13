@@ -8,6 +8,7 @@ import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
 import { urlencoded } from "express";
+import morgan from "morgan";
 
 import authRoutes from "./routes/authroutes.js";
 import conversationRoutes from "./routes/conversationRoutes.js";
@@ -25,6 +26,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 // Global middlewares
+app.use(morgan("dev"));
 app.use(cookieParser());
 
 app.use(
