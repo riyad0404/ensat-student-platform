@@ -402,29 +402,6 @@ const Profile = () => {
                                 Remove banner
                             </div>
                         </div>
-                    </div>
-                    
-                    <input
-                        type="file"
-                        ref={avatarFileInputRef}
-                        className="file-input"
-                        accept="image/*"
-                        onChange={handleAvatarUpload}
-                    />
-                </div>
-
-                {/* Section infos */}
-                <div className="profile-info-section">
-                    <div className="profile-header">
-                        <div className="profile-text">
-                            <h1 className="profile-name">{fullName}</h1>
-                            <span className="profile-program">{program}</span>
-                                     {user.bio && (
-                                         <p className="profile-description">
-                                         {user.bio}
-                                         </p>
-                                     )}
-                        </div>
                         
                         <input
                             type="file"

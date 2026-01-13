@@ -9,13 +9,14 @@ const EditProfile = () => {
     const navigate = useNavigate();
     
     const [formData, setFormData] = useState({
-        firstName: user.prenom ,
-        lastName: user.nom ,
-        level: user.niveau ,
+        firstName: user.prenom || '',
+        lastName: user.nom || '',
+        level: user.niveau || '',
         about: user.bio || 'Short personal description',
-        email: user.email ,
-        secretCode: '',
-        password: ''
+        email: user.email || '',
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
     });
     
     const [passwordError, setPasswordError] = useState('');
@@ -131,14 +132,29 @@ const handleSubmit = async (e) => {
         
         console.log('📤 Données envoyées au serveur:', dataToSend);
         
-        try {
-            await updateProfile({
-                prenom: formData.firstName,
-                nom: formData.lastName,
-                niveau: formData.level,
-                bio: formData.about,
-                email: formData.email
-            });
+        const result = await updateProfile(dataToSend);
+        
+        console.log('📥 Réponse du serveur:', result);
+        
+        if (result.success) {
+            setMessage('Profil mis à jour avec succès ! Redirection...');
+            
+            // Réinitialiser les champs de mot de passe après succès
+            setFormData(prev => ({
+                ...prev,
+                currentPassword: '',
+                newPassword: '',
+                confirmPassword: ''
+            }));
+            
+            // Rediriger après 1.5 secondes
+            setTimeout(() => {
+                navigate('/profile');
+            }, 1500);
+        } else {
+            // Afficher les messages d'erreur spécifiques
+            const errorMsg = result.error || result.message || 'Erreur lors de la mise à jour';
+            setMessage(errorMsg);
             
             // Si erreur de mot de passe, réinitialiser le champ currentPassword
             if (errorMsg.includes('mot de passe') || errorMsg.includes('password')) {
