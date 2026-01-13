@@ -40,7 +40,7 @@ const styles = {
   },
   sidebar: {
     position: "fixed",
-    left: 0,
+    left: "320px", // global sidebar width
     top: 0,
     bottom: 0,
     width: "320px",
@@ -155,7 +155,7 @@ const styles = {
     transition: "all 0.3s",
   },
   mainContent: {
-    marginLeft: "320px",
+    marginLeft: "640px", // global sidebar + chatbot sidebar
     transition: "margin-left 0.3s ease",
     display: "flex",
     flexDirection: "column",
@@ -1048,3 +1048,4 @@ export default function ChatbotInterface() {
     </div>
   )
 }
+
