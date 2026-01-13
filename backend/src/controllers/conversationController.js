@@ -114,7 +114,18 @@ export const getMyConversations = async (req, res) => {
     });
 
     const result = conversations.map((conv) => {
-      const members = (conv.conversation_members || []).map((cm) => cm.user);
+
+      // Include role and joinedAt/leftAt for each member
+      const members = (conv.conversation_members || []).map((cm) => ({
+        iduser: cm.user.iduser,
+        nom: cm.user.nom,
+        prenom: cm.user.prenom,
+        photo: cm.user.photo,
+        niveau: cm.user.niveau,
+        role: cm.role,
+        joinedAt: cm.joinedAt,
+        leftAt: cm.leftAt,
+      }));
 
       const lastMessage = conv.messages?.[0]
         ? {
