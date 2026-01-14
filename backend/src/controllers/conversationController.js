@@ -459,3 +459,41 @@ export const removeMember = async (req, res) => {
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
+/**
+ * 11) POST /api/conversations/:id/files
+ * Send a file message
+ */
+export const sendFileMessage = async (req, res) => {
+  try {
+    const myUserId = req.user.iduser;
+    const idconversation = Number(req.params.id);
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const member = await requireMembership(idconversation, myUserId);
+    if (!member) return res.status(403).json({ message: 'Not a member of this conversation' });
+
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+    const fileUrl = `${baseUrl}/uploads/${req.file.filename}`;
+
+    const msg = await Message.create({
+      idconversation,
+      senderId: myUserId,
+      content: fileUrl,
+      sentAt: new Date(),
+    });
+
+    await Conversation.update(
+      { updatedAt: new Date() },
+      { where: { idconversation } }
+    );
+
+    return res.status(201).json(msg);
+  } catch (error) {
+    console.error('sendFileMessage error:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};

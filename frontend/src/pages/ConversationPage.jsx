@@ -143,7 +143,7 @@ const ConversationPage = () => {
       fetchData(); // Rafraîchir pour voir le fichier (message système ou autre)
     } catch (error) {
       console.error("Erreur envoi fichier", error);
-      const msg = error.response?.data?.message || "Erreur lors de l'envoi du fichier";
+      const msg = error.response?.data?.message || "Error sending file";
       alert(msg);
     }
   };
@@ -159,7 +159,7 @@ const ConversationPage = () => {
       navigate('/groups');
     } catch (error) {
       console.error("Delete group error:", error);
-      const msg = error.response?.data?.message || "Impossible de supprimer le groupe.";
+      const msg = error.response?.data?.message || "Unable to delete group.";
       setDeleteError(msg);
     }
   };
@@ -175,7 +175,7 @@ const ConversationPage = () => {
       navigate('/groups');
     } catch (error) {
       console.error("Leave group error:", error);
-      const msg = error.response?.data?.message || error.message || "Erreur inconnue";
+      const msg = error.response?.data?.message || error.message || "Unknown error";
       setLeaveError(msg);
     }
   };
@@ -206,10 +206,10 @@ const ConversationPage = () => {
       setMemberSearchResults([]);
       setShowAddMember(false);
       fetchData(); // Rafraîchir les données
-      setSidebarNotification({ type: 'success', message: 'Membre ajouté avec succès' });
+      setSidebarNotification({ type: 'success', message: 'Member added successfully' });
       setTimeout(() => setSidebarNotification(null), 3000);
     } catch (error) {
-      setSidebarNotification({ type: 'error', message: "Erreur lors de l'ajout du membre" });
+      setSidebarNotification({ type: 'error', message: "Error adding member" });
       setTimeout(() => setSidebarNotification(null), 3000);
     }
   };
@@ -224,10 +224,10 @@ const ConversationPage = () => {
     try {
       await conversationAPI.removeMember(id, memberToRemove.iduser);
       fetchData(); // Rafraîchir les données
-      setSidebarNotification({ type: 'success', message: 'Membre retiré' });
+      setSidebarNotification({ type: 'success', message: 'Member removed' });
       setTimeout(() => setSidebarNotification(null), 3000);
     } catch (error) {
-      setSidebarNotification({ type: 'error', message: "Erreur lors de la suppression du membre" });
+      setSidebarNotification({ type: 'error', message: "Error removing member" });
       setTimeout(() => setSidebarNotification(null), 3000);
     } finally {
       setShowRemoveMemberModal(false);
@@ -245,11 +245,11 @@ const ConversationPage = () => {
     try {
       await conversationAPI.transferOwnership(id, memberToTransfer.iduser);
       fetchData(); // Rafraîchir les données
-      setSidebarNotification({ type: 'success', message: 'Droits transférés avec succès' });
+      setSidebarNotification({ type: 'success', message: 'Ownership transferred successfully' });
       setTimeout(() => setSidebarNotification(null), 3000);
     } catch (error) {
       console.error("Transfer error:", error);
-      setSidebarNotification({ type: 'error', message: "Erreur lors du transfert" });
+      setSidebarNotification({ type: 'error', message: "Error transferring ownership" });
       setTimeout(() => setSidebarNotification(null), 4000);
     } finally {
       setShowTransferModal(false);
@@ -271,8 +271,7 @@ const ConversationPage = () => {
   const isGroup = conversation.type === 'GROUP';
   // Déterminer si l'utilisateur est propriétaire (Admin)
   const currentMember = conversation.members?.find(m => String(m.iduser) === String(currentUserId));
-  // Fallback sur createdBy car le backend n'envoie pas encore le rôle dans la liste des membres
-  const isOwner = (currentMember?.role === 'OWNER') || (conversation.createdBy && String(conversation.createdBy) === String(currentUserId));
+  const isOwner = currentMember?.role === 'OWNER';
 
   // Fonction pour récupérer le nom du groupe de manière robuste
   const getConvName = () => conversation.name || conversation.nom || conversation.title || conversation.sujet || "Conversation";
@@ -287,6 +286,16 @@ const ConversationPage = () => {
 
   // Récupérer l'image du groupe
   const groupIcon = conversation.icon || conversation.photo;
+
+  // Récupérer l'image de l'autre utilisateur (Direct Chat)
+  const otherUser = conversation.otherUser;
+  let otherUserImage = null;
+  if (otherUser?.iduser) {
+      otherUserImage = localStorage.getItem(`profile_image_${otherUser.iduser}`);
+  }
+  if (!otherUserImage && otherUser?.photo && (otherUser.photo.startsWith('data:') || otherUser.photo.startsWith('http') || otherUser.photo.startsWith('/'))) {
+      otherUserImage = otherUser.photo;
+  }
 
   const handleHeaderClick = () => {
     setShowGroupInfo(true);
@@ -312,27 +321,27 @@ const ConversationPage = () => {
     <div style={{ display: 'flex', height: '100vh', width: '100%', overflow: 'hidden' }}>
       
       {/* Main Chat Area */}
-      <div className="conv-view" style={{ background: '#efeae2', flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+      <div className="conv-view" style={{ background: '#f9fafb', flex: 1, display: 'flex', flexDirection: 'column', position: 'relative' }}>
       {/* Header WhatsApp Style */}
       <div 
         className="conv-header" 
-        style={{ padding: '10px 16px', background: '#f0f2f5', display: 'flex', alignItems: 'center', borderBottom: '1px solid #d1d7db', boxShadow: 'none', cursor: 'pointer', zIndex: 10 }}
+        style={{ padding: '16px 24px', background: 'white', display: 'flex', alignItems: 'center', borderBottom: '1px solid #f3f4f6', boxShadow: '0 1px 2px rgba(0,0,0,0.02)', cursor: 'pointer', zIndex: 10 }}
         onClick={handleHeaderClick}
       >
         <button onClick={() => navigate(-1)} style={{ marginRight: '10px', background: 'none', border: 'none', cursor: 'pointer' }}>
           <ArrowLeft size={24} color="#54656f" />
         </button>
         
-        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#dfe3e5', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '12px', overflow: 'hidden' }}>
+        <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center', marginRight: '16px', overflow: 'hidden', color: '#7c3aed' }}>
           {groupIcon ? (
             <img src={groupIcon} alt="Group Icon" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
-            isGroup ? <Users size={20} color="#fff" /> : <div style={{fontWeight:'bold', color:'#fff', fontSize:'18px'}}>{getConvName().charAt(0)}</div>
+            isGroup ? <Users size={22} /> : <div style={{fontWeight:'bold', fontSize:'18px'}}>{getConvName().charAt(0)}</div>
           )}
         </div>
 
         <div style={{ flex: 1 }}>
-          <h2 style={{ fontSize: '16px', margin: 0, color: '#111b21', fontWeight: '500' }}>{getConvName()}</h2>
+          <h2 style={{ fontSize: '18px', margin: 0, color: '#111827', fontWeight: '700' }}>{getConvName()}</h2>
           {isGroup && (
             <p style={{ fontSize: '13px', margin: 0, color: '#667781', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '200px' }}>
               {conversation.members ? conversation.members.map(m => m.prenom).join(', ') : conversation.description}
@@ -347,24 +356,25 @@ const ConversationPage = () => {
         )}
       </div>
 
-      <div className="conv-messages" style={{ flex: 1, padding: '20px', overflowY: 'auto', background: '#efeae2' }}>
+      <div className="conv-messages" style={{ flex: 1, padding: '24px', overflowY: 'auto', background: '#f9fafb', display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {messages.map((msg) => (
           <div key={msg.id} className={`message ${msg.senderId === currentUserId ? 'message-own' : ''}`}
                style={{ 
                  alignSelf: msg.senderId === currentUserId ? 'flex-end' : 'flex-start', 
-                 background: msg.senderId === currentUserId ? '#d9fdd3' : 'white',
-                 borderRadius: '8px',
-                 padding: '6px 7px 8px 9px',
+                 background: msg.senderId === currentUserId ? '#7c3aed' : 'white',
+                 color: msg.senderId === currentUserId ? 'white' : '#1f2937',
+                 borderRadius: msg.senderId === currentUserId ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+                 padding: '12px 16px',
                  maxWidth: '70%',
-                 boxShadow: '0 1px 0.5px rgba(0,0,0,0.13)',
-                 marginBottom: '8px',
+                 boxShadow: msg.senderId === currentUserId ? '0 4px 6px -1px rgba(124, 58, 237, 0.2)' : '0 2px 4px rgba(0,0,0,0.02)',
+                 border: msg.senderId === currentUserId ? 'none' : '1px solid #f3f4f6',
+                 marginBottom: '4px',
                  position: 'relative',
-                 fontSize: '14.2px',
-                 lineHeight: '19px',
-                 color: '#111b21'
+                 fontSize: '15px',
+                 lineHeight: '1.5',
                }}>
             {isGroup && msg.senderId !== currentUserId && (
-              <div className="message-sender" style={{ fontSize: '12px', color: '#e542a3', fontWeight: '500', marginBottom: '2px' }}>
+              <div className="message-sender" style={{ fontSize: '12px', color: '#7c3aed', fontWeight: '600', marginBottom: '4px' }}>
                 {msg.senderName || (msg.sender ? `${msg.sender.prenom} ${msg.sender.nom}` : 'Unknown')}
               </div>
             )}
@@ -373,7 +383,7 @@ const ConversationPage = () => {
             ) : (
               <div className="message-content" style={{ wordWrap: 'break-word' }}>{msg.content}</div>
             )}
-            <div style={{ fontSize: '11px', color: '#667781', textAlign: 'right', marginTop: '2px', float: 'right', marginLeft: '8px' }}>
+            <div style={{ fontSize: '11px', color: msg.senderId === currentUserId ? 'rgba(255,255,255,0.8)' : '#9ca3af', textAlign: 'right', marginTop: '4px', float: 'right', marginLeft: '12px' }}>
               {new Date(msg.sentAt || msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
             </div>
           </div>
@@ -737,22 +747,22 @@ const ConversationPage = () => {
             boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
             textAlign: 'center'
           }}>
-            <h3 style={{ margin: '0 0 10px 0', color: '#111b21' }}>Retirer ce membre ?</h3>
-            <p style={{ color: '#667781', marginBottom: '20px', fontSize: '14px' }}>
-              Voulez-vous vraiment retirer {memberToRemove?.prenom} {memberToRemove?.nom} du groupe ?
+            <h3 style={{ margin: '0 0 10px 0', color: '#111b21' }}>Remove member?</h3>
+            <p style={{ color: '#6b7280', marginBottom: '20px', fontSize: '14px' }}>
+              Are you sure you want to remove {memberToRemove?.prenom} {memberToRemove?.nom} from the group?
             </p>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
               <button 
                 onClick={() => setShowRemoveMemberModal(false)}
                 style={{ background: 'none', border: '1px solid #ddd', padding: '8px 16px', borderRadius: '20px', cursor: 'pointer', color: '#111b21', fontWeight: '500' }}
               >
-                Annuler
+                Cancel
               </button>
               <button 
                 onClick={confirmRemoveMember}
                 style={{ background: '#ea0038', border: 'none', padding: '8px 16px', borderRadius: '20px', cursor: 'pointer', color: 'white', fontWeight: '500' }}
               >
-                Retirer
+                Remove
               </button>
             </div>
           </div>
@@ -772,14 +782,14 @@ const ConversationPage = () => {
             boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
             textAlign: 'center'
           }}>
-            <h3 style={{ margin: '0 0 10px 0', color: '#111b21' }}>Transférer les droits ?</h3>
-            <p style={{ color: '#667781', marginBottom: '20px', fontSize: '14px' }}>
-              Voulez-vous transférer les droits d'administrateur à {memberToTransfer?.prenom} {memberToTransfer?.nom} ? Vous deviendrez un simple membre.
+            <h3 style={{ margin: '0 0 10px 0', color: '#111b21' }}>Transfer ownership?</h3>
+            <p style={{ color: '#6b7280', marginBottom: '20px', fontSize: '14px' }}>
+              Do you want to transfer admin rights to {memberToTransfer?.prenom} {memberToTransfer?.nom}? You will become a regular member.
             </p>
             <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowTransferModal(false)} style={{ background: 'none', border: '1px solid #ddd', padding: '8px 16px', borderRadius: '20px', cursor: 'pointer', color: '#111b21', fontWeight: '500' }}>Annuler</button>
+              <button onClick={() => setShowTransferModal(false)} style={{ background: 'none', border: '1px solid #ddd', padding: '8px 16px', borderRadius: '20px', cursor: 'pointer', color: '#111b21', fontWeight: '500' }}>Cancel</button>
               <button onClick={confirmTransferOwnership} style={{ background: '#00a884', border: 'none', padding: '8px 16px', borderRadius: '20px', cursor: 'pointer', color: 'white', fontWeight: '500' }}>
-                Confirmer
+                Confirm
               </button>
             </div>
           </div>
