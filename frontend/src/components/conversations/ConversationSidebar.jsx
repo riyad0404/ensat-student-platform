@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, UserPlus, Link as LinkIcon, Check, LogOut, Trash2, UserMinus, Shield, Users, User, MessageCircle } from 'lucide-react';
+import { X, UserPlus, Link as LinkIcon, Check, LogOut, Trash2, UserMinus, Shield, Users, User, MessageCircle, EyeOff } from 'lucide-react';
 import conversationAPI from '../../api/conversationAPI';
+import axios from 'axios';
 
 const ConversationSidebar = ({
   show,
@@ -30,10 +31,12 @@ const ConversationSidebar = ({
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [memberToTransfer, setMemberToTransfer] = useState(null);
   const [commonGroups, setCommonGroups] = useState([]);
+  const [showHideModal, setShowHideModal] = useState(false);
 
   const getConvName = () => conversation.name || conversation.nom || conversation.title || conversation.sujet || "Conversation";
 
   const loadCommonGroups = async () => {
+    const convId = conversation.id || conversation.idconversation || conversation.id_conversation;
     try {
       const allConvs = await conversationAPI.getConversations();
       const otherId = conversation.otherUser?.iduser;
@@ -71,8 +74,9 @@ const ConversationSidebar = ({
   };
 
   const handleAddSpecificMember = async (userId) => {
+    const convId = conversation.id || conversation.idconversation || conversation.id_conversation;
     try {
-      await conversationAPI.addMember(conversation.idconversation, userId);
+      await conversationAPI.addMember(convId, userId);
       setMemberSearchQuery('');
       setMemberSearchResults([]);
       setShowAddMember(false);
@@ -92,13 +96,28 @@ const ConversationSidebar = ({
 
   const confirmRemoveMember = async () => {
     if (!memberToRemove) return;
+    const convId = conversation.id || conversation.idconversation || conversation.id_conversation;
+    const userIdToRemove = memberToRemove.iduser || memberToRemove.userId || memberToRemove.id;
+    
     try {
-      await conversationAPI.removeMember(conversation.idconversation, memberToRemove.iduser);
+      await axios.delete(`http://localhost:5000/api/conversations/${convId}/members/${userIdToRemove}`, { withCredentials: true });
       onConversationUpdate();
       setSidebarNotification({ type: 'success', message: 'Member removed' });
       setTimeout(() => setSidebarNotification(null), 3000);
     } catch (error) {
-      setSidebarNotification({ type: 'error', message: "Error removing member" });
+      console.error("Error removing member:", error);
+      let msg = "Error removing member";
+      if (error.response) {
+        const data = error.response.data;
+        if (typeof data === 'string') {
+             msg = `Error ${error.response.status}: ${data.substring(0, 60)}`;
+        } else {
+             msg = data?.message || data?.error || `Error ${error.response.status}`;
+        }
+      } else if (error.request) {
+        msg = "Server unreachable";
+      }
+      setSidebarNotification({ type: 'error', message: msg });
       setTimeout(() => setSidebarNotification(null), 3000);
     } finally {
       setShowRemoveMemberModal(false);
@@ -113,8 +132,9 @@ const ConversationSidebar = ({
 
   const confirmTransferOwnership = async () => {
     if (!memberToTransfer) return;
+    const convId = conversation.id || conversation.idconversation || conversation.id_conversation;
     try {
-      await conversationAPI.transferOwnership(conversation.idconversation, memberToTransfer.iduser);
+      await conversationAPI.transferOwnership(convId, memberToTransfer.iduser);
       onConversationUpdate();
       setSidebarNotification({ type: 'success', message: 'Ownership transferred successfully' });
       setTimeout(() => setSidebarNotification(null), 3000);
@@ -129,7 +149,8 @@ const ConversationSidebar = ({
   };
 
   const copyGroupLink = () => {
-    const link = `${window.location.origin}/conversations/${conversation.idconversation}`;
+    const convId = conversation.id || conversation.idconversation || conversation.id_conversation;
+    const link = `${window.location.origin}/conversations/${convId}`;
     navigator.clipboard.writeText(link);
     setCopySuccess(true);
     setTimeout(() => setCopySuccess(false), 2000);
@@ -141,8 +162,9 @@ const ConversationSidebar = ({
   };
 
   const confirmDeleteGroup = async () => {
+    const convId = conversation.id || conversation.idconversation || conversation.id_conversation;
     try {
-      await conversationAPI.deleteConversation(conversation.idconversation);
+      await conversationAPI.deleteConversation(convId);
       navigate('/groups');
     } catch (error) {
       console.error("Delete group error:", error);
@@ -157,8 +179,9 @@ const ConversationSidebar = ({
   };
 
   const confirmLeaveGroup = async () => {
+    const convId = conversation.id || conversation.idconversation || conversation.id_conversation;
     try {
-      await conversationAPI.leaveConversation(conversation.idconversation);
+      await conversationAPI.leaveConversation(convId);
       navigate('/groups');
     } catch (error) {
       console.error("Leave group error:", error);
@@ -175,6 +198,34 @@ const ConversationSidebar = ({
       onClose(); // Fermer la sidebar
     } catch (error) {
       console.error("Error creating direct chat", error);
+    }
+  };
+
+  const handleHideConversationClick = () => {
+    setShowHideModal(true);
+  };
+
+  const confirmHideConversation = async () => {
+    const convId = conversation.id || conversation.idconversation || conversation.id_conversation;
+    try {
+      await axios.post(`http://localhost:5000/api/conversations/${convId}/hide`, {}, { withCredentials: true });
+      navigate('/messages');
+    } catch (error) {
+      console.error("Error hiding conversation", error);
+      let msg = "Failed to delete conversation";
+      if (error.response) {
+        const data = error.response.data;
+        if (typeof data === 'string') {
+             msg = `Error ${error.response.status}: ${data.substring(0, 60)}`;
+        } else {
+             msg = data?.message || data?.error || `Error ${error.response.status}`;
+        }
+      } else if (error.request) {
+        msg = "Server unreachable";
+      }
+      setSidebarNotification({ type: 'error', message: msg });
+    } finally {
+      setShowHideModal(false);
     }
   };
 
@@ -208,7 +259,7 @@ const ConversationSidebar = ({
             </div>
             <h2 style={{ fontSize: '22px', color: '#111b21', margin: '0 0 5px 0' }}>{getConvName()}</h2>
             <p style={{ color: '#667781', fontSize: '14px', textAlign: 'center' }}>{conversation.description || "No description"}</p>
-            <p style={{ color: '#667781', fontSize: '13px', marginTop: '5px' }}>Group · {conversation.members?.length} members</p>
+            <p style={{ color: '#667781', fontSize: '13px', marginTop: '5px' }}>Group · {(conversation.members || []).filter(m => !m.leftAt).length} members</p>
           </div>
         ) : (
           <div style={{ background: 'white', padding: '30px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', borderBottom: '1px solid #f3f4f6' }}>
@@ -275,8 +326,8 @@ const ConversationSidebar = ({
         {/* Members List */}
         {isGroup && (
           <div style={{ background: 'white', padding: '10px 0', marginBottom: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
-            <div style={{ padding: '10px 20px', color: '#667781', fontSize: '14px', fontWeight: '500' }}>{conversation.members?.length} participants</div>
-            {conversation.members?.map(member => {
+            <div style={{ padding: '10px 20px', color: '#667781', fontSize: '14px', fontWeight: '500' }}>{(conversation.members || []).filter(m => !m.leftAt).length} participants</div>
+            {(conversation.members || []).filter(m => !m.leftAt).map(member => {
               let memberImage = localStorage.getItem(`profile_image_${member.iduser}`);
               if (!memberImage && member.photo && (member.photo.startsWith('data:') || member.photo.startsWith('http') || member.photo.startsWith('/'))) {
                 memberImage = member.photo;
@@ -322,7 +373,9 @@ const ConversationSidebar = ({
         <div style={{ background: 'white', padding: '10px 0', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
           {isGroup ? (
             <button onClick={handleLeaveGroupClick} style={{ width: '100%', padding: '15px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'none', border: 'none', cursor: 'pointer', color: '#ea0038', fontSize: '16px', textAlign: 'left' }}><LogOut size={20} /> Exit group</button>
-          ) : null}
+          ) : (
+            <button onClick={handleHideConversationClick} style={{ width: '100%', padding: '15px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'none', border: 'none', cursor: 'pointer', color: '#ea0038', fontSize: '16px', textAlign: 'left' }}><Trash2 size={20} /> Delete conversation</button>
+          )}
           {isGroup && isOwner && (
             <button onClick={handleDeleteGroupClick} style={{ width: '100%', padding: '15px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'none', border: 'none', cursor: 'pointer', color: '#ea0038', fontSize: '16px', textAlign: 'left' }}><Trash2 size={20} /> Delete group</button>
           )}
@@ -352,6 +405,20 @@ const ConversationSidebar = ({
             ) : (
               <><h3 style={{ margin: '0 0 10px 0', color: '#111b21' }}>Delete group?</h3><p style={{ color: '#667781', marginBottom: '20px', fontSize: '14px' }}>Are you sure you want to delete "{getConvName()}" permanently?</p><div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}><button onClick={() => setShowDeleteModal(false)} style={{ background: 'none', border: '1px solid #ddd', padding: '8px 16px', borderRadius: '20px', cursor: 'pointer', color: '#111b21', fontWeight: '500' }}>Cancel</button><button onClick={confirmDeleteGroup} style={{ background: '#ea0038', border: 'none', padding: '8px 16px', borderRadius: '20px', cursor: 'pointer', color: 'white', fontWeight: '500' }}>Delete</button></div></>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Hide Conversation Confirmation Modal */}
+      {showHideModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: 'white', width: '90%', maxWidth: '350px', borderRadius: '12px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', textAlign: 'center' }}>
+            <h3 style={{ margin: '0 0 10px 0', color: '#111b21' }}>Delete conversation?</h3>
+            <p style={{ color: '#667781', marginBottom: '20px', fontSize: '14px' }}>Delete this conversation from your list? It will reappear if you receive a new message.</p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowHideModal(false)} style={{ background: 'none', border: '1px solid #ddd', padding: '8px 16px', borderRadius: '20px', cursor: 'pointer', color: '#111b21', fontWeight: '500' }}>Cancel</button>
+              <button onClick={confirmHideConversation} style={{ background: '#ea0038', border: 'none', padding: '8px 16px', borderRadius: '20px', cursor: 'pointer', color: 'white', fontWeight: '500' }}>Delete</button>
+            </div>
           </div>
         </div>
       )}

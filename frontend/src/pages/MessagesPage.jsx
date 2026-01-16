@@ -54,12 +54,23 @@ const MessagesPage = () => {
   };
 
   const startConversation = async (userId) => {
+    if (!userId) return;
+    if (String(userId) === String(currentUserId)) {
+      alert("Vous ne pouvez pas démarrer une conversation avec vous-même.");
+      return;
+    }
     try {
-      const conv = await conversationAPI.createDirect(userId);
-      const convId = conv.id || conv.idconversation;
-      navigate(`/conversations/${convId}`);
-    } catch (error) {
+      const response = await conversationAPI.createDirect(userId)
+      const conv = response.data || response
+      const convId = getConvId(conv);
+      if (convId) {
+        navigate(`/conversations/${convId}`);
+      } else {
+        alert("Erreur: Impossible de récupérer l'ID de la conversation.");
+      }
+    } catch (error) {      
       console.error("Erreur création conversation", error);
+      alert(`Impossible de démarrer la conversation. Veuillez réessayer. Détails: ${error.message || error}`);
     }
   };
 

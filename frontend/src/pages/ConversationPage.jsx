@@ -5,6 +5,7 @@ import conversationAPI from '../api/conversationAPI';
 import '../styles/conversations.css';
 import { useAuth } from '../contexts/AuthContext';
 import ConversationSidebar from '../components/conversations/ConversationSidebar';
+import axios from 'axios';
 
 const ConversationPage = () => {
   const { id } = useParams();
@@ -13,12 +14,17 @@ const ConversationPage = () => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const [showGroupInfo, setShowGroupInfo] = useState(false);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [joinLoading, setJoinLoading] = useState(false);
   const [joinError, setJoinError] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState(null);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const prevMessagesLength = useRef(0);
 
   const { user } = useAuth();
   const currentUserId = user?.iduser || user?.id;
@@ -30,8 +36,26 @@ const ConversationPage = () => {
   }, [id]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    const container = messagesContainerRef.current;
+    if (container) {
+      const hasNewMessages = messages.length > prevMessagesLength.current;
+
+      if (isFirstLoad && messages.length > 0) {
+        messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+        setIsFirstLoad(false);
+      } else if (hasNewMessages) {
+        const { scrollHeight, scrollTop, clientHeight } = container;
+        const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+        const lastMessage = messages[messages.length - 1];
+        const isOwnMessage = lastMessage && String(lastMessage.senderId) === String(currentUserId);
+
+        if (isOwnMessage || isNearBottom) {
+          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }
+      }
+      prevMessagesLength.current = messages.length;
+    }
+  }, [messages, isFirstLoad]);
 
   const fetchData = async () => {
     try {
@@ -41,8 +65,7 @@ const ConversationPage = () => {
       setMessages(msgs);
       setLoading(false);
 
-      // Marquer la conversation comme lue (mise à jour du timestamp local)
-      localStorage.setItem(`lastRead_${id}`, new Date().toISOString());
+      // Le backend marque automatiquement comme lu lors du fetch des messages
     } catch (error) {
       console.error("Erreur chargement", error);
       setError("Impossible de charger la conversation.");
@@ -80,14 +103,22 @@ const ConversationPage = () => {
     setEditingMessageId(msg.id || msg.idmessage);
   };
 
-  const handleDeleteMessage = async (messageId) => {
-    if (!window.confirm("Delete this message?")) return;
+  const handleDeleteMessage = (messageId) => {
+    setMessageToDelete(messageId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteMessage = async () => {
+    if (!messageToDelete) return;
     try {
-      await conversationAPI.deleteMessage(id, messageId);
-      setMessages(messages.filter(m => (m.id || m.idmessage) !== messageId));
+      await conversationAPI.deleteMessage(id, messageToDelete);
+      setMessages(messages.filter(m => (m.id || m.idmessage) !== messageToDelete));
     } catch (error) {
       console.error("Delete error", error);
       alert("Failed to delete message");
+    } finally {
+      setShowDeleteModal(false);
+      setMessageToDelete(null);
     }
   };
 
@@ -95,12 +126,35 @@ const ConversationPage = () => {
     setJoinLoading(true);
     setJoinError(null);
     try {
-      await conversationAPI.addMember(id, currentUserId);
+      await axios.post(`http://localhost:5000/api/conversations/${id}/join`, {}, { withCredentials: true });
       setError(null);
       fetchData();
     } catch (err) {
       console.error("Erreur join group", err);
-      const serverMessage = err.response?.data?.message || err.response?.data?.error || "Impossible de rejoindre ce groupe. Il est peut-être privé ou supprimé.";
+      let serverMessage = "Impossible de rejoindre ce groupe. Il est peut-être privé ou supprimé.";
+      
+      if (err.response) {
+        const data = err.response.data;
+        const status = err.response.status;
+
+        if (status === 500) {
+           serverMessage = "Erreur serveur (500). Vérifiez les migrations (npm run migrate) et les logs backend.";
+        } else if (status === 404) {
+           serverMessage = "Route ou ressource introuvable (404).";
+        } else if (data) {
+           if (typeof data === 'string') {
+             serverMessage = `Erreur (${status}): ${data.substring(0, 100)}`;
+           } else {
+             serverMessage = data.message || data.error || JSON.stringify(data);
+           }
+        } else {
+           serverMessage = `Erreur ${status}: ${err.response.statusText}`;
+        }
+      } else if (err.request) {
+         serverMessage = "Erreur de connexion au serveur. Le backend est-il lancé ?";
+      } else {
+         serverMessage = err.message;
+      }
       setJoinError(serverMessage);
     } finally {
       setJoinLoading(false);
@@ -111,8 +165,8 @@ const ConversationPage = () => {
   if (error) {
     return (
       <div className="conv-empty" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '15px', padding: '20px' }}>
-        <div style={{ color: '#ef4444', fontSize: '18px', fontWeight: '500' }}>{error}</div>
-        <p style={{ color: '#6b7280', textAlign: 'center' }}>Vous n'êtes pas membre de ce groupe ou il n'existe pas.</p>
+        <div style={{ color: '#111b21', fontSize: '18px', fontWeight: '500' }}>Rejoindre ce groupe ?</div>
+        <p style={{ color: '#6b7280', textAlign: 'center' }}>Vous devez être membre pour voir les messages de ce groupe.</p>
         
         {joinError && (
           <div style={{
@@ -233,6 +287,18 @@ const ConversationPage = () => {
     );
   };
 
+  const formatDateLabel = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) return "Aujourd'hui";
+    if (date.toDateString() === yesterday.toDateString()) return "Hier";
+    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  };
+
   return (
     <div style={{ display: 'flex', height: '100vh', maxHeight: '100dvh', width: '100%', overflow: 'hidden' }}>
       
@@ -263,19 +329,29 @@ const ConversationPage = () => {
           <h2 style={{ fontSize: '16px', margin: 0, color: '#111b21', fontWeight: '500' }}>{getConvName()}</h2>
           {isGroup && (
             <p style={{ fontSize: '13px', margin: 0, color: '#667781', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '200px' }}>
-              {conversation.members ? conversation.members.map(m => m.prenom).join(', ') : conversation.description}
+              {conversation.members ? conversation.members.filter(m => !m.leftAt).map(m => m.prenom).join(', ') : conversation.description}
             </p>
           )}
         </div>
       </div>
 
-       <div className="conv-messages" style={{ flex: 1, padding: '20px', overflowY: 'auto', background: '#efeae2', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-        {messages.map((msg) => {
+       <div className="conv-messages" ref={messagesContainerRef} style={{ flex: 1, padding: '20px', overflowY: 'auto', background: '#efeae2', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        {messages.map((msg, index) => {
           const isOwn = String(msg.senderId) === String(currentUserId);
+          const currentDate = new Date(msg.sentAt || msg.createdAt).toDateString();
+          const prevDate = index > 0 ? new Date(messages[index - 1].sentAt || messages[index - 1].createdAt).toDateString() : null;
+          const showDate = currentDate !== prevDate;
 
           return (
+            <React.Fragment key={msg.id || msg.idmessage || index}>
+            {showDate && (
+              <div style={{ textAlign: 'center', margin: '15px 0', position: 'relative', display: 'flex', justifyContent: 'center' }}>
+                <span style={{ background: '#ffffff', color: '#54656f', padding: '5px 12px', borderRadius: '8px', fontSize: '12.5px', boxShadow: '0 1px 2px rgba(0,0,0,0.1)', fontWeight: '500' }}>
+                  {formatDateLabel(msg.sentAt || msg.createdAt)}
+                </span>
+              </div>
+            )}
             <div 
-              key={msg.id} 
               className={`message ${isOwn ? 'message-own' : ''}`}
               style={{
                   alignSelf: isOwn ? 'flex-end' : 'flex-start',
@@ -312,6 +388,7 @@ const ConversationPage = () => {
               )}
               <style>{`.message:hover .message-actions { display: flex !important; animation: fadeIn 0.2s; }`}</style>
             </div>
+            </React.Fragment>
           );
         })}
         <div ref={messagesEndRef} />
@@ -336,6 +413,20 @@ const ConversationPage = () => {
       </form>
 
       </div>
+
+      {/* Delete Message Confirmation Modal */}
+      {showDeleteModal && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: 'white', width: '90%', maxWidth: '350px', borderRadius: '12px', padding: '24px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', textAlign: 'center' }}>
+            <h3 style={{ margin: '0 0 10px 0', color: '#111b21' }}>Delete message?</h3>
+            <p style={{ color: '#667781', marginBottom: '20px', fontSize: '14px' }}>Are you sure you want to delete this message?</p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowDeleteModal(false)} style={{ background: 'none', border: '1px solid #ddd', padding: '8px 16px', borderRadius: '20px', cursor: 'pointer', color: '#111b21', fontWeight: '500' }}>Cancel</button>
+              <button onClick={confirmDeleteMessage} style={{ background: '#ea0038', border: 'none', padding: '8px 16px', borderRadius: '20px', cursor: 'pointer', color: 'white', fontWeight: '500' }}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ConversationSidebar
         show={showGroupInfo}

@@ -63,7 +63,12 @@ const GroupsPage = () => {
       }
     } catch (err) {
       console.error("Erreur chargement groupes", err);
-      setError("Failed to load groups.");
+      let msg = "Failed to load groups.";
+      if (err.response) {
+        msg += ` Server returned ${err.response.status} - ${err.response.statusText}`;
+      } else {
+        msg += " " + (err.message || "");
+      }
     } finally {
       setLoading(false);
     }
@@ -81,7 +86,7 @@ const GroupsPage = () => {
       createdGroup = await conversationAPI.createGroup({ 
         name: newGroup.name, 
         description: newGroup.description, 
-        memberIds: [] 
+        memberIds: []
       });
     } catch (error) {
       console.error(error);
@@ -238,7 +243,7 @@ const GroupsPage = () => {
                    {groupName}
                  </h3>
                  <span style={{ fontSize: '14px', color: '#6b7280' }}>
-                   {group.members?.length || 0} members
+                   {(group.members || []).filter(m => !m.leftAt).length} members
                  </span>
                </div>
              </div>
