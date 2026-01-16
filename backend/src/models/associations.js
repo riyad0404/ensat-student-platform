@@ -6,6 +6,7 @@ import { Comment } from "./comment.js";
 import { Conversation } from './conversation.js';
 import { ConversationMember } from './conversationMember.js';
 import { Message } from './message.js';
+import { Notification } from './notification.js';
 
 // Conversation created by a User
 User.hasMany(Conversation, { foreignKey: 'createdBy' });
@@ -65,3 +66,10 @@ Post.hasMany(Document, { foreignKey: "idpost"});
 // Comment -> Documents
 Comment.hasMany(Document, {foreignKey: "idcomment",as: "documents",});
 Document.belongsTo(Comment, {foreignKey: "idcomment",as: "comment",});
+// Notification -> User (destinataire)
+Notification.belongsTo(User, { foreignKey: 'idDestinataire', as: 'destinataire' });
+User.hasMany(Notification, { foreignKey: 'idDestinataire', as: 'notificationsReceived' });
+
+// Notification -> User (source)
+Notification.belongsTo(User, { foreignKey: 'idSourceUser', as: 'sourceUser' });
+User.hasMany(Notification, { foreignKey: 'idSourceUser', as: 'notificationsSent' });
