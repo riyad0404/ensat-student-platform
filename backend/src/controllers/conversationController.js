@@ -461,39 +461,152 @@ export const removeMember = async (req, res) => {
 };
 
 /**
- * 11) POST /api/conversations/:id/files
- * Send a file message
+ * 11) DELETE /api/conversations/:id/messages/:messageId
+ * Delete a message in a conversation (only sender can delete)
  */
-export const sendFileMessage = async (req, res) => {
+export const deleteMessage = async (req, res) => {
+  try {
+    const myUserId = req.user.iduser;
+    const idconversation = Number(req.params.id);
+    const idmessage = Number(req.params.messageId);
+
+    // Find message
+    const message = await Message.findOne({ where: { idmessage, idconversation } });
+    if (!message) {
+      return res.status(404).json({ message: 'Message not found' });
+    }
+
+    // Only sender can delete
+    if (message.senderId !== myUserId) {
+      return res.status(403).json({ message: 'Not authorized to delete this message' });
+    }
+
+    await message.destroy();
+    return res.status(200).json({ message: 'Message deleted' });
+  } catch (error) {
+    console.error('deleteMessage error:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+/**
+ * 12) PUT /api/conversations/:id/messages/:messageId
+ * Edit a message in a conversation (only sender can edit)
+ * Body: { content }
+ */
+export const editMessage = async (req, res) => {
+  try {
+    const myUserId = req.user.iduser;
+    const idconversation = Number(req.params.id);
+    const idmessage = Number(req.params.messageId);
+    const { content } = req.body;
+
+    if (!content || typeof content !== 'string' || !content.trim()) {
+      return res.status(400).json({ message: 'Content required' });
+    }
+
+    // Find message
+    const message = await Message.findOne({ where: { idmessage, idconversation } });
+    if (!message) {
+      return res.status(404).json({ message: 'Message not found' });
+    }
+
+    // Only sender can edit
+    if (message.senderId !== myUserId) {
+      return res.status(403).json({ message: 'Not authorized to edit this message' });
+    }
+
+    message.content = content.trim();
+    await message.save();
+    return res.status(200).json({ message: 'Message updated', messageId: message.idmessage });
+  } catch (error) {
+    console.error('editMessage error:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+/**
+ * GET /api/conversations/:id
+ * Get details for a single conversation (if member), including all messages
+ */
+export const getSingleConversation = async (req, res) => {
   try {
     const myUserId = req.user.iduser;
     const idconversation = Number(req.params.id);
 
-    if (!req.file) {
-      return res.status(400).json({ message: 'No file uploaded' });
-    }
-
-    const member = await requireMembership(idconversation, myUserId);
-    if (!member) return res.status(403).json({ message: 'Not a member of this conversation' });
-
-    const baseUrl = `${req.protocol}://${req.get("host")}`;
-    const fileUrl = `${baseUrl}/uploads/${req.file.filename}`;
-
-    const msg = await Message.create({
-      idconversation,
-      senderId: myUserId,
-      content: fileUrl,
-      sentAt: new Date(),
+    // Check membership
+    const membership = await ConversationMember.findOne({
+      where: { idconversation, iduser: myUserId, leftAt: null },
     });
+    if (!membership) return res.status(403).json({ message: 'Not a member of this conversation' });
 
-    await Conversation.update(
-      { updatedAt: new Date() },
-      { where: { idconversation } }
-    );
+    // Fetch conversation with members and all messages
+    const conv = await Conversation.findOne({
+      where: { idconversation },
+      include: [
+        {
+          model: ConversationMember,
+          where: { leftAt: null },
+          required: false,
+          attributes: ['iduser', 'role', 'joinedAt', 'leftAt'],
+          include: [{ model: User, attributes: ['iduser', 'nom', 'prenom', 'photo', 'niveau'] }],
+        },
+        {
+          model: Message,
+          order: [['sentAt', 'ASC']],
+          include: [{ model: User, as: 'sender', attributes: ['iduser', 'nom', 'prenom', 'photo'] }],
+          attributes: ['idmessage', 'content', 'sentAt', 'senderId'],
+        },
+      ],
+    });
+    if (!conv) return res.status(404).json({ message: 'Conversation not found' });
 
-    return res.status(201).json(msg);
+    // Format result
+    const members = (conv.conversation_members || []).map((cm) => ({
+      iduser: cm.user.iduser,
+      nom: cm.user.nom,
+      prenom: cm.user.prenom,
+      photo: cm.user.photo,
+      niveau: cm.user.niveau,
+      role: cm.role,
+      joinedAt: cm.joinedAt,
+      leftAt: cm.leftAt,
+    }));
+    const messages = (conv.messages || []).map((msg) => ({
+      idmessage: msg.idmessage,
+      content: msg.content,
+      sentAt: msg.sentAt,
+      senderId: msg.senderId,
+      sender: msg.sender ? {
+        iduser: msg.sender.iduser,
+        nom: msg.sender.nom,
+        prenom: msg.sender.prenom,
+        photo: msg.sender.photo
+      } : null
+    }));
+    let otherUser = null;
+    let title = conv.name || null;
+    if (conv.type === 'DIRECT') {
+      otherUser = members.find((u) => u.iduser !== myUserId) || null;
+      title = otherUser ? `${otherUser.prenom} ${otherUser.nom}` : 'Direct Chat';
+    }
+    if (conv.type === 'GROUP') {
+      title = conv.name || 'Group';
+    }
+    const result = {
+      idconversation: conv.idconversation,
+      type: conv.type,
+      title,
+      description: conv.description || null,
+      createdBy: conv.createdBy,
+      members,
+      otherUser,
+      messages,
+      updatedAt: conv.updatedAt,
+    };
+    return res.status(200).json(result);
   } catch (error) {
-    console.error('sendFileMessage error:', error);
+    console.error('getSingleConversation error:', error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

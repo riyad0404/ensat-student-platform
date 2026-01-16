@@ -180,67 +180,76 @@ const GroupsPage = () => {
           const groupId = getGroupId(group);
           
           // Logique de notification (Non lu)
-          const lastRead = localStorage.getItem(`lastRead_${groupId}`);
-          const lastMsgDate = group.lastMessage?.sentAt;
-          const hasUnread = lastMsgDate && (!lastRead || new Date(lastMsgDate) > new Date(lastRead));
+          let hasUnread = false;
+
+          if (group.unreadCount !== undefined) {
+             hasUnread = group.unreadCount > 0;
+          } else {
+             const lastRead = localStorage.getItem(`lastRead_${groupId}`);
+             const lastMsg = group.lastMessage;
+             const lastMsgDate = lastMsg?.sentAt || lastMsg?.createdAt || group.updatedAt;
+             const isLastReadValid = lastRead && !isNaN(new Date(lastRead).getTime());
+             const isOwnMessage = lastMsg?.senderId && String(lastMsg.senderId) === String(currentUserId);
+
+             hasUnread = !isOwnMessage && lastMsgDate && (!isLastReadValid || new Date(lastMsgDate) > new Date(lastRead));
+          }
 
           return (
           <div 
             key={groupId || index} 
             onClick={() => groupId ? navigate(`/conversations/${groupId}`) : console.error("ID manquant pour le groupe", group)}
-            style={{ 
-              background: 'white',
-              borderRadius: '20px',
-              padding: '24px',
-              cursor: 'pointer',
-              border: '1px solid #f3f4f6',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
-              transition: 'all 0.2s ease',
-              display: 'flex',
-              flexDirection: 'column',
-              position: 'relative'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-4px)';
-              e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.05)';
-            }}
-          >
-            {/* Indicateur de message non lu (Badge) */}
-            {hasUnread && (
-              <div style={{ position: 'absolute', top: '15px', right: '15px', minWidth: '20px', height: '20px', background: '#25D366', borderRadius: '50%', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '11px', fontWeight: 'bold' }}>
-                1
-              </div>
-            )}
-
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-              <div style={{ 
-                width: '56px', height: '56px', borderRadius: '16px', 
-                background: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#7c3aed', marginRight: '16px'
-              }}>
-                <Users size={28} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#1f2937', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {groupName}
-                </h3>
-                <span style={{ fontSize: '14px', color: '#6b7280' }}>
-                  {group.members?.length || 0} members
-                </span>
-              </div>
-            </div>
-            
-            <p style={{ 
-              color: hasUnread ? '#111' : '#4b5563', 
-              fontSize: '14px', lineHeight: '1.5', margin: 0, 
-              display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-              flex: 1,
-              fontWeight: hasUnread ? '600' : '400'
-            }}>
+             style={{ 
+               background: 'white',
+               borderRadius: '20px',
+               padding: '24px',
+               cursor: 'pointer',
+               border: '1px solid #f3f4f6',
+               boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
+               transition: 'all 0.2s ease',
+               display: 'flex',
+               flexDirection: 'column',
+               position: 'relative'
+             }}
+             onMouseEnter={(e) => {
+               e.currentTarget.style.transform = 'translateY(-4px)';
+               e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)';
+             }}
+             onMouseLeave={(e) => {
+               e.currentTarget.style.transform = 'translateY(0)';
+               e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.05)';
+             }}
+           >
+             {hasUnread && (
+               <div style={{ position: 'absolute', top: '15px', right: '15px', minWidth: '20px', height: '20px', background: '#25D366', borderRadius: '50%', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '11px', fontWeight: 'bold' }}>
+                 1
+               </div>
+             )}
+ 
+             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+               <div style={{ 
+                 width: '56px', height: '56px', borderRadius: '16px', 
+                 background: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                 color: '#7c3aed', marginRight: '16px'
+               }}>
+                 <Users size={28} />
+               </div>
+               <div style={{ flex: 1, minWidth: 0 }}>
+                 <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#1f2937', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                   {groupName}
+                 </h3>
+                 <span style={{ fontSize: '14px', color: '#6b7280' }}>
+                   {group.members?.length || 0} members
+                 </span>
+               </div>
+             </div>
+             
+             <p style={{ 
+               color: hasUnread ? '#111' : '#4b5563', 
+               fontSize: '14px', lineHeight: '1.5', margin: 0, 
+               display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+               flex: 1,
+               fontWeight: hasUnread ? '600' : '400'
+             }}>
               {(() => {
                 if (group.lastMessage) {
                    const senderId = group.lastMessage.senderId;
@@ -256,7 +265,7 @@ const GroupsPage = () => {
                 }
                 return group.description || "No description available.";
               })()}
-            </p>
+             </p>
           </div>
           );
         })}
@@ -272,71 +281,71 @@ const GroupsPage = () => {
       {showModal && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.5)', zIndex: 1000,
+          background: 'rgba(0,0,0,0.4)', zIndex: 1000,
           display: 'flex', alignItems: 'center', justifyContent: 'center'
         }}>
           <div style={{
-            background: 'white', width: '90%', maxWidth: '400px',
-            borderRadius: '12px', padding: '24px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+            background: 'white', width: '90%', maxWidth: '500px',
+            borderRadius: '16px', padding: '32px',
+            boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
-              <h3 style={{ margin: 0, fontSize: '20px', color: '#111b21' }}>New Group</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h3 style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#111827' }}>Create New Group</h3>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-                <X size={24} color="#54656f" />
+                <X size={24} color="#6b7280" />
               </button>
             </div>
 
             <form onSubmit={handleCreateGroup}>
-              {/* Image Placeholder (Visual only) */}
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
-                <div 
-                  style={{ 
-                  width: '80px', height: '80px', borderRadius: '50%', 
-                  background: '#f0f2f5', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  border: '1px solid #eee'
-                }}>
-                  <Users size={40} color="#54656f" />
-                </div>
-              </div>
-
-              <div style={{ marginBottom: '16px' }}>
+              <div style={{ marginBottom: '20px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>Group Name</label>
                 <input
                   type="text"
                   placeholder="Group Name"
                   value={newGroup.name}
                   onChange={(e) => setNewGroup({...newGroup, name: e.target.value, nom: e.target.value})}
                   style={{ 
-                    width: '100%', padding: '10px', border: 'none', 
-                    borderBottom: '2px solid #00a884', outline: 'none',
-                    fontSize: '16px'
+                    width: '100%', padding: '12px 16px', border: '1px solid #d1d5db', 
+                    borderRadius: '8px', outline: 'none', fontSize: '15px',
+                    background: '#f9fafb'
                   }}
                   required
                 />
               </div>
 
-              <div style={{ marginBottom: '24px' }}>
-                <input
-                  type="text"
+              <div style={{ marginBottom: '32px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>Description</label>
+                <textarea
                   placeholder="Description (Optional)"
                   value={newGroup.description}
                   onChange={(e) => setNewGroup({...newGroup, description: e.target.value})}
                   style={{ 
-                    width: '100%', padding: '10px', border: 'none', 
-                    borderBottom: '1px solid #e0e0e0', outline: 'none',
-                    fontSize: '14px'
+                    width: '100%', padding: '12px 16px', border: '1px solid #d1d5db', 
+                    borderRadius: '8px', outline: 'none', fontSize: '15px',
+                    background: '#f9fafb', minHeight: '80px', resize: 'vertical'
                   }}
-                />
+                ></textarea>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                <button 
+                  type="button" 
+                  onClick={() => setShowModal(false)}
+                  style={{ 
+                    background: 'white', color: '#374151', border: '1px solid #d1d5db', 
+                    padding: '10px 24px', borderRadius: '8px', 
+                    fontWeight: '600', cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
                 <button 
                   type="submit" 
                   disabled={creating}
                   style={{ 
-                    background: '#00a884', color: 'white', border: 'none', 
-                    padding: '10px 24px', borderRadius: '24px', 
-                    fontWeight: 'bold', cursor: 'pointer',
+                    background: '#7c3aed', color: 'white', border: 'none', 
+                    padding: '10px 24px', borderRadius: '8px', 
+                    fontWeight: '600', cursor: 'pointer',
                     opacity: creating ? 0.7 : 1
                   }}
                 >

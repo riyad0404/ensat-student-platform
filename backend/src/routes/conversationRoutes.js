@@ -11,6 +11,9 @@ import {
   removeMember,
   deleteConversation,
   transferOwnership,
+  deleteMessage,
+  editMessage,
+  getSingleConversation,
 } from '../controllers/conversationController.js';
 
 
@@ -33,9 +36,16 @@ router.post('/group', authMiddleware, createGroupConversation);
 router.get('/:id/messages', authMiddleware, getConversationMessages);
 router.post('/:id/messages', authMiddleware, sendMessage);
 
+// Edit and delete messages
+router.delete('/:id/messages/:messageId', authMiddleware, deleteMessage);
+router.put('/:id/messages/:messageId', authMiddleware, editMessage);
+
 // Membership
 router.post('/:id/leave', authMiddleware, leaveConversation);
 router.post('/:id/members', authMiddleware, addMember);
 router.delete('/:id/members/:userId', authMiddleware, removeMember);
+
+// Get a single conversation by ID
+router.get('/:id', authMiddleware, getSingleConversation);
 
 export default router;

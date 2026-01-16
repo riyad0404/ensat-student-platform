@@ -21,12 +21,13 @@ export const conversationAPI = {
     return res.data;
   },
 
-  sendFile: async (conversationId, file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    const res = await axiosInstance.post(`/conversations/${conversationId}/files`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+  deleteMessage: async (conversationId, messageId) => {
+    const res = await axiosInstance.delete(`/conversations/${conversationId}/messages/${messageId}`);
+    return res.data;
+  },
+
+  editMessage: async (conversationId, messageId, content) => {
+    const res = await axiosInstance.put(`/conversations/${conversationId}/messages/${messageId}`, { content });
     return res.data;
   },
 
@@ -37,15 +38,6 @@ export const conversationAPI = {
 
   createGroup: async ({ name, description, memberIds }) => {
     const res = await axiosInstance.post('/conversations/group', { name, nom: name, title: name, description, memberIds });
-    return res.data;
-  },
-
-  updateGroupIcon: async (conversationId, file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    const res = await axiosInstance.put(`/conversations/${conversationId}/icon`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
     return res.data;
   },
 
