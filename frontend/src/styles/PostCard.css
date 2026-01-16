@@ -331,48 +331,51 @@
     font-size: 11px;
   }
 }
-/* PostCard.css */
+/* Header et Menu options */
 
 .post-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  position: relative; /* Référence pour le placement du menu */
+  position: relative; 
+  overflow: visible !important; /* TRÈS IMPORTANT */
 }
 
-.post-options-wrapper {
-  position: relative; /* Garde le bouton et le menu ensemble */
+/* 2. Le bouton doit être visible */
+.post-menu-btn {
+  background: none;
+  border: none;
+  font-size: 24px; /* Augmenter la taille pour mieux voir les points */
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px 10px;
+  line-height: 1;
 }
 
+/* 3. Le menu déroulant (Dropdown) */
 .post-dropdown-menu {
-  position: absolute; /* Sort le menu du flux normal pour qu'il "flotte" */
+  position: absolute;
   right: 0;
-  top: 100%; /* Se place juste sous le bouton ⋮ */
+  top: 40px; /* Ajustez pour qu'il soit sous les points */
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Ombre pour le relief */
-  z-index: 1000; /* Assure que le menu est au premier plan */
-  min-width: 140px;
-  padding: 4px 0;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  z-index: 9999; /* Doit être au-dessus de TOUT */
+  min-width: 150px;
+  display: flex;
+  flex-direction: column;
 }
 
 .post-dropdown-menu button {
-  display: block;
-  width: 100%;
-  padding: 10px 16px;
+  padding: 12px 16px;
   text-align: left;
-  background: none;
   border: none;
+  background: none;
   font-size: 14px;
   cursor: pointer;
-  color: #374151;
 }
 
 .post-dropdown-menu button:hover {
-  background-color: #f3f4f6;
-}
-
-.post-dropdown-menu .delete-option {
-  color: #ef4444; /* Rouge pour la suppression */
+  background-color: #f9fafb;
 }
