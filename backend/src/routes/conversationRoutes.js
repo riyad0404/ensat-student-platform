@@ -14,6 +14,10 @@ import {
   deleteMessage,
   editMessage,
   getSingleConversation,
+  hideConversation,
+  unhideConversation,
+  joinConversation,
+  markConversationAsRead,
 } from '../controllers/conversationController.js';
 
 
@@ -23,6 +27,17 @@ router.delete('/:id', authMiddleware, deleteConversation);
 
 // Transfer ownership
 router.post('/:id/transfer', authMiddleware, transferOwnership);
+
+// Hide/unhide conversation
+router.post('/:id/hide', authMiddleware, hideConversation);
+router.post('/:id/unhide', authMiddleware, unhideConversation);
+
+// Join conversation
+router.post('/:id/join', authMiddleware, joinConversation);
+
+// Mark as read
+router.post('/:id/read', authMiddleware, markConversationAsRead);
+
 // Conversations list
 router.get('/', authMiddleware, getMyConversations);
 

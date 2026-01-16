@@ -78,18 +78,28 @@ const requireOwner = async (idconversation, iduser) => {
 
 /**
  * 1) GET /api/conversations
- * List my conversations with members + last message preview
+ * List my conversations with members + last message preview + unreadCount
  */
 export const getMyConversations = async (req, res) => {
   try {
     const myUserId = req.user.iduser;
+    const includeHidden = req.query.includeHidden === 'true';
+
+    // If includeHidden, get all memberships; else, only active (leftAt: null)
+    const membershipWhere = { iduser: myUserId };
+    if (!includeHidden) membershipWhere.leftAt = null;
 
     const memberships = await ConversationMember.findAll({
-      where: { iduser: myUserId, leftAt: null },
-      attributes: ['idconversation'],
+      where: membershipWhere,
+      attributes: ['idconversation', 'lastReadAt', 'leftAt'],
     });
 
     const ids = memberships.map((m) => m.idconversation);
+    const membershipMap = {};
+    memberships.forEach(m => {
+      membershipMap[m.idconversation] = { lastReadAt: m.lastReadAt, leftAt: m.leftAt };
+    });
+
     if (ids.length === 0) return res.status(200).json([]);
 
     const conversations = await Conversation.findAll({
@@ -98,7 +108,7 @@ export const getMyConversations = async (req, res) => {
       include: [
         {
           model: ConversationMember,
-          where: { leftAt: null },
+          // Show all memberships for this conversation
           required: false,
           attributes: ['iduser', 'role', 'joinedAt', 'leftAt'],
           include: [{ model: User, attributes: ['iduser', 'nom', 'prenom', 'photo', 'niveau'] }],
@@ -110,10 +120,12 @@ export const getMyConversations = async (req, res) => {
           order: [['sentAt', 'DESC']],
           attributes: ['idmessage', 'content', 'sentAt', 'senderId'],
         },
-        ],
+      ],
     });
 
-    const result = conversations.map((conv) => {
+    const result = await Promise.all(conversations.map(async (conv) => {
+      // Find this user's membership for this conversation
+      const myMembership = membershipMap[conv.idconversation];
 
       // Include role and joinedAt/leftAt for each member
       const members = (conv.conversation_members || []).map((cm) => ({
@@ -136,6 +148,14 @@ export const getMyConversations = async (req, res) => {
           }
         : null;
 
+      // Calculate unreadCount
+      const lastReadAt = myMembership?.lastReadAt;
+      const where = { idconversation: conv.idconversation };
+      if (lastReadAt) {
+        where.sentAt = { [Op.gt]: lastReadAt };
+      }
+      const unreadCount = await Message.count({ where });
+
       let otherUser = null;
       let title = conv.name || null;
 
@@ -148,6 +168,9 @@ export const getMyConversations = async (req, res) => {
         title = conv.name || 'Group';
       }
 
+      // Add isHidden flag for this user
+      const isHidden = !!myMembership?.leftAt;
+
       return {
         idconversation: conv.idconversation,
         type: conv.type,
@@ -157,9 +180,11 @@ export const getMyConversations = async (req, res) => {
         members,
         otherUser,
         lastMessage,
+        unreadCount,
         updatedAt: conv.updatedAt,
+        isHidden,
       };
-    });
+    }));
 
     return res.status(200).json(result);
   } catch (error) {
@@ -167,6 +192,7 @@ export const getMyConversations = async (req, res) => {
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
 
 /**
  * 2) POST /api/conversations/direct
@@ -282,6 +308,7 @@ export const createGroupConversation = async (req, res) => {
 /**
  * 4) GET /api/conversations/:id/messages
  * Fetch messages for a conversation (basic version: no pagination)
+ * Automatically updates lastReadAt for the current user
  */
 export const getConversationMessages = async (req, res) => {
   try {
@@ -290,6 +317,10 @@ export const getConversationMessages = async (req, res) => {
 
     const member = await requireMembership(idconversation, myUserId);
     if (!member) return res.status(403).json({ message: 'Not a member of this conversation' });
+
+    // Automatically update lastReadAt to current time
+    member.lastReadAt = new Date();
+    await member.save();
 
     const messages = await Message.findAll({
       where: { idconversation },
@@ -533,11 +564,12 @@ export const getSingleConversation = async (req, res) => {
   try {
     const myUserId = req.user.iduser;
     const idconversation = Number(req.params.id);
+    const includeHidden = req.query.includeHidden === 'true';
 
-    // Check membership
-    const membership = await ConversationMember.findOne({
-      where: { idconversation, iduser: myUserId, leftAt: null },
-    });
+    // Check membership (optionally include hidden)
+    const membershipWhere = { idconversation, iduser: myUserId };
+    if (!includeHidden) membershipWhere.leftAt = null;
+    const membership = await ConversationMember.findOne({ where: membershipWhere });
     if (!membership) return res.status(403).json({ message: 'Not a member of this conversation' });
 
     // Fetch conversation with members and all messages
@@ -546,7 +578,6 @@ export const getSingleConversation = async (req, res) => {
       include: [
         {
           model: ConversationMember,
-          where: { leftAt: null },
           required: false,
           attributes: ['iduser', 'role', 'joinedAt', 'leftAt'],
           include: [{ model: User, attributes: ['iduser', 'nom', 'prenom', 'photo', 'niveau'] }],
@@ -593,6 +624,8 @@ export const getSingleConversation = async (req, res) => {
     if (conv.type === 'GROUP') {
       title = conv.name || 'Group';
     }
+    // Add isHidden flag for this user
+    const isHidden = !!membership.leftAt;
     const result = {
       idconversation: conv.idconversation,
       type: conv.type,
@@ -603,10 +636,141 @@ export const getSingleConversation = async (req, res) => {
       otherUser,
       messages,
       updatedAt: conv.updatedAt,
+      isHidden,
     };
     return res.status(200).json(result);
   } catch (error) {
     console.error('getSingleConversation error:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+/**
+ * 13) POST /api/conversations/:id/hide
+ * Hide a conversation for the current user (set leftAt without actually leaving)
+ * This allows the user to remove the conversation from their list without affecting the other user
+ */
+export const hideConversation = async (req, res) => {
+  try {
+    const myUserId = req.user.iduser;
+    const idconversation = Number(req.params.id);
+
+    const membership = await requireMembership(idconversation, myUserId);
+    if (!membership) return res.status(403).json({ message: 'Not a member of this conversation' });
+
+    // Mark conversation as hidden by setting leftAt
+    membership.leftAt = new Date();
+    await membership.save();
+
+    return res.status(200).json({ message: 'Conversation hidden successfully' });
+  } catch (error) {
+    console.error('hideConversation error:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+/**
+ * 14) POST /api/conversations/:id/unhide
+ * Unhide a hidden conversation (set leftAt back to null)
+ */
+export const unhideConversation = async (req, res) => {
+  try {
+    const myUserId = req.user.iduser;
+    const idconversation = Number(req.params.id);
+
+    const membership = await ConversationMember.findOne({
+      where: { idconversation, iduser: myUserId },
+    });
+    if (!membership) return res.status(403).json({ message: 'Not a member of this conversation' });
+
+    if (!membership.leftAt) {
+      return res.status(400).json({ message: 'Conversation is not hidden' });
+    }
+
+    // Unhide by clearing leftAt
+    membership.leftAt = null;
+    await membership.save();
+
+    return res.status(200).json({ message: 'Conversation unhidden successfully' });
+  } catch (error) {
+    console.error('unhideConversation error:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+/**
+ * 15) POST /api/conversations/:id/join
+ * Allow any authenticated user to join a group conversation
+ * (could be extended with invitation tokens if needed)
+ */
+export const joinConversation = async (req, res) => {
+  try {
+    const myUserId = req.user.iduser;
+    const idconversation = Number(req.params.id);
+
+    const conv = await Conversation.findByPk(idconversation);
+    if (!conv) return res.status(404).json({ message: 'Conversation not found' });
+
+    // Only allow joining GROUP conversations
+    if (conv.type !== 'GROUP') {
+      return res.status(400).json({ message: 'Can only join GROUP conversations' });
+    }
+
+    // Check if already an active member
+    const activeMember = await ConversationMember.findOne({
+      where: { idconversation, iduser: myUserId, leftAt: null },
+    });
+
+    if (activeMember) {
+      return res.status(200).json({ message: 'Already a member of this conversation' });
+    }
+
+    // Check if there's an old membership (user left before)
+    const oldMember = await ConversationMember.findOne({
+      where: { idconversation, iduser: myUserId },
+    });
+
+    if (oldMember) {
+      // Re-join: restore membership
+      oldMember.leftAt = null;
+      oldMember.joinedAt = new Date();
+      await oldMember.save();
+      return res.status(200).json({ message: 'Rejoined conversation successfully' });
+    }
+
+    // Create new membership
+    await ConversationMember.create({
+      idconversation,
+      iduser: myUserId,
+      role: 'MEMBER',
+      joinedAt: new Date(),
+    });
+
+    return res.status(201).json({ message: 'Joined conversation successfully' });
+  } catch (error) {
+    console.error('joinConversation error:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+/**
+ * 16) POST /api/conversations/:id/read
+ * Mark a conversation as read by setting lastReadAt to current time
+ */
+export const markConversationAsRead = async (req, res) => {
+  try {
+    const myUserId = req.user.iduser;
+    const idconversation = Number(req.params.id);
+
+    const membership = await requireMembership(idconversation, myUserId);
+    if (!membership) return res.status(403).json({ message: 'Not a member of this conversation' });
+
+    membership.lastReadAt = new Date();
+    await membership.save();
+
+    return res.status(200).json({ message: 'Conversation marked as read' });
+  } catch (error) {
+    console.error('markConversationAsRead error:', error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
