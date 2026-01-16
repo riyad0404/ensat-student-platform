@@ -14,6 +14,7 @@ import sequelize from './database.js';
 import cookieParser from 'cookie-parser';
 import conversationRoutes from './routes/conversationRoutes.js';
 import reactionRoutes from "./routes/reactionroutes.js";
+//import notificationRoutes from "./routes/notificationroutes.js";
 import userRoutes from './routes/userRoutes.js';
 import documentRoutes from "./routes/documentRoutes.js";
 import commentRoutes from "./routes/commentroutes.js";
@@ -29,7 +30,7 @@ app.use(cookieParser());
 // CORS for React (important for cookies)
 app.use(
   cors({
-    origin:process.env.FRONTEND_URL || 'http://localhost:5173', // adapt to your React port if needed
+    origin:process.env.FRONTEND_URL || 'http://localhost:5174', // adapt to your React port if needed
     credentials: true, // allow sending cookies
   })
 );
@@ -46,9 +47,8 @@ app.use("/api/reactions", reactionRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/users", userRoutes);
 app.use('/api/conversations', conversationRoutes);
-
-
-
+//app.use("/api/notifications", notificationRoutes);
+//app.use("/api/notifications", notificationRoutes);
 // Health check route
 app.get('/api/health', (req, res) => {
   res.json({
