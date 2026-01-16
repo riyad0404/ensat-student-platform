@@ -38,15 +38,18 @@ npm start
 
 ## 📡 Endpoints API
 
-### 1. Masquer une conversation
+
+### 1. Masquer une conversation (Hide)
 
 **Endpoint:** `POST /api/conversations/:id/hide`
 
-**Description:** Cache une conversation de la liste de l'utilisateur sans la supprimer pour l'autre personne.
+**Description:** Masque une conversation pour l'utilisateur courant (soft delete). La conversation disparaît de la liste principale de l'utilisateur, mais reste accessible pour les autres membres. Peut être réaffichée avec l'endpoint unhide.
 
-**En-têtes:**
+**Authentification :**
+Cookie HTTP-only `accessToken` (voir plus haut)
+
+**En-têtes :**
 ```
-Authorization: Bearer {token}
 Content-Type: application/json
 ```
 
@@ -55,21 +58,21 @@ Content-Type: application/json
 { "message": "Conversation hidden successfully" }
 ```
 
-**Exemple cURL:**
+**Exemple cURL :**
 ```bash
 curl -X POST http://localhost:5000/api/conversations/1/hide \
-  -H "Authorization: Bearer YOUR_TOKEN" \
+  --cookie "accessToken=VOTRE_TOKEN" \
   -H "Content-Type: application/json"
 ```
 
-**Exemple JavaScript:**
+**Exemple JavaScript :**
 ```javascript
 const response = await fetch('/api/conversations/1/hide', {
   method: 'POST',
   headers: {
-    'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json'
-  }
+  },
+  credentials: 'include' // Important pour envoyer le cookie !
 });
 const data = await response.json();
 console.log(data.message); // "Conversation hidden successfully"
@@ -77,15 +80,15 @@ console.log(data.message); // "Conversation hidden successfully"
 
 ---
 
-### 2. Réafficher une conversation cachée
+
+### 2. Réafficher une conversation cachée (Unhide)
 
 **Endpoint:** `POST /api/conversations/:id/unhide`
 
-**Description:** Réaffiche une conversation qui avait été masquée.
+**Description:** Réaffiche une conversation précédemment masquée. La conversation réapparaît dans la liste principale de l'utilisateur.
 
-**En-têtes:**
+**En-têtes :**
 ```
-Authorization: Bearer {token}
 Content-Type: application/json
 ```
 
@@ -98,14 +101,14 @@ Content-Type: application/json
 - `400`: La conversation n'est pas cachée
 - `403`: L'utilisateur n'est pas membre de la conversation
 
-**Exemple JavaScript:**
+**Exemple JavaScript :**
 ```javascript
 const response = await fetch('/api/conversations/1/unhide', {
   method: 'POST',
   headers: {
-    'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json'
-  }
+  },
+  credentials: 'include'
 });
 ```
 
@@ -117,9 +120,8 @@ const response = await fetch('/api/conversations/1/unhide', {
 
 **Description:** Permet à un utilisateur authentifié de rejoindre une conversation de groupe publique.
 
-**En-têtes:**
+**En-têtes :**
 ```
-Authorization: Bearer {token}
 Content-Type: application/json
 ```
 
@@ -132,14 +134,14 @@ Content-Type: application/json
 - `404`: Conversation introuvable
 - `400`: Impossible de rejoindre une conversation DIRECT
 
-**Exemple JavaScript:**
+**Exemple JavaScript :**
 ```javascript
 const response = await fetch('/api/conversations/5/join', {
   method: 'POST',
   headers: {
-    'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json'
-  }
+  },
+  credentials: 'include'
 });
 
 if (response.ok) {
@@ -149,16 +151,20 @@ if (response.ok) {
 
 ---
 
-### 4. Récupérer les conversations avec comptage des non-lus
+
+### 4. Récupérer les conversations (inclure ou non les cachées)
 
 **Endpoint:** `GET /api/conversations`
 
-**Description:** Liste les conversations actives avec un champ `unreadCount` supplémentaire.
+**Description:** Liste les conversations de l'utilisateur. Par défaut, seules les conversations actives (non cachées) sont retournées. Pour inclure les conversations cachées, ajoutez le paramètre `?includeHidden=true`.
 
-**En-têtes:**
-```
-Authorization: Bearer {token}
-```
+Chaque conversation contient un champ supplémentaire `isHidden` (booléen) qui indique si la conversation est masquée pour l'utilisateur courant.
+
+**Paramètres de requête :**
+- `includeHidden=true` (optionnel) : inclut les conversations cachées dans la réponse.
+
+**Authentification :**
+Cookie HTTP-only `accessToken` (voir plus haut)
 
 **Réponse (200 OK):**
 ```json
@@ -195,15 +201,16 @@ Authorization: Bearer {token}
       "senderId": 2
     },
     "unreadCount": 3,
-    "updatedAt": "2026-01-16T15:30:00Z"
+    "updatedAt": "2026-01-16T15:30:00Z",
+    "isHidden": false
   }
 ]
 ```
 
-**Exemple JavaScript:**
+**Exemple JavaScript :**
 ```javascript
 const response = await fetch('/api/conversations', {
-  headers: { 'Authorization': `Bearer ${token}` }
+  credentials: 'include'
 });
 
 const conversations = await response.json();
@@ -227,9 +234,8 @@ conversations.forEach(conv => {
 
 **Description:** Marque explicitement une conversation comme lue en mettant à jour `lastReadAt`.
 
-**En-têtes:**
+**En-têtes :**
 ```
-Authorization: Bearer {token}
 Content-Type: application/json
 ```
 
@@ -241,14 +247,14 @@ Content-Type: application/json
 **Codes d'erreur:**
 - `403`: L'utilisateur n'est pas membre de la conversation
 
-**Exemple JavaScript:**
+**Exemple JavaScript :**
 ```javascript
 const response = await fetch('/api/conversations/1/read', {
   method: 'POST',
   headers: {
-    'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json'
-  }
+  },
+  credentials: 'include'
 });
 
 if (response.ok) {
@@ -264,10 +270,8 @@ if (response.ok) {
 
 **Description:** Récupère les messages d'une conversation et met automatiquement à jour `lastReadAt`.
 
-**En-têtes:**
-```
-Authorization: Bearer {token}
-```
+**Authentification :**
+Cookie HTTP-only `accessToken` (voir plus haut)
 
 **Réponse (200 OK):**
 ```json
@@ -287,10 +291,10 @@ Authorization: Bearer {token}
 ]
 ```
 
-**Exemple JavaScript:**
+**Exemple JavaScript :**
 ```javascript
 const response = await fetch('/api/conversations/1/messages', {
-  headers: { 'Authorization': `Bearer ${token}` }
+  credentials: 'include'
 });
 
 const messages = await response.json();
@@ -310,14 +314,11 @@ messages.forEach(msg => {
 ```javascript
 async function displayConversationsList() {
   const response = await fetch('/api/conversations', {
-    headers: { 'Authorization': `Bearer ${token}` }
+    credentials: 'include'
   });
-  
   const conversations = await response.json();
-  
   conversations.forEach(conv => {
     const element = document.querySelector(`[data-conv-id="${conv.idconversation}"]`);
-    
     if (conv.unreadCount > 0) {
       element.classList.add('has-unread');
       element.querySelector('.badge').textContent = conv.unreadCount;
@@ -328,24 +329,36 @@ async function displayConversationsList() {
 }
 ```
 
-### Cas 2: Masquer une conversation au clic
+
+### Cas 2: Masquer et réafficher une conversation
 
 ```javascript
 async function hideConversation(conversationId) {
   const response = await fetch(`/api/conversations/${conversationId}/hide`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
-    }
+    },
+    credentials: 'include'
   });
-  
   if (response.ok) {
     // Retirer la conversation de la liste UI
     document.querySelector(`[data-conv-id="${conversationId}"]`).remove();
-    
-    // Optionnel: Afficher un message de confirmation
     showToast('Conversation masquée');
+  }
+}
+
+async function unhideConversation(conversationId) {
+  const response = await fetch(`/api/conversations/${conversationId}/unhide`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    credentials: 'include'
+  });
+  if (response.ok) {
+    // Recharger la liste ou réafficher la conversation
+    showToast('Conversation réaffichée');
   }
 }
 ```
@@ -357,11 +370,10 @@ async function joinGroupViaLink(conversationId) {
   const response = await fetch(`/api/conversations/${conversationId}/join`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
-    }
+    },
+    credentials: 'include'
   });
-  
   if (response.ok) {
     // Rediriger vers la conversation
     window.location.href = `/conversations/${conversationId}`;
@@ -377,11 +389,9 @@ async function joinGroupViaLink(conversationId) {
 async function openConversation(conversationId) {
   // Cette requête met automatiquement à jour lastReadAt
   const response = await fetch(`/api/conversations/${conversationId}/messages`, {
-    headers: { 'Authorization': `Bearer ${token}` }
+    credentials: 'include'
   });
-  
   const messages = await response.json();
-  
   // L'utilisateur est marqué comme ayant lu les messages
   // unreadCount sera 0 pour cette conversation
   renderMessages(messages);
@@ -394,8 +404,8 @@ async function openConversation(conversationId) {
 
 | Opération | Restriction | Notes |
 |-----------|------------|-------|
-| Hide | Membre actif | Soft delete uniquement |
-| Unhide | Propriétaire de la membership | Peut réafficher sa propre membership |
+| Hide | Membre actif | Soft delete uniquement. Conversation masquée pour l'utilisateur, mais pas supprimée. |
+| Unhide | Propriétaire de la membership | Peut réafficher sa propre membership. |
 | Join | Conversation GROUP | Pas de vérification de permission |
 | Read | Membre actif | Met à jour le timestamp personnel |
 | Get messages | Membre actif | Met à jour automatiquement lastReadAt |

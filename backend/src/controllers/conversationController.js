@@ -83,16 +83,21 @@ const requireOwner = async (idconversation, iduser) => {
 export const getMyConversations = async (req, res) => {
   try {
     const myUserId = req.user.iduser;
+    const includeHidden = req.query.includeHidden === 'true';
+
+    // If includeHidden, get all memberships; else, only active (leftAt: null)
+    const membershipWhere = { iduser: myUserId };
+    if (!includeHidden) membershipWhere.leftAt = null;
 
     const memberships = await ConversationMember.findAll({
-      where: { iduser: myUserId, leftAt: null },
-      attributes: ['idconversation', 'lastReadAt'],
+      where: membershipWhere,
+      attributes: ['idconversation', 'lastReadAt', 'leftAt'],
     });
 
     const ids = memberships.map((m) => m.idconversation);
     const membershipMap = {};
     memberships.forEach(m => {
-      membershipMap[m.idconversation] = m.lastReadAt;
+      membershipMap[m.idconversation] = { lastReadAt: m.lastReadAt, leftAt: m.leftAt };
     });
 
     if (ids.length === 0) return res.status(200).json([]);
@@ -103,7 +108,7 @@ export const getMyConversations = async (req, res) => {
       include: [
         {
           model: ConversationMember,
-          where: { leftAt: null },
+          // Show all memberships for this conversation
           required: false,
           attributes: ['iduser', 'role', 'joinedAt', 'leftAt'],
           include: [{ model: User, attributes: ['iduser', 'nom', 'prenom', 'photo', 'niveau'] }],
@@ -115,10 +120,12 @@ export const getMyConversations = async (req, res) => {
           order: [['sentAt', 'DESC']],
           attributes: ['idmessage', 'content', 'sentAt', 'senderId'],
         },
-        ],
+      ],
     });
 
     const result = await Promise.all(conversations.map(async (conv) => {
+      // Find this user's membership for this conversation
+      const myMembership = membershipMap[conv.idconversation];
 
       // Include role and joinedAt/leftAt for each member
       const members = (conv.conversation_members || []).map((cm) => ({
@@ -142,13 +149,12 @@ export const getMyConversations = async (req, res) => {
         : null;
 
       // Calculate unreadCount
-      const lastReadAt = membershipMap[conv.idconversation];
-      const unreadCount = await Message.count({
-        where: {
-          idconversation: conv.idconversation,
-          sentAt: lastReadAt ? { [Op.gt]: lastReadAt } : undefined,
-        },
-      });
+      const lastReadAt = myMembership?.lastReadAt;
+      const where = { idconversation: conv.idconversation };
+      if (lastReadAt) {
+        where.sentAt = { [Op.gt]: lastReadAt };
+      }
+      const unreadCount = await Message.count({ where });
 
       let otherUser = null;
       let title = conv.name || null;
@@ -162,6 +168,9 @@ export const getMyConversations = async (req, res) => {
         title = conv.name || 'Group';
       }
 
+      // Add isHidden flag for this user
+      const isHidden = !!myMembership?.leftAt;
+
       return {
         idconversation: conv.idconversation,
         type: conv.type,
@@ -173,6 +182,7 @@ export const getMyConversations = async (req, res) => {
         lastMessage,
         unreadCount,
         updatedAt: conv.updatedAt,
+        isHidden,
       };
     }));
 
@@ -554,11 +564,12 @@ export const getSingleConversation = async (req, res) => {
   try {
     const myUserId = req.user.iduser;
     const idconversation = Number(req.params.id);
+    const includeHidden = req.query.includeHidden === 'true';
 
-    // Check membership
-    const membership = await ConversationMember.findOne({
-      where: { idconversation, iduser: myUserId, leftAt: null },
-    });
+    // Check membership (optionally include hidden)
+    const membershipWhere = { idconversation, iduser: myUserId };
+    if (!includeHidden) membershipWhere.leftAt = null;
+    const membership = await ConversationMember.findOne({ where: membershipWhere });
     if (!membership) return res.status(403).json({ message: 'Not a member of this conversation' });
 
     // Fetch conversation with members and all messages
@@ -567,7 +578,6 @@ export const getSingleConversation = async (req, res) => {
       include: [
         {
           model: ConversationMember,
-          where: { leftAt: null },
           required: false,
           attributes: ['iduser', 'role', 'joinedAt', 'leftAt'],
           include: [{ model: User, attributes: ['iduser', 'nom', 'prenom', 'photo', 'niveau'] }],
@@ -614,6 +624,8 @@ export const getSingleConversation = async (req, res) => {
     if (conv.type === 'GROUP') {
       title = conv.name || 'Group';
     }
+    // Add isHidden flag for this user
+    const isHidden = !!membership.leftAt;
     const result = {
       idconversation: conv.idconversation,
       type: conv.type,
@@ -624,6 +636,7 @@ export const getSingleConversation = async (req, res) => {
       otherUser,
       messages,
       updatedAt: conv.updatedAt,
+      isHidden,
     };
     return res.status(200).json(result);
   } catch (error) {

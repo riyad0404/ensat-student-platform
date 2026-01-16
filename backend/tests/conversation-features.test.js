@@ -1,24 +1,79 @@
+import request from "supertest";
+import app from "../src/app.js";
+
 /**
  * Tests pour les nouvelles fonctionnalités de conversations
  * À ajouter à votre suite de tests Jest
  */
 
 describe('Conversation Features - Hide, Join, Unread Count', () => {
-  let authToken;
   let userId1;
   let userId2;
   let conversationId;
+  let user1Cookies;
+  let user2Cookies;
+  let nonMemberCookies;
 
   beforeAll(async () => {
-    // Setup: créer 2 utilisateurs et une conversation
-    // Récupérer les tokens d'authentification
+    // 1. Create users
+    const user1 = {
+      nom: "User1",
+      prenom: "Test",
+      email: "user1@example.com",
+      password: "Password123!",
+      niveau: "3A",
+      secretCode: 1111,
+    };
+    const user2 = {
+      nom: "User2",
+      prenom: "Test",
+      email: "user2@example.com",
+      password: "Password123!",
+      niveau: "3A",
+      secretCode: 2222,
+    };
+    const nonMember = {
+      nom: "NonMember",
+      prenom: "Test",
+      email: "nonmember@example.com",
+      password: "Password123!",
+      niveau: "3A",
+      secretCode: 3333,
+    };
+
+    // Signup users
+    await request(app).post("/api/auth/signup").send(user1);
+    await request(app).post("/api/auth/signup").send(user2);
+    await request(app).post("/api/auth/signup").send(nonMember);
+
+    // Login users and get cookies
+    const login1 = await request(app).post("/api/auth/login").send({ email: user1.email, password: user1.password });
+    const login2 = await request(app).post("/api/auth/login").send({ email: user2.email, password: user2.password });
+    const loginNonMember = await request(app).post("/api/auth/login").send({ email: nonMember.email, password: nonMember.password });
+
+    user1Cookies = login1.headers["set-cookie"];
+    user2Cookies = login2.headers["set-cookie"];
+    nonMemberCookies = loginNonMember.headers["set-cookie"];
+
+    userId1 = login1.body.user ? login1.body.user.iduser : undefined;
+    userId2 = login2.body.user ? login2.body.user.iduser : undefined;
+
+    // 2. Create a direct conversation between user1 and user2
+    const convRes = await request(app)
+      .post("/api/conversations/direct")
+      .set("Cookie", user1Cookies)
+      .send({ memberIds: [userId1, userId2] });
+
+    console.log('Conversation creation response:', convRes.status, convRes.body);
+
+    conversationId = convRes.body.idconversation;
   });
 
   describe('POST /api/conversations/:id/hide', () => {
     test('should hide a conversation for the current user', async () => {
       const response = await request(app)
         .post(`/api/conversations/${conversationId}/hide`)
-        .set('Authorization', `Bearer ${authToken}`);
+        .set('Cookie', user1Cookies);
 
       expect(response.status).toBe(200);
       expect(response.body.message).toBe('Conversation hidden successfully');
@@ -26,7 +81,7 @@ describe('Conversation Features - Hide, Join, Unread Count', () => {
       // Vérifier que la conversation n'apparaît plus dans la liste
       const listResponse = await request(app)
         .get('/api/conversations')
-        .set('Authorization', `Bearer ${authToken}`);
+        .set('Cookie', user1Cookies);
 
       const conversationInList = listResponse.body.find(
         c => c.idconversation === conversationId
@@ -37,7 +92,7 @@ describe('Conversation Features - Hide, Join, Unread Count', () => {
     test('should not affect the other user', async () => {
       const response = await request(app)
         .get('/api/conversations')
-        .set('Authorization', `Bearer ${otherUserToken}`);
+        .set('Cookie', user2Cookies);
 
       const conversationInList = response.body.find(
         c => c.idconversation === conversationId
@@ -51,12 +106,12 @@ describe('Conversation Features - Hide, Join, Unread Count', () => {
       // Récréer une conversation cachée
       await request(app)
         .post(`/api/conversations/${conversationId}/hide`)
-        .set('Authorization', `Bearer ${authToken}`);
+        .set('Cookie', user1Cookies);
 
       // Unhide it
       const response = await request(app)
         .post(`/api/conversations/${conversationId}/unhide`)
-        .set('Authorization', `Bearer ${authToken}`);
+        .set('Cookie', user1Cookies);
 
       expect(response.status).toBe(200);
       expect(response.body.message).toBe('Conversation unhidden successfully');
@@ -64,7 +119,7 @@ describe('Conversation Features - Hide, Join, Unread Count', () => {
       // Vérifier que la conversation réapparaît dans la liste
       const listResponse = await request(app)
         .get('/api/conversations')
-        .set('Authorization', `Bearer ${authToken}`);
+        .set('Cookie', user1Cookies);
 
       const conversationInList = listResponse.body.find(
         c => c.idconversation === conversationId
@@ -75,7 +130,7 @@ describe('Conversation Features - Hide, Join, Unread Count', () => {
     test('should fail if conversation is not hidden', async () => {
       const response = await request(app)
         .post(`/api/conversations/${conversationId}/unhide`)
-        .set('Authorization', `Bearer ${authToken}`);
+        .set('Cookie', user1Cookies);
 
       expect(response.status).toBe(400);
       expect(response.body.message).toBe('Conversation is not hidden');
@@ -89,7 +144,7 @@ describe('Conversation Features - Hide, Join, Unread Count', () => {
       // Créer une conversation de groupe
       const createResponse = await request(app)
         .post('/api/conversations/group')
-        .set('Authorization', `Bearer ${userId1Token}`)
+        .set('Cookie', user1Cookies)
         .send({
           name: 'Test Group',
           description: 'Test Group Description',
@@ -102,7 +157,7 @@ describe('Conversation Features - Hide, Join, Unread Count', () => {
     test('should allow a user to join a GROUP conversation', async () => {
       const response = await request(app)
         .post(`/api/conversations/${groupConversationId}/join`)
-        .set('Authorization', `Bearer ${userId2Token}`);
+        .set('Cookie', user2Cookies);
 
       expect(response.status).toBe(201);
       expect(response.body.message).toBe('Joined conversation successfully');
@@ -111,7 +166,7 @@ describe('Conversation Features - Hide, Join, Unread Count', () => {
     test('should not allow joining a DIRECT conversation', async () => {
       const response = await request(app)
         .post(`/api/conversations/${conversationId}/join`)
-        .set('Authorization', `Bearer ${userId2Token}`);
+        .set('Cookie', user2Cookies);
 
       expect(response.status).toBe(400);
       expect(response.body.message).toBe('Can only join GROUP conversations');
@@ -121,12 +176,12 @@ describe('Conversation Features - Hide, Join, Unread Count', () => {
       // Rejoindre une première fois
       await request(app)
         .post(`/api/conversations/${groupConversationId}/join`)
-        .set('Authorization', `Bearer ${userId2Token}`);
+        .set('Cookie', user2Cookies);
 
       // Essayer de rejoindre à nouveau
       const response = await request(app)
         .post(`/api/conversations/${groupConversationId}/join`)
-        .set('Authorization', `Bearer ${userId2Token}`);
+        .set('Cookie', user2Cookies);
 
       expect(response.status).toBe(200);
       expect(response.body.message).toBe('Already a member of this conversation');
@@ -136,17 +191,17 @@ describe('Conversation Features - Hide, Join, Unread Count', () => {
       // Rejoindre
       await request(app)
         .post(`/api/conversations/${groupConversationId}/join`)
-        .set('Authorization', `Bearer ${userId2Token}`);
+        .set('Cookie', user2Cookies);
 
       // Quitter
       await request(app)
         .post(`/api/conversations/${groupConversationId}/leave`)
-        .set('Authorization', `Bearer ${userId2Token}`);
+        .set('Cookie', user2Cookies);
 
       // Rejoindre
       const response = await request(app)
         .post(`/api/conversations/${groupConversationId}/join`)
-        .set('Authorization', `Bearer ${userId2Token}`);
+        .set('Cookie', user2Cookies);
 
       expect(response.status).toBe(200);
       expect(response.body.message).toBe('Rejoined conversation successfully');
@@ -157,7 +212,7 @@ describe('Conversation Features - Hide, Join, Unread Count', () => {
     test('should include unreadCount in response', async () => {
       const response = await request(app)
         .get('/api/conversations')
-        .set('Authorization', `Bearer ${authToken}`);
+        .set('Cookie', user1Cookies);
 
       expect(response.status).toBe(200);
       expect(Array.isArray(response.body)).toBe(true);
@@ -171,19 +226,17 @@ describe('Conversation Features - Hide, Join, Unread Count', () => {
 
     test('should correctly count unread messages', async () => {
       // Envoyer 3 messages dans la conversation
-      const user2Token = otherUserToken;
-
       for (let i = 0; i < 3; i++) {
         await request(app)
           .post(`/api/conversations/${conversationId}/messages`)
-          .set('Authorization', `Bearer ${user2Token}`)
+          .set('Cookie', user2Cookies)
           .send({ content: `Message ${i + 1}` });
       }
 
       // User 1 ne doit pas avoir consulté les messages
       const response = await request(app)
         .get('/api/conversations')
-        .set('Authorization', `Bearer ${authToken}`);
+        .set('Cookie', user1Cookies);
 
       const conversation = response.body.find(
         c => c.idconversation === conversationId
@@ -195,18 +248,18 @@ describe('Conversation Features - Hide, Join, Unread Count', () => {
       // Envoyer un message
       await request(app)
         .post(`/api/conversations/${conversationId}/messages`)
-        .set('Authorization', `Bearer ${otherUserToken}`)
+        .set('Cookie', user2Cookies)
         .send({ content: 'Test message' });
 
       // Consulter les messages (cela met à jour lastReadAt)
       await request(app)
         .get(`/api/conversations/${conversationId}/messages`)
-        .set('Authorization', `Bearer ${authToken}`);
+        .set('Cookie', user1Cookies);
 
       // Vérifier que unreadCount est 0
       const response = await request(app)
         .get('/api/conversations')
-        .set('Authorization', `Bearer ${authToken}`);
+        .set('Cookie', user1Cookies);
 
       const conversation = response.body.find(
         c => c.idconversation === conversationId
@@ -220,13 +273,13 @@ describe('Conversation Features - Hide, Join, Unread Count', () => {
       // Envoyer un message d'un autre utilisateur
       await request(app)
         .post(`/api/conversations/${conversationId}/messages`)
-        .set('Authorization', `Bearer ${otherUserToken}`)
+        .set('Cookie', user2Cookies)
         .send({ content: 'Test message' });
 
       // Avant de consulter: unreadCount devrait être > 0
       let listResponse = await request(app)
         .get('/api/conversations')
-        .set('Authorization', `Bearer ${authToken}`);
+        .set('Cookie', user1Cookies);
 
       let conversation = listResponse.body.find(
         c => c.idconversation === conversationId
@@ -237,14 +290,14 @@ describe('Conversation Features - Hide, Join, Unread Count', () => {
       // Consulter les messages
       const messagesResponse = await request(app)
         .get(`/api/conversations/${conversationId}/messages`)
-        .set('Authorization', `Bearer ${authToken}`);
+        .set('Cookie', user1Cookies);
 
       expect(messagesResponse.status).toBe(200);
 
       // Après consultation: unreadCount devrait être 0
       listResponse = await request(app)
         .get('/api/conversations')
-        .set('Authorization', `Bearer ${authToken}`);
+        .set('Cookie', user1Cookies);
 
       conversation = listResponse.body.find(
         c => c.idconversation === conversationId
@@ -259,14 +312,14 @@ describe('Conversation Features - Hide, Join, Unread Count', () => {
       for (let i = 0; i < 2; i++) {
         await request(app)
           .post(`/api/conversations/${conversationId}/messages`)
-          .set('Authorization', `Bearer ${otherUserToken}`)
+          .set('Cookie', user2Cookies)
           .send({ content: `Message ${i + 1}` });
       }
 
       // Vérifier que unreadCount > 0
       let listResponse = await request(app)
         .get('/api/conversations')
-        .set('Authorization', `Bearer ${authToken}`);
+        .set('Cookie', user1Cookies);
 
       let conversation = listResponse.body.find(
         c => c.idconversation === conversationId
@@ -276,7 +329,7 @@ describe('Conversation Features - Hide, Join, Unread Count', () => {
       // Marquer comme lu explicitement
       const readResponse = await request(app)
         .post(`/api/conversations/${conversationId}/read`)
-        .set('Authorization', `Bearer ${authToken}`);
+        .set('Cookie', user1Cookies);
 
       expect(readResponse.status).toBe(200);
       expect(readResponse.body.message).toBe('Conversation marked as read');
@@ -284,7 +337,7 @@ describe('Conversation Features - Hide, Join, Unread Count', () => {
       // Vérifier que unreadCount = 0
       listResponse = await request(app)
         .get('/api/conversations')
-        .set('Authorization', `Bearer ${authToken}`);
+        .set('Cookie', user1Cookies);
 
       conversation = listResponse.body.find(
         c => c.idconversation === conversationId
@@ -295,7 +348,7 @@ describe('Conversation Features - Hide, Join, Unread Count', () => {
     test('should fail if user is not a member', async () => {
       const response = await request(app)
         .post(`/api/conversations/${conversationId}/read`)
-        .set('Authorization', `Bearer ${nonMemberToken}`);
+        .set('Cookie', nonMemberCookies);
 
       expect(response.status).toBe(403);
       expect(response.body.message).toBe('Not a member of this conversation');

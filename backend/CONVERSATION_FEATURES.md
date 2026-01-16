@@ -14,7 +14,7 @@ Permet à un utilisateur de masquer une conversation privée de sa liste sans la
 ### Requête
 ```bash
 POST /api/conversations/1/hide
-Authorization: Bearer {token}
+# Authentification via cookie HTTP-only accessToken (voir plus bas)
 ```
 
 ### Réponse (200 OK)
@@ -38,7 +38,7 @@ Permet à un utilisateur authentifié de rejoindre une conversation de groupe sa
 ### Requête
 ```bash
 POST /api/conversations/5/join
-Authorization: Bearer {token}
+# Authentification via cookie HTTP-only accessToken (voir plus bas)
 ```
 
 ### Réponse (201 Created ou 200 OK)
@@ -62,7 +62,7 @@ Ajoute un champ `unreadCount` à la réponse de `GET /api/conversations` qui ind
 ### Requête
 ```bash
 GET /api/conversations
-Authorization: Bearer {token}
+# Authentification via cookie HTTP-only accessToken (voir plus bas)
 ```
 
 ### Réponse (200 OK)
@@ -98,7 +98,7 @@ La route `GET /api/conversations/:id/messages` met à jour automatiquement le ti
 ### Requête
 ```bash
 GET /api/conversations/1/messages
-Authorization: Bearer {token}
+# Authentification via cookie HTTP-only accessToken (voir plus bas)
 ```
 
 ### Réponse (200 OK)
@@ -134,7 +134,7 @@ Route alternative pour marquer manuellement une conversation comme lue, si néce
 ### Requête
 ```bash
 POST /api/conversations/1/read
-Authorization: Bearer {token}
+# Authentification via cookie HTTP-only accessToken (voir plus bas)
 ```
 
 ### Réponse (200 OK)
@@ -180,7 +180,7 @@ L'ordre est crucial car Express évalue les routes de haut en bas.
 ```javascript
 // Récupérer les conversations avec le compteur de non-lus
 const response = await fetch('/api/conversations', {
-  headers: { 'Authorization': `Bearer ${token}` }
+  credentials: 'include'
 });
 const conversations = await response.json();
 
@@ -192,18 +192,20 @@ conversations.forEach(conv => {
 // Rejoindre une conversation
 await fetch('/api/conversations/5/join', {
   method: 'POST',
-  headers: { 'Authorization': `Bearer ${token}` }
+  headers: { 'Content-Type': 'application/json' },
+  credentials: 'include'
 });
 
 // Consulter les messages (marque automatiquement comme lus)
 const messages = await fetch('/api/conversations/1/messages', {
-  headers: { 'Authorization': `Bearer ${token}` }
+  credentials: 'include'
 });
 
 // Masquer une conversation
 await fetch('/api/conversations/1/hide', {
   method: 'POST',
-  headers: { 'Authorization': `Bearer ${token}` }
+  headers: { 'Content-Type': 'application/json' },
+  credentials: 'include'
 });
 ```
 
@@ -211,10 +213,15 @@ await fetch('/api/conversations/1/hide', {
 
 ## Notes importantes
 
-1. **Performances**: Le calcul de `unreadCount` pour chaque conversation peut être lent si vous avez beaucoup de messages. Envisagez de mettre en cache si nécessaire.
+1. **Authentification** :
+  - L'API utilise un cookie HTTP-only nommé `accessToken` pour l'authentification. Aucun header Authorization n'est requis.
+  - Pour les requêtes fetch côté frontend, ajoutez `credentials: 'include'`.
+  - Pour cURL, utilisez l'option `--cookie "accessToken=VOTRE_TOKEN"`.
 
-2. **Timestamps**: `lastReadAt` est défini automatiquement quand on appelle `GET /api/conversations/:id/messages`, mais la route `POST /api/conversations/:id/read` peut être utilisée pour un contrôle manuel.
+2. **Performances**: Le calcul de `unreadCount` pour chaque conversation peut être lent si vous avez beaucoup de messages. Envisagez de mettre en cache si nécessaire.
 
-3. **Soft delete**: L'utilisation de `leftAt` pour "masquer" une conversation signifie que la logique de `requireMembership()` fonctionne toujours correctement.
+3. **Timestamps**: `lastReadAt` est défini automatiquement quand on appelle `GET /api/conversations/:id/messages`, mais la route `POST /api/conversations/:id/read` peut être utilisée pour un contrôle manuel.
 
-4. **Migration**: N'oubliez pas d'exécuter la migration pour ajouter la colonne `lastReadAt` avant de déployer le code.
+4. **Soft delete**: L'utilisation de `leftAt` pour "masquer" une conversation signifie que la logique de `requireMembership()` fonctionne toujours correctement.
+
+5. **Migration**: N'oubliez pas d'exécuter la migration pour ajouter la colonne `lastReadAt` avant de déployer le code.
