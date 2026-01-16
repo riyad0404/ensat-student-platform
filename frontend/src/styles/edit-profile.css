@@ -1,0 +1,285 @@
+.edit-profile-page {
+    width: 100%;
+    min-height: 100vh;
+    background: #f5f5f5;
+    display: flex;
+    flex-direction: column;
+    padding-top: 350px;
+    margin-left: -32px; /* Même correction que profile */
+    width: calc(100% + 60px); 
+}
+
+.edit-profile-container {
+    max-width: 1500px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 20px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.edit-profile-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    padding: 40px;
+    border: 1px solid #e0e0e0;
+}
+
+/* AJOUTEZ ceci pour le titre DANS la carte */
+.edit-profile-title {
+    font-size: 1.8rem;
+    color: #A6048E;
+    font-weight: 600;
+    margin-bottom: 30px;
+    text-align: left;
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 5px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+.form-group {
+    margin-bottom: 25px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #333;
+    font-size: 0.95rem;
+}
+
+.form-input, .form-textarea {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #faf8f8;
+    border-radius: 4px;
+    font-size: 0.95rem;
+    color: #666;
+    background:#f8f9fa;
+    font-family: inherit;
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.form-input:focus, .form-textarea:focus {
+    outline: none;
+    border-color: #faf8f8;
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 80px;
+    line-height: 1.5;
+}
+
+/* FORM ACTIONS CORRIGÉ - SANS LIGNE */
+.form-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 40px;
+    justify-content: flex-start;
+    padding-top: 0; /* Changé de 20px à 0 */
+}
+
+/* Style des boutons comme login/register */
+.cancel-btn, .save-btn {
+    height: 44px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    letter-spacing: 0.5px;
+    padding: 0 40px;
+    min-width: 140px;
+    border: 2px solid transparent;
+}
+
+/* Bouton Cancel - style secondaire comme dans login */
+.cancel-btn {
+    background: transparent;
+    border: 2px solid #E334FE;
+    color: #E334FE;
+}
+
+.cancel-btn:hover:not(:disabled) {
+    background: linear-gradient(90deg, #E334FE, #A6048E);
+    color: white;
+    border-color: transparent;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(227, 52, 254, 0.25);
+}
+
+/* Bouton Save - style primaire comme dans login */
+.save-btn {
+    background: linear-gradient(90deg, #E334FE, #A6048E);
+    color: white;
+    border: none;
+}
+
+.save-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(227, 52, 254, 0.25);
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .edit-profile-card {
+        padding: 25px;
+    }
+    
+    .edit-profile-container {
+        padding: 20px 15px;
+    }
+}
+
+/* Messages de statut - AJOUTEZ CE BLOC */
+.edit-message {
+    padding: 12px 20px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    animation: fadeIn 0.3s ease;
+}
+
+.edit-message.success {
+    background: rgba(46, 213, 115, 0.1);
+    border-left: 3px solid #2ed573;
+    color: #2ed573;
+}
+
+.edit-message.error {
+    background: rgba(255, 71, 87, 0.1);
+    border-left: 3px solid #ff4757;
+    color: #ff4757;
+}
+
+.edit-message.info {
+    background: rgba(52, 152, 219, 0.1);
+    border-left: 3px solid #3498db;
+    color: #3498db;
+}
+
+/* Animation pour les messages - AJOUTEZ */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Message d'erreur mot de passe - AJOUTEZ */
+.error-message {
+    color: #ff4757;
+    font-size: 0.9rem;
+    margin-top: 10px;
+    padding: 10px;
+    background: rgba(255, 71, 87, 0.1);
+    border-radius: 4px;
+}
+
+/* Info texte - AJOUTEZ */
+.edit-info {
+    margin-top: -15px;  /* Remonte le texte pour être sous le titre */
+    margin-bottom: 25px; /* Espace avant le formulaire */
+    padding: 10px 15px;
+   background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 3px solid #E334FE;
+}
+
+.edit-info p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+/* Désactiver les boutons pendant le chargement - AJOUTEZ */
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+
+/* Section mot de passe - CORRIGÉ */
+.password-section {
+    margin-top: 20px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #faf8f8; /* Ajoute une bordure pour mieux voir */
+}
+
+/* Titre de la section mot de passe */
+.password-section h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: #333;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* Texte d'information dans la section mot de passe */
+.password-info {
+    margin-bottom: 20px;
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+/* Ajustement des groupes de formulaire DANS la section mot de passe */
+.password-section .form-group {
+    margin-bottom: 20px; /* Espacement entre les champs */
+}
+
+.password-section .form-row {
+    margin-bottom: 15px; /* Espacement entre les lignes */
+}
+
+/* Ajustement spécifique pour les champs de mot de passe */
+.password-section .form-input {
+    background: white; /* Fond blanc pour mieux voir */
+    border-color: #ddd; /* Bordure plus visible */
+}
+
+/* Note sous la section mot de passe */
+.password-note {
+    margin-top: 15px;
+    font-size: 0.85rem;
+    color: #666;
+    font-style: italic;
+}
+
+/* Pour que les champs ne soient pas trop collés */
+.password-section .form-row .form-group {
+    margin-bottom: 0; /* Retire la marge inférieure des groupes dans les rows */
+}
+
+/* Ajustement responsive pour la section mot de passe */
+@media (max-width: 768px) {
+    .password-section {
+        padding: 15px;
+    }
+    
+    .password-section .form-row {
+        margin-bottom: 0;
+    }
+}
+

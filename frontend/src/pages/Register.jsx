@@ -1,12 +1,22 @@
 // src/pages/Register.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "./../styles/login.css";
-import { FiMail, FiLock , FiEye, FiEyeOff  } from "react-icons/fi";
+import { FiMail, FiEye, FiEyeOff } from "react-icons/fi";
 import registerImg from "../assets/login-illustration.png";
 import Input from "../components/input.jsx";
 import Button from "../components/button.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
+
+const SIGNUP_LOCK_KEY = "signup_lock_until_ms";
+
+
+const formatMMSS = (totalSeconds) => {
+  const s = Math.max(0, Number(totalSeconds) || 0);
+  const mm = String(Math.floor(s / 60)).padStart(2, "0");
+  const ss = String(Math.floor(s % 60)).padStart(2, "0");
+  return `${mm}:${ss}`;
+};
 
 export default function Register() {
   const { user, register } = useAuth();
@@ -18,114 +28,154 @@ export default function Register() {
     email: "",
     niveau: "",
     password: "",
-    secretCode: ""
+    secretCode: "",
   });
-  
+
   const [fieldErrors, setFieldErrors] = useState({
     nom: "",
     prenom: "",
     email: "",
     niveau: "",
     password: "",
-    secretCode: ""
+    secretCode: "",
   });
-  
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
+  // ✅ Lock state (persistant)
+  const [signupLockedUntilMs, setSignupLockedUntilMs] = useState(null);
+  const [signupRemainingSec, setSignupRemainingSec] = useState(0);
+
+  const isSignupLocked = useMemo(() => {
+    return !!signupLockedUntilMs && Date.now() < signupLockedUntilMs;
+  }, [signupLockedUntilMs]);
 
   useEffect(() => {
     if (user) navigate("/", { replace: true });
   }, [user, navigate]);
 
+  // ✅ Charger lock depuis localStorage au montage
+  useEffect(() => {
+    const raw = localStorage.getItem(SIGNUP_LOCK_KEY);
+    const until = raw ? Number(raw) : null;
+    if (until && !Number.isNaN(until) && until > Date.now()) {
+      setSignupLockedUntilMs(until);
+      setSignupRemainingSec(Math.ceil((until - Date.now()) / 1000));
+    } else {
+      localStorage.removeItem(SIGNUP_LOCK_KEY);
+      setSignupLockedUntilMs(null);
+      setSignupRemainingSec(0);
+    }
+  }, []);
+
+  // ✅ Décompte (continue même après refresh/retour page)
+  useEffect(() => {
+    if (!signupLockedUntilMs) return;
+
+    const tick = () => {
+      const diff = signupLockedUntilMs - Date.now();
+      if (diff <= 0) {
+        setSignupLockedUntilMs(null);
+        setSignupRemainingSec(0);
+        localStorage.removeItem(SIGNUP_LOCK_KEY);
+        // Optionnel: effacer le message d’erreur quand c’est débloqué
+        setError("");
+        return;
+      }
+      setSignupRemainingSec(Math.ceil(diff / 1000));
+    };
+
+    tick();
+    const id = setInterval(tick, 250);
+    return () => clearInterval(id);
+  }, [signupLockedUntilMs]);
+
   const validateField = (fieldName, value) => {
     switch (fieldName) {
       case "email":
-        if (!value) return "Email requis";
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-          return "Format d'email invalide";
-        }
+        if (!value) return "Email required";
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Invalid email format";
         return "";
-        
+
       case "password":
-        if (!value) return "Mot de passe requis";
-        if (value.length < 6) return "Minimum 6 caractères";
+        if (!value) return "Password required";
+        if (value.length < 6) return "Minimum 6 characters";
         return "";
-        
+
       case "secretCode":
-        if (!value) return "Code secret requis";
-        if (!/^\d{6}$/.test(value)) return "6 chiffres requis";
+        if (!value) return "Secret code required";
+        if (!/^\d{6}$/.test(value)) return "6 digits required";
         return "";
-        
+
       case "nom":
       case "prenom":
-        if (!value) return "Champ requis";
-        if (value.length < 2) return "Minimum 2 caractères";
+        if (!value) return "Field required";
+        if (value.length < 2) return "Minimum 2 characters";
         return "";
-        
+
       case "niveau":
-        if (!value) return "Niveau requis";
+        if (!value) return "Level required";
         return "";
-        
+
       default:
         return "";
     }
   };
 
   const handleChange = (field) => (e) => {
+    // ✅ si lock actif, on ignore la saisie
+    if (isSignupLocked) return;
+
     const value = e.target.value;
-    
+
     setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
-    
-    // Validation en temps réel
+
     const errorMsg = validateField(field, value);
-    setFieldErrors(prev => ({
+    setFieldErrors((prev) => ({
       ...prev,
-      [field]: errorMsg
+      [field]: errorMsg,
     }));
-    
-    // Réinitialiser l'erreur générale quand l'utilisateur modifie un champ
+
     if (error) setError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // ✅ si lock actif, on ne soumet pas
+    if (isSignupLocked) return;
+
     setError("");
     setSuccessMessage("");
 
     const { nom, prenom, email, niveau, password, secretCode } = formData;
 
-    // Validation complète
     const newErrors = {
       nom: validateField("nom", nom),
       prenom: validateField("prenom", prenom),
       email: validateField("email", email),
       niveau: validateField("niveau", niveau),
       password: validateField("password", password),
-      secretCode: validateField("secretCode", secretCode)
+      secretCode: validateField("secretCode", secretCode),
     };
 
     setFieldErrors(newErrors);
 
-    // Vérifier s'il y a des erreurs
-    const hasErrors = Object.values(newErrors).some(err => err !== "");
+    const hasErrors = Object.values(newErrors).some((err) => err !== "");
     if (hasErrors) {
-      setError("Veuillez vérifier les informations saisies.");
+      setError("Please check the entered information.");
       return;
     }
 
-    // Convertir secretCode en nombre
-    const secretCodeNum = parseInt(secretCode);
-    if (isNaN(secretCodeNum)) {
-      setFieldErrors(prev => ({ 
-        ...prev, 
-        secretCode: "Le code secret doit être un nombre." 
-      }));
+    const secretCodeNum = parseInt(secretCode, 10);
+    if (Number.isNaN(secretCodeNum)) {
+      setFieldErrors((prev) => ({ ...prev, secretCode: "Secret code must be a number." }));
       return;
     }
 
@@ -138,192 +188,180 @@ export default function Register() {
         email,
         niveau,
         password,
-        secretCode: secretCodeNum
+        secretCode: secretCodeNum,
       });
 
+      // ✅ 1) PRIORITÉ: cas 429 (RATE LIMIT) → lock + compteur + champs bloqués
+      if (!result.success && result.errorCode === "RATE_LIMIT") {
+        const seconds = Number(result.retryAfterSeconds);
+        const untilMs =
+          Number.isFinite(seconds) && seconds > 0
+            ? Date.now() + seconds * 1000
+            : Date.now() + 10 * 60 * 1000; // fallback 10 min si le backend n’envoie pas retry-after
+
+        localStorage.setItem(SIGNUP_LOCK_KEY, String(untilMs));
+        setSignupLockedUntilMs(untilMs);
+        setSignupRemainingSec(Math.ceil((untilMs - Date.now()) / 1000));
+
+        // ✅ Message rouge + compteur comme login
+        setError(`Too many signup attempts. Please try again in ${formatMMSS(Math.ceil((untilMs - Date.now()) / 1000))}.`);
+        return;
+      }
+
+      // ✅ 2) succès
       if (result.success) {
-        setSuccessMessage("Compte créé avec succès ! Redirection...");
+        setSuccessMessage("Account created successfully! Redirecting...");
         setTimeout(() => navigate("/login"), 2000);
-      } else {
-        // 🎯 Message d'erreur personnalisé - Email déjà existant
-        setError(" Cet email est déjà enregistré. Veuillez utiliser un autre email ou vous connecter.");
-        setFieldErrors(prev => ({
-          ...prev,
-          email: "Email déjà utilisé"
-        }));
+        return;
       }
+
+      // ✅ 3) autres erreurs (ex: email déjà utilisé)
+      const msg = (result.error || "").toLowerCase();
+
+      if (result.status === 409 || msg.includes("email") || msg.includes("already") || msg.includes("exists") || msg.includes("duplicate")) {
+        setError("This email is already registered. Please use another email or login.");
+        setFieldErrors((prev) => ({ ...prev, email: "Email already in use" }));
+        return;
+      }
+
+      if (result.status === 400 && (msg.includes("code") || msg.includes("secret"))) {
+        setError("Invalid secret code. Please contact the administrator for the correct code.");
+        setFieldErrors((prev) => ({ ...prev, secretCode: "Invalid code" }));
+        return;
+      }
+
+      setError(result.error || "Registration failed. Please try again.");
     } catch (err) {
-      console.error("Erreur d'inscription:", err);
-      
-      // 🎯 Gestion des erreurs HTTP avec messages personnalisés
-      const status = err.response?.status;
-      const serverMessage = err.response?.data?.message || 
-                           err.response?.data?.error || 
-                           err.message || "";
-      
-      console.log("Status:", status);
-      console.log("Server message:", serverMessage);
-      
-      // Analyse du message d'erreur pour détecter le type
-      const errorLower = serverMessage.toLowerCase();
-      
-      if (
-        status === 409 || 
-        errorLower.includes("email") ||
-        errorLower.includes("already") ||
-        errorLower.includes("existe") ||
-        errorLower.includes("duplicate") ||
-        errorLower.includes("déjà")
-      ) {
-        // 📧 Email déjà existant
-        setError("Cet email est déjà enregistré. Veuillez utiliser un autre email ou vous connecter.");
-        setFieldErrors(prev => ({
-          ...prev,
-          email: "Email déjà utilisé"
-        }));
-      } 
-      else if (
-        status === 400 &&
-        (errorLower.includes("code") || errorLower.includes("secret"))
-      ) {
-        // 🔐 Code secret invalide
-        setError(" Code secret invalide. Veuillez contacter l'administrateur pour obtenir le bon code.");
-        setFieldErrors(prev => ({
-          ...prev,
-          secretCode: "Code invalide"
-        }));
-      }
-      else if (status === 400) {
-        // ⚠️ Données invalides
-        setError(" Les informations saisies sont invalides. Veuillez vérifier tous les champs.");
-      }
-      else if (status === 500) {
-        // 🔧 Erreur serveur
-        setError(" Erreur du serveur. Veuillez réessayer dans quelques instants.");
-      } 
-      else if (err.message === "Network Error" || !navigator.onLine) {
-        // 🌐 Problème de connexion
-        setError(" Problème de connexion internet. Veuillez vérifier votre connexion.");
-      }
-      else {
-        // ❌ Erreur générique
-        setError("Une erreur s'est produite lors de l'inscription. Veuillez réessayer.");
-      }
+      console.error("Registration error:", err);
+      setError("Registration failed. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
+  // ✅ Quand lock actif, on met à jour le message d’erreur avec le compteur (comme login)
+  useEffect(() => {
+    if (!isSignupLocked) return;
+    setError(`Too many signup attempts. Please try again in ${formatMMSS(signupRemainingSec)}.`);
+  }, [isSignupLocked, signupRemainingSec]);
+
   return (
     <div className="login-page">
       <div className="login-card">
         <div className="login-left">
-          <img
-            src={registerImg}
-            alt="Register Illustration"
-            className="login-illustration"
-          />
+          <img src={registerImg} alt="Register Illustration" className="login-illustration" />
         </div>
 
         <div className="login-right register-page">
-          <h2>Créer un Compte</h2>
-          <p className="subtitle">Bienvenue dans la communauté</p>
+          <h2>Create an Account</h2>
+          <p className="subtitle">Welcome to the community</p>
 
-          {error && <div className="error-text"> {error}</div>}
+          {/* ✅ même design d’erreur que login (box rouge) */}
+          {error && <div className="error-message">{error}</div>}
           {successMessage && <div className="success-text">✅ {successMessage}</div>}
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} noValidate>
             <Input
-              label="Nom"
-              placeholder="Entrez votre nom"
+              label="Last Name"
+              placeholder="Enter your last name"
               value={formData.nom}
               onChange={handleChange("nom")}
               error={fieldErrors.nom}
               required
+              disabled={isSignupLocked || loading}
             />
             <Input
-              label="Prénom"
-              placeholder="Entrez votre prénom"
+              label="First Name"
+              placeholder="Enter your first name"
               value={formData.prenom}
               onChange={handleChange("prenom")}
               error={fieldErrors.prenom}
               required
+              disabled={isSignupLocked || loading}
             />
             <Input
               label="Email"
               type="email"
-              placeholder="Entrez votre email"
+              placeholder="Enter your email"
               icon={<FiMail />}
               value={formData.email}
               onChange={handleChange("email")}
               error={fieldErrors.email}
               required
+              disabled={isSignupLocked || loading}
             />
             <Input
-              label="Niveau"
-              placeholder="Entrez votre niveau"
+              label="Level"
+              placeholder="Enter your level"
               value={formData.niveau}
               onChange={handleChange("niveau")}
               error={fieldErrors.niveau}
               required
+              disabled={isSignupLocked || loading}
             />
-           <div style={{ position: 'relative', marginBottom: '1.2rem' }}>
-              <Input
-                label="Mot de passe"
-                type={showPassword ? "text" : "password"}
-                placeholder="Entrez votre mot de passe"
 
+            <div style={{ position: "relative", marginBottom: "1.2rem" }}>
+              <Input
+                label="Password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter your password"
                 value={formData.password}
                 onChange={handleChange("password")}
                 error={fieldErrors.password}
                 required
+                disabled={isSignupLocked || loading}
               />
-              <span 
-                onClick={() => setShowPassword(!showPassword)}
-                style={{ 
-                  position: 'absolute',
-                  right: '1rem',
-                  top: '2.3rem',
-                  cursor: 'pointer',
-                  color: '#666',
-                  display: 'flex',
-                  alignItems: 'center',
+              <span
+                onClick={() => !isSignupLocked && setShowPassword(!showPassword)}
+                style={{
+                  position: "absolute",
+                  right: "1rem",
+                  top: "2.3rem",
+                  cursor: isSignupLocked ? "not-allowed" : "pointer",
+                  color: "#666",
+                  display: "flex",
+                  alignItems: "center",
                   zIndex: 10,
-                  transition: 'color 0.2s'
+                  transition: "color 0.2s",
+                  opacity: isSignupLocked ? 0.5 : 1,
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.color = '#4a90e2'}
-                onMouseLeave={(e) => e.currentTarget.style.color = '#666'}
               >
                 {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
               </span>
             </div>
+
             <Input
-              label="Code Secret"
+              label="Secret Code"
               type="number"
-              placeholder="Entrez le code à 6 chiffres"
+              placeholder="Enter the 6-digit code"
               value={formData.secretCode}
               onChange={handleChange("secretCode")}
               error={fieldErrors.secretCode}
               required
               min="100000"
               max="999999"
+              disabled={isSignupLocked || loading}
             />
 
-            <Button
-              text={loading ? "CRÉATION EN COURS..." : "CRÉER UN COMPTE"}
-              className="btn-create"
-              type="submit"
-              disabled={loading}
-            />
+           <Button
+  text={
+    isSignupLocked
+      ? "TRY AGAIN IN 10 MINUTES"
+      : loading
+      ? "CREATING ACCOUNT..."
+      : "CREATE ACCOUNT"
+  }
+  className="btn-create"
+  type="submit"
+  disabled={loading || isSignupLocked}
+/>
+
           </form>
 
           <p className="redirect">
-            Vous avez déjà un compte ?{" "}
-            <span
-              onClick={() => navigate("/login")}
-              style={{ cursor: "pointer" }} 
-            >
-              Se connecter
+            Already have an account?{" "}
+            <span onClick={() => navigate("/login")} style={{ cursor: "pointer" }}>
+              Login
             </span>
           </p>
         </div>

@@ -1,7 +1,14 @@
 import { User } from './user.js';
+import { Post } from "./post.js";
+import { Document } from "./document.js";
+import { Reaction } from "./reaction.js";
+import { Comment } from "./comment.js";
 import { Conversation } from './conversation.js';
 import { ConversationMember } from './conversationMember.js';
 import { Message } from './message.js';
+import { ConversationChat } from './ConversationChat.js';
+import { MessageChat } from './MessageChat.js';
+
 
 // Conversation created by a User
 User.hasMany(Conversation, { foreignKey: 'createdBy' });
@@ -21,4 +28,64 @@ Message.belongsTo(Conversation, { foreignKey: 'idconversation' });
 User.hasMany(Message, { foreignKey: 'senderId' });
 Message.belongsTo(User, { foreignKey: 'senderId', as: 'sender' });
 
-export { User, Conversation, ConversationMember, Message };
+export { User, Conversation, ConversationMember, Message, Post, Document, Reaction, Comment, ConversationChat, MessageChat };
+// Posts and Documents
+Post.hasMany(Document, { foreignKey: "idpost", as: "documents" });
+Document.belongsTo(Post, { foreignKey: "idpost", as: "post" });
+// Users and Posts
+User.hasMany(Post, { foreignKey: "iduser" });
+Post.belongsTo(User, { foreignKey: "iduser", as: "auteur" });
+// Posts and Reactions
+Post.hasMany(Reaction, { foreignKey: "idpost" });
+Reaction.belongsTo(Post, { foreignKey: "idpost" });
+// Users and Reactions
+User.hasMany(Reaction, { foreignKey: "iduser" });
+Reaction.belongsTo(User, { foreignKey: "iduser" });
+Comment.hasMany(Reaction, { foreignKey: "idcomment", as: "reactions" });
+Reaction.belongsTo(Comment, { foreignKey: "idcomment", as: "comment" });
+
+// Post -> Comment
+Post.hasMany(Comment, { foreignKey: "idpost", as: "comments" });
+Comment.belongsTo(Post, { foreignKey: "idpost", as: "post" });
+
+// User -> Comment
+User.hasMany(Comment, { foreignKey: "iduser" });
+Comment.belongsTo(User, { foreignKey: "iduser", as: "auteur" });
+
+// Replies (thread)
+Comment.hasMany(Comment, { foreignKey: "idparent", as: "replies" });
+Comment.belongsTo(Comment, { foreignKey: "idparent", as: "parent" });
+
+// Comment -> Document (car documents.idcomment existe)
+// Document -> User
+Document.belongsTo(User, { foreignKey: "iduser", as: "auteur" });
+User.hasMany(Document, { foreignKey: "iduser" });
+// Document -> Comment (optionnel mais recommandé)
+// Comment -> Documents
+Comment.hasMany(Document, {foreignKey: "idcomment",as: "documents",});
+Document.belongsTo(Comment, {foreignKey: "idcomment",as: "comment",});
+// Chat Associations
+User.hasMany(ConversationChat, { 
+  foreignKey: 'userId', 
+  as: 'chatConversations',
+  onDelete: 'CASCADE' 
+});
+
+ConversationChat.belongsTo(User, { 
+  foreignKey: 'userId', 
+  as: 'user' 
+});
+
+// Relations ConversationChat <-> MessageChat
+ConversationChat.hasMany(MessageChat, { 
+  foreignKey: 'idConvChat', 
+  as: 'chatMessages',
+  onDelete: 'CASCADE' 
+});
+
+MessageChat.belongsTo(ConversationChat, { 
+  foreignKey: 'idConvChat', 
+  as: 'conversationChat' 
+});
+
+

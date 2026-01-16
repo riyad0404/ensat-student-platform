@@ -37,13 +37,20 @@ axiosInstance.interceptors.response.use(
     const currentPath = window.location.pathname;
     const isResetPasswordRoute = currentPath.startsWith('/reset-password/');
     
-    if (error.response?.status === 401 && !isResetPasswordRoute) {
-      console.log('🔒 Session expirée, redirection vers login...');
-      if (currentPath !== '/login') {
-        window.location.href = '/login';
-      }
-    }
-    
+   const url = error.config?.url || "";
+const isAuthLoginRequest = url.includes("/auth/login");
+
+if (
+  error.response?.status === 401 &&
+  !isResetPasswordRoute &&
+  !isAuthLoginRequest
+) {
+  console.log('🔒 Session expirée, redirection vers login...');
+  if (currentPath !== '/landing') {
+    window.location.href = '/landing';
+  }
+}
+
     if (!error.response) {
       console.error('🌐 Erreur réseau - Vérifiez votre connexion');
     }

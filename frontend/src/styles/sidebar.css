@@ -1,0 +1,302 @@
+/* sidebar.css - Style épuré et coloré */
+.sidebar-container {
+    width: var(--sidebar-width);
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    background: linear-gradient(180deg, #ffffff 0%, #ffffff 100%);
+    display: flex;
+    flex-direction: column;
+    color: #E334FE;
+    z-index: 1000;
+    overflow-y: auto;
+    transition: all 0.3s ease;
+    box-shadow: 2px 0 15px rgba(227, 52, 254, 0.15);
+}
+
+/* Mode collapsed */
+.sidebar-container.collapsed {
+    width: var(--sidebar-collapsed-width);
+}
+
+/* Logo section - position relative pour le bouton absolu */
+.logo-section {
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    min-height: 70px;
+    
+}
+
+/* Logo */
+.logo {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #E334FE;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    text-shadow: 0 2px 4px rgba(227, 52, 254, 0.2);
+    white-space: nowrap;
+    flex: 1;
+}
+
+/* Mode collapsed - logo centré seul */
+.sidebar-container.collapsed .logo-section {
+    padding: 25px 10px;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.sidebar-container.collapsed .logo {
+    font-size: 1.2rem;
+    text-align: center;
+    width: 100%;
+    order: 2; /* Logo en dessous du bouton */
+    margin-top: 10px;
+}
+
+/* CORRECTION: Bouton collapse positionné au-dessus du logo en mode collapsed */
+.collapse-btn {
+    background: #E334FE;
+    border: none;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(227, 52, 254, 0.3);
+    flex-shrink: 0;
+}
+
+/* Mode collapsed - bouton AU-DESSUS du logo */
+.sidebar-container.collapsed .collapse-btn {
+    order: 1; /* Bouton au-dessus du logo */
+    margin: 0;
+    position: relative;
+    top: 0;
+    width: 30px;
+    height: 30px;
+    background: #E334FE;
+}
+
+.collapse-btn:hover {
+    background: #A6048E;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(227, 52, 254, 0.4);
+}
+
+.collapse-btn .material-icons {
+    font-size: 20px;
+    margin: 0;
+    font-weight: bold;
+    transition: transform 0.3s ease;
+}
+
+/* Animation de rotation pour l'icône */
+.sidebar-container.collapsed .collapse-btn .material-icons {
+    transform: rotate(180deg);
+}
+
+/* Navigation */
+.nav-links {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 15px 0 0 0;
+}
+
+/* Items navigation avec bords arrondis */
+.nav-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 20px;
+    color: #E334FE;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    margin: 0 15px 8px 15px;
+    border-radius: 12px;
+    position: relative;
+}
+
+.sidebar-container.collapsed .nav-item {
+    justify-content: center;
+    padding: 14px 0;
+    margin: 0 12px 8px 12px;
+    border-radius: 12px;
+}
+
+/* Hover effect avec bords arrondis */
+.nav-item:hover {
+    background: rgba(227, 52, 254, 0.08);
+}
+
+/* Élément actif avec bords arrondis */
+.nav-item.active {
+    background: linear-gradient(90deg, #E334FE 0%, #A6048E 100%);
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(227, 52, 254, 0.2);
+    border-radius: 12px;
+}
+
+/* Supprime la barre verticale */
+.nav-item.active::before {
+    display: none;
+}
+
+/* Icônes standards */
+.material-icons {
+    width: 22px;
+    height: 22px;
+    margin-right: 15px;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: inherit;
+    flex-shrink: 0;
+}
+
+.sidebar-container.collapsed .material-icons {
+    margin-right: 0;
+}
+
+/* Labels */
+.nav-label {
+    font-size: 0.92rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    opacity: 1;
+    white-space: nowrap;
+}
+
+.sidebar-container.collapsed .nav-label {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    display: none;
+}
+
+/* Section logout */
+.bottom-section {
+    margin-top: auto;
+    padding: 20px;
+    
+}
+
+/* Bouton logout avec bords arrondis */
+.logout-btn {
+    background: transparent;
+    color: #E334FE;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 20px;
+    width: 100%;
+    height: 45px;
+    font-size: 0.92rem;
+    font-weight: 600;
+}
+
+.logout-btn:hover {
+    background: rgba(227, 52, 254, 0.08);
+    color: #E334FE;
+}
+
+.logout-btn .material-icons {
+    margin-right: 12px;
+    font-size: 20px;
+    color: inherit;
+}
+
+.sidebar-container.collapsed .logout-btn {
+    padding: 0;
+    justify-content: center;
+    width: 100%;
+    height: 45px;
+    border-radius: 12px;
+}
+
+.sidebar-container.collapsed .logout-btn .material-icons {
+    margin-right: 0;
+}
+
+.logout-label {
+    font-size: 0.92rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    opacity: 1;
+    white-space: nowrap;
+}
+
+.sidebar-container.collapsed .logout-label {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    display: none;
+}
+
+/* Tooltip pour mode collapsed */
+.sidebar-container.collapsed .nav-item[title]:hover::after,
+.sidebar-container.collapsed .logout-btn[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    left: 75px;
+    background: #E334FE;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    white-space: nowrap;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(227, 52, 254, 0.3);
+    animation: fadeIn 0.2s ease;
+}
+
+/* Pour que le contenu s'adapte */
+.sidebar-container ~ div {
+    margin-left: var(--sidebar-width);
+    transition: margin-left 0.3s ease;
+    background: #f5f5f5;
+    /* keep top padding minimal; TopBar is sticky inside content */
+    padding-top: 0;
+}
+
+.sidebar-container.collapsed ~ div {
+    margin-left: var(--sidebar-collapsed-width) !important;
+    width: calc(100vw - var(--sidebar-collapsed-width)) !important;
+    padding-top: 0; /* keep same top spacing when collapsed */
+}
+
+/* Animation pour les tooltips */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Animation smooth pour tout */
+.sidebar-container * {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

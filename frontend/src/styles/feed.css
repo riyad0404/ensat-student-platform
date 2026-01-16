@@ -2,11 +2,11 @@
 
 .feed {
   width: 100%;
-  padding: 0;
-  margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 24px;
+  /* On s'assure qu'il prend toute la place offerte par le parent */
+  max-width: 100%; 
 }
 
 @media (max-width: 768px) {

@@ -1,7 +1,9 @@
+// src/pages/ResetPasswordByCode.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./../styles/login.css";
 import resetImg from "../assets/login-illustration.png";
+import { FiEye, FiEyeOff } from "react-icons/fi"; // Ajout des icônes
 import Input from "../components/input";
 import Button from "../components/button";
 import axios from "axios";
@@ -26,6 +28,8 @@ export default function ResetPasswordByCode() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Validation
   const validateField = (name, value) => {
@@ -114,7 +118,7 @@ export default function ResetPasswordByCode() {
       setTimeout(() => navigate("/login"), 2000);
       
     } catch (err) {
-      setError("❌  Invalid or expired Code secret");
+      setError("❌ Invalid or expired Code secret");
       console.error(err);
     } finally {
       setLoading(false);
@@ -123,7 +127,7 @@ export default function ResetPasswordByCode() {
 
   return (
     <div className="login-page">
-      <div className="login-card reset-page"> {/* ⭐ AJOUTEZ reset-page */}
+      <div className="login-card reset-page">
         
         {/* IMAGE */}
         <div className="login-left">
@@ -163,25 +167,67 @@ export default function ResetPasswordByCode() {
               required
             />
             
-            <Input 
-              label="NEW PASSWORD" 
-              type="password" 
-              placeholder="Enter new password"
-              value={formData.newPassword}
-              onChange={handleChange("newPassword")}
-              error={errors.newPassword}
-              required
-            />
+          
+            <div style={{ position: 'relative', marginBottom: '1.2rem' }}>
+              <Input 
+                label="NEW PASSWORD" 
+                type={showNewPassword ? "text" : "password"}
+                placeholder="Enter new password"
+                value={formData.newPassword}
+                onChange={handleChange("newPassword")}
+                error={errors.newPassword}
+                required
+              />
+              <span 
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                style={{ 
+                  position: 'absolute',
+                  right: '1rem',
+                  top: '2.3rem',
+                  cursor: 'pointer',
+                  color: '#666',
+                  display: 'flex',
+                  alignItems: 'center',
+                  zIndex: 10,
+                  transition: 'color 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#4a90e2'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#666'}
+              >
+                {showNewPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+              </span>
+            </div>
             
-            <Input 
-              label="CONFIRM PASSWORD" 
-              type="password" 
-              placeholder="Confirm new password"
-              value={formData.confirmPassword}
-              onChange={handleChange("confirmPassword")}
-              error={errors.confirmPassword}
-              required
-            />
+            
+            <div style={{ position: 'relative', marginBottom: '1.2rem' }}>
+              <Input 
+                label="CONFIRM PASSWORD" 
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="Confirm new password"
+                value={formData.confirmPassword}
+                onChange={handleChange("confirmPassword")}
+                error={errors.confirmPassword}
+                required
+              />
+              <span 
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={{ 
+                  position: 'absolute',
+                  right: '1rem',
+                  top: '2.3rem',
+                  cursor: 'pointer',
+                  color: '#666',
+                  display: 'flex',
+                  alignItems: 'center',
+                  zIndex: 10,
+                  transition: 'color 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = '#4a90e2'}
+                onMouseLeave={(e) => e.currentTarget.style.color = '#666'}
+              >
+                {showConfirmPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+              </span>
+            </div>
 
             <Button 
               text={loading ? "RESETTING..." : "RESET PASSWORD"} 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import TopBar from "../components/TopBar";
+import { useLocation } from 'react-router-dom';
 import Feed from "../components/feed";
 import CreatePostModal from "../components/CreatePostModal";
 import { getAllPosts } from "../api/postAPI";
@@ -12,7 +12,22 @@ const HomePage = () => {
 
   useEffect(() => {
     fetchPosts();
+    // initial check handled below via location effect
   }, []);
+
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('create') === '1') {
+      setIsModalOpen(true);
+      // remove the query param without reloading
+      params.delete('create');
+      const newSearch = params.toString();
+      const newUrl = location.pathname + (newSearch ? `?${newSearch}` : '');
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [location.search]);
 
   const fetchPosts = async () => {
     try {
@@ -46,111 +61,30 @@ const HomePage = () => {
     }
   };
 
-  const handleNewPost = () => {
-    setIsModalOpen(true);
-  };
+  // removed unused handleNewPost
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
   };
 
   const handlePostCreated = (newPost) => {
-    // Ajouter le nouveau post en haut de la liste
     setPosts([newPost, ...posts]);
   };
 
   return (
-    <div style={{ width: '100%', margin: 0, padding: 0 }}>
-      <TopBar onAddPost={handleNewPost} />
-      
-      {loading && (
-        <div style={{ 
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          padding: '60px 20px',
-          color: '#666',
-          fontSize: '16px'
-        }}>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '15px'
-          }}>
-            <div className="spinner" style={{
-              width: '40px',
-              height: '40px',
-              border: '3px solid #f3f4f6',
-              borderTop: '3px solid #a855f7',
-              borderRadius: '50%',
-              animation: 'spin 0.8s linear infinite'
-            }} />
-            <span>Chargement des posts...</span>
-          </div>
-        </div>
-      )}
-      
-      {error && (
-        <div style={{ 
-          textAlign: 'center', 
-          padding: '20px 40px', 
-          color: '#ef4444',
-          backgroundColor: '#fee2e2',
-          fontSize: '14px'
-        }}>
-          ⚠️ Erreur: {error}
-        </div>
-      )}
-      
-      {!loading && !error && posts.length === 0 && (
-        <div style={{ 
-          textAlign: 'center', 
-          padding: '60px 20px',
-          color: '#666',
-          fontSize: '16px'
-        }}>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '15px'
-          }}>
-            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5">
-              <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z" />
-              <path d="M3 9h18M9 21V9" />
-            </svg>
-            <p>Aucun post disponible pour le moment.</p>
-            <button 
-              onClick={handleNewPost}
-              style={{
-                background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
-                color: 'white',
-                border: 'none',
-                padding: '10px 24px',
-                borderRadius: '30px',
-                cursor: 'pointer',
-                fontWeight: '600',
-                fontSize: '14px',
-                marginTop: '10px'
-              }}
-            >
-              Créer le premier post
-            </button>
-          </div>
-        </div>
-      )}
-      
-      {!loading && !error && posts.length > 0 && <Feed posts={posts} />}
-
-      {/* Modal pour créer un post */}
-      <CreatePostModal 
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        onPostCreated={handlePostCreated}
-      />
-    </div>
-  );
+  <div style={{ width: '100%' }}> 
+    {/* Pas de margin-top ici, le MainLayout s'en occupe avec content-wrapper */}
+    {!loading && !error && posts.length > 0 && (
+      <Feed posts={posts} />
+    )}
+    
+    <CreatePostModal 
+      isOpen={isModalOpen}
+      onClose={handleCloseModal}
+      onPostCreated={handlePostCreated}
+    />
+  </div>
+);
 };
 
 export default HomePage;

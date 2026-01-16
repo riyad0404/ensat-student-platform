@@ -1,18 +1,18 @@
 /* PostCard.css */
 
 .post-card {
+  width: 100%; /* Indispensable pour remplir le conteneur parent */
+  max-width: none; /* On retire toute limite spécifique à la carte */
   background: white;
-  border-radius: 0;
-  padding: 24px 40px;
-  box-shadow: none;
-  border-bottom: 8px solid #f5f5f5;
-  transition: background-color 0.2s ease;
-  margin: 0;
-  width: 100%;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
 }
 
 .post-card:hover {
-  background-color: #fafafa;
+  box-shadow: 0 18px 40px rgba(16,24,40,0.08);
+  transform: translateY(-6px);
 }
 
 /* Header */
@@ -20,7 +20,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
 }
 
 .post-author {
@@ -30,8 +30,8 @@
 }
 
 .author-avatar {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid #f3f4f6;
@@ -43,14 +43,14 @@
 }
 
 .author-name {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: #1f2937;
   margin: 0;
 }
 
 .author-role {
-  font-size: 13px;
+  font-size: 12px;
   color: #6b7280;
   margin: 2px 0 0 0;
 }
@@ -72,23 +72,28 @@
 
 /* Content */
 .post-content {
-  margin-bottom: 15px;
-}
-
-.post-text {
+  margin-bottom: 12px;
   font-size: 15px;
   line-height: 1.6;
   color: #374151;
-  margin-bottom: 12px;
-  white-space: pre-wrap;
+}
+
+.post-image-container {
+  width: 100%;
+  margin: 16px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
 }
 
 .post-image {
   width: 100%;
-  border-radius: 8px;
-  margin-top: 12px;
+  max-height: 400px;
   object-fit: cover;
-  max-height: 500px;
+  display: block;
 }
 
 .post-hashtags {
@@ -100,7 +105,7 @@
 
 .hashtag {
   color: #a855f7;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
   transition: color 0.2s;
@@ -113,8 +118,8 @@
 /* Stats */
 .post-stats {
   display: flex;
-  gap: 20px;
-  padding: 15px 0;
+  gap: 16px;
+  padding: 12px 0;
   border-top: 1px solid #f3f4f6;
   border-bottom: 1px solid #f3f4f6;
 }
@@ -122,15 +127,15 @@
 .stat-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   background: none;
   border: none;
   color: #6b7280;
   cursor: pointer;
-  padding: 6px 12px;
+  padding: 4px 8px;
   border-radius: 6px;
   transition: all 0.2s ease;
-  font-size: 14px;
+  font-size: 13px;
   font-family: inherit;
 }
 
@@ -145,6 +150,8 @@
 
 .stat-btn svg {
   flex-shrink: 0;
+  width: 18px;
+  height: 18px;
 }
 
 .stat-count {
@@ -153,19 +160,19 @@
 
 /* Comment section */
 .comment-section {
-  margin-top: 15px;
+  margin-top: 12px;
 }
 
 .comment-form {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 15px;
+  gap: 10px;
+  margin-bottom: 12px;
 }
 
 .comment-avatar {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
@@ -173,10 +180,10 @@
 
 .comment-input {
   flex: 1;
-  padding: 10px 16px;
+  padding: 8px 14px;
   border: 1px solid #e5e7eb;
-  border-radius: 20px;
-  font-size: 14px;
+  border-radius: 18px;
+  font-size: 13px;
   color: #374151;
   background-color: #f9fafb;
   transition: all 0.2s;
@@ -187,7 +194,7 @@
   outline: none;
   border-color: #a855f7;
   background-color: white;
-  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.08);
 }
 
 .comment-input::placeholder {
@@ -197,8 +204,8 @@
 .comment-submit-btn {
   background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
   border: none;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -221,8 +228,8 @@
 .comments-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-top: 15px;
+  gap: 10px;
+  margin-top: 12px;
 }
 
 .comment-item {
@@ -234,8 +241,8 @@
 }
 
 .comment-author-avatar {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
@@ -246,29 +253,29 @@
 }
 
 .comment-author-name {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #1f2937;
   margin: 0 0 4px 0;
 }
 
 .comment-text {
-  font-size: 14px;
+  font-size: 13px;
   color: #374151;
-  line-height: 1.5;
+  line-height: 1.4;
   margin: 0 0 4px 0;
 }
 
 .comment-date {
-  font-size: 12px;
+  font-size: 11px;
   color: #9ca3af;
 }
 
 .no-comments {
   text-align: center;
-  padding: 20px;
+  padding: 16px;
   color: #9ca3af;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .spinner {
@@ -297,7 +304,8 @@
 /* Responsive */
 @media (max-width: 768px) {
   .post-card {
-    padding: 20px 15px;
+    padding: 16px;
+    margin-bottom: 12px;
   }
 
   .post-stats {
@@ -306,20 +314,65 @@
   }
 
   .stat-btn {
-    font-size: 13px;
-    padding: 4px 8px;
+    font-size: 12px;
+    padding: 4px 6px;
   }
 
   .author-avatar {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
   }
 
   .author-name {
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .author-role {
-    font-size: 12px;
+    font-size: 11px;
   }
+}
+/* PostCard.css */
+
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative; /* Référence pour le placement du menu */
+}
+
+.post-options-wrapper {
+  position: relative; /* Garde le bouton et le menu ensemble */
+}
+
+.post-dropdown-menu {
+  position: absolute; /* Sort le menu du flux normal pour qu'il "flotte" */
+  right: 0;
+  top: 100%; /* Se place juste sous le bouton ⋮ */
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Ombre pour le relief */
+  z-index: 1000; /* Assure que le menu est au premier plan */
+  min-width: 140px;
+  padding: 4px 0;
+}
+
+.post-dropdown-menu button {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  text-align: left;
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  color: #374151;
+}
+
+.post-dropdown-menu button:hover {
+  background-color: #f3f4f6;
+}
+
+.post-dropdown-menu .delete-option {
+  color: #ef4444; /* Rouge pour la suppression */
 }

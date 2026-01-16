@@ -32,7 +32,16 @@ export const getPostById = async (idpost) => {
 
 export const createPost = async (postData) => {
   try {
-    const response = await axiosInstance.post('/posts', postData);
+    // Pour FormData (avec fichier), ne pas définir Content-Type
+    // Laisser axios ajouter automatiquement multipart/form-data avec boundary
+    const config = {};
+    if (postData instanceof FormData) {
+      config.headers = {
+        'Content-Type': undefined  // Supprime l'en-tête par défaut
+      };
+    }
+    
+    const response = await axiosInstance.post('/posts/pubdoc', postData, config);
     return response.data;
   } catch (error) {
     console.error('Error creating post:', error);
@@ -135,4 +144,17 @@ export const toggleReaction = async (idpost, typeReaction = 'LIKE') => {
     });
     throw error;
   }
+};
+export const deletePost = async (idpost) => {
+  const response = await axiosInstance.delete(`/posts/${idpost}`);
+  return response.data;
+};
+
+export const updatePost = async (idpost, data) => {
+  const response = await axiosInstance.patch(`/posts/${idpost}`, data); 
+  return response.data;
+};
+export const searchUsers = async (query) => {
+  const response = await axiosInstance.get(`/users/search?q=${query}`);
+  return response.data;
 };
