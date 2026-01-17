@@ -16,6 +16,7 @@ export const signupLimiter = rateLimit({
   max: 3,                  // 3 inscriptions max
   standardHeaders: true,
   legacyHeaders: false,
+  skipFailedRequests: true,
   message: {
     message: "Too many signup attempts. Please try again later.",
   },

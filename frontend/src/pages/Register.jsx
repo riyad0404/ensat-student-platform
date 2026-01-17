@@ -7,9 +7,9 @@ import registerImg from "../assets/login-illustration.png";
 import Input from "../components/input.jsx";
 import Button from "../components/button.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
+import { validatePasswordField, applyPasswordPolicyBackendError } from "../utils/authValidation";
 
 const SIGNUP_LOCK_KEY = "signup_lock_until_ms";
-
 
 const formatMMSS = (totalSeconds) => {
   const s = Math.max(0, Number(totalSeconds) || 0);
@@ -101,9 +101,7 @@ export default function Register() {
         return "";
 
       case "password":
-        if (!value) return "Password required";
-        if (value.length < 6) return "Minimum 6 characters";
-        return "";
+        return validatePasswordField(value);
 
       case "secretCode":
         if (!value) return "Secret code required";
@@ -204,9 +202,29 @@ export default function Register() {
         setSignupRemainingSec(Math.ceil((untilMs - Date.now()) / 1000));
 
         // ✅ Message rouge + compteur comme login
-        setError(`Too many signup attempts. Please try again in ${formatMMSS(Math.ceil((untilMs - Date.now()) / 1000))}.`);
+        setError(
+          `Too many signup attempts. Please try again in ${formatMMSS(
+            Math.ceil((untilMs - Date.now()) / 1000)
+          )}.`
+        );
         return;
       }
+
+      // ✅ 1bis) PASSWORD POLICY (backend) -> afficher sous le champ password + bannière
+ // ✅ 1bis) PASSWORD POLICY (backend) -> afficher sous le champ password + bannière
+if (!result.success) {
+  const backendData = result?.data || null;
+
+  const applied = applyPasswordPolicyBackendError({
+    backendData,
+    setError,
+    setFieldErrors,
+    passwordFieldName: "password",
+  });
+
+  if (applied) return;
+}
+
 
       // ✅ 2) succès
       if (result.success) {
@@ -218,7 +236,13 @@ export default function Register() {
       // ✅ 3) autres erreurs (ex: email déjà utilisé)
       const msg = (result.error || "").toLowerCase();
 
-      if (result.status === 409 || msg.includes("email") || msg.includes("already") || msg.includes("exists") || msg.includes("duplicate")) {
+      if (
+        result.status === 409 ||
+        msg.includes("email") ||
+        msg.includes("already") ||
+        msg.includes("exists") ||
+        msg.includes("duplicate")
+      ) {
         setError("This email is already registered. Please use another email or login.");
         setFieldErrors((prev) => ({ ...prev, email: "Email already in use" }));
         return;
@@ -343,19 +367,18 @@ export default function Register() {
               disabled={isSignupLocked || loading}
             />
 
-           <Button
-  text={
-    isSignupLocked
-      ? "TRY AGAIN IN 10 MINUTES"
-      : loading
-      ? "CREATING ACCOUNT..."
-      : "CREATE ACCOUNT"
-  }
-  className="btn-create"
-  type="submit"
-  disabled={loading || isSignupLocked}
-/>
-
+            <Button
+              text={
+                isSignupLocked
+                  ? "TRY AGAIN IN 10 MINUTES"
+                  : loading
+                  ? "CREATING ACCOUNT..."
+                  : "CREATE ACCOUNT"
+              }
+              className="btn-create"
+              type="submit"
+              disabled={loading || isSignupLocked}
+            />
           </form>
 
           <p className="redirect">
