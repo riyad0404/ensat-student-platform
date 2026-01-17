@@ -6,6 +6,11 @@ export const createPost = async (req, res) => {
   try {
     const iduser = req.user.iduser;
 
+    // DEBUG: afficher si req.file existe
+    console.log("📤 createPost reçu");
+    console.log("📦 req.file:", req.file ? `OUI - ${req.file.filename}` : "NON");
+    console.log("📝 req.body:", req.body);
+
     // Postman en form-data => req.body = strings
     let { contenu, typeContenu, isAnonymat = false, niveau } = req.body;
 
@@ -69,19 +74,37 @@ export const getAllPosts = async (req, res) => {
   try {
     const posts = await Post.findAll({
       order: [["createdAt", "DESC"]],
-      include: {
-        model: User,
-        as: "auteur",
-        attributes: ["iduser", "nom", "prenom", "niveau", "photo"],
-      },
+      include: [
+        {
+          model: User,
+          as: "auteur",
+          attributes: ["iduser", "nom", "prenom", "niveau", "photo"],
+        },
+        {
+          model: Document,
+          as: "documents",
+          required: false,
+        },
+      ],
     });
 
     const result = posts.map((pInstance) => {
       const p = pInstance.toJSON();
 
-      // Si anonymat et ce n’est pas le propriétaire -> cacher auteur
+      // DEBUG: afficher l'anonymat et l'iduser
+      console.log(`📝 Post ${p.idpost}:`, {
+        isAnonymat: p.isAnonymat,
+        iduser: p.iduser,
+        req_user_iduser: req.user?.iduser,
+        auteur_before: p.auteur ? `${p.auteur.nom}` : "null"
+      });
+
+      // Si anonymat et ce n'est pas le propriétaire -> cacher auteur
       if (p.isAnonymat === true && Number(p.iduser) !== Number(req.user.iduser)) {
+        console.log(`  → Masquage auteur (anonyme et pas propriétaire)`);
         p.auteur = null;
+      } else {
+        console.log(`  → Affichage auteur`);
       }
 
       return p;
@@ -118,11 +141,18 @@ export const getPostById = async (req, res) => {
     if (!idpost) return res.status(400).json({ message: "idpost invalide" });
 
     const post = await Post.findByPk(idpost, {
-      include: {
-        model: User,
-        as: "auteur",
-        attributes: ["iduser", "nom", "prenom", "niveau", "photo"],
-      },
+      include: [
+        {
+          model: User,
+          as: "auteur",
+          attributes: ["iduser", "nom", "prenom", "niveau", "photo"],
+        },
+        {
+          model: Document,
+          as: "documents",
+          required: false,
+        },
+      ],
     });
 
     if (!post) return res.status(404).json({ message: "Post introuvable" });
