@@ -1,849 +1,305 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+// src/pages/LoginPage.jsx
+import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import "./../styles/login.css";
+import { FiMail, FiEye, FiEyeOff } from "react-icons/fi";
+import loginImg from "../assets/login-illustration.png";
+import Input from "../components/input.jsx";
+import Button from "../components/button.jsx";
 
-/* Replace by local assets if you want */
-const HERO_IMG =
-  "https://images.unsplash.com/photo-1588072432836-7fb78c5f0b44?auto=format&fit=crop&w=1400&q=80";
-const ABOUT_IMG =
-  "https://images.unsplash.com/photo-1588072432904-843af37f03ed?auto=format&fit=crop&w=1400&q=80";
+const LOGIN_LOCK_KEY = "auth_login_lock_until";        // timestamp ms
+const LOGIN_LOCK_ACTIVE_KEY = "auth_login_lock_active"; // "1" or "0"
 
-export default function Landing() {
+const formatMMSS = (totalSeconds) => {
+  const s = Math.max(0, Math.floor(totalSeconds || 0));
+  const mm = String(Math.floor(s / 60)).padStart(2, "0");
+  const ss = String(s % 60).padStart(2, "0");
+  return ${mm}:${ss};
+};
+
+export default function LoginPage() {
+  const { login } = useAuth();
   const navigate = useNavigate();
-  const [scrolled, setScrolled] = useState(false);
 
-  // Handle scroll for header
+  const [showForgotOptions, setShowForgotOptions] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [errors, setErrors] = useState({ email: "", password: "" });
+
+  const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState("");
+
+  // ✅ Lock state persisted (ms timestamp)
+  const [lockUntil, setLockUntil] = useState(() => {
+    const raw = localStorage.getItem(LOGIN_LOCK_KEY);
+    const v = raw ? Number(raw) : 0;
+    return Number.isFinite(v) ? v : 0;
+  });
+
+  const now = Date.now();
+  const isLocked = lockUntil && lockUntil > now;
+
+  const remainingSeconds = useMemo(() => {
+    if (!isLocked) return 0;
+    return Math.ceil((lockUntil - Date.now()) / 1000);
+  }, [isLocked, lockUntil]);
+
+  // ✅ On mount: if still locked -> show red message immediately (persist like signup)
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
+    const rawUntil = localStorage.getItem(LOGIN_LOCK_KEY);
+    const until = rawUntil ? Number(rawUntil) : 0;
 
-    window.addEventListener('scroll', handleScroll);
-    
-    // Set body class for this page
-    document.body.classList.add('landing-page');
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      document.body.classList.remove('landing-page');
-    };
+    const active = localStorage.getItem(LOGIN_LOCK_ACTIVE_KEY) === "1";
+
+    if (active && Number.isFinite(until) && until > Date.now()) {
+      setLockUntil(until);
+      const secs = Math.ceil((until - Date.now()) / 1000);
+      setFormError(Too many login attempts. Please try again in ${formatMMSS(secs)}.);
+    } else {
+      // cleanup if expired
+      localStorage.removeItem(LOGIN_LOCK_KEY);
+      localStorage.removeItem(LOGIN_LOCK_ACTIVE_KEY);
+      setLockUntil(0);
+      setFormError("");
+    }
   }, []);
 
-  const features = [
-    {
-      icon: <Search size={28} />,
-      title: "Recherche Intelligente",
-      description: "Trouvez rapidement étudiants, documents et ressources par nom, niveau ou domaine d'étude avec notre moteur de recherche avancé.",
-      color: "#7c3aed"
-    },
-    {
-      icon: <Users size={28} />,
-      title: "Profils Étudiants",
-      description: "Consultez les profils publics détaillés avec publications, compétences, parcours académique et projets réalisés.",
-      color: "#a855f7"
-    },
-    {
-      icon: <FileText size={28} />,
-      title: "Publications Anonymes",
-      description: "Partagez vos questions et idées anonymement dans un espace sécurisé, visible uniquement par vous.",
-      color: "#ec4899"
-    },
-    {
-      icon: <MessageSquare size={28} />,
-      title: "Collaboration en Temps Réel",
-      description: "Discussions thématiques, groupes privés et chatbot d'assistance académique pour une collaboration optimale.",
-      color: "#10b981"
-    },
-    {
-      icon: <Shield size={28} />,
-      title: "Sécurité Maximale",
-      description: "Protection avancée des données personnelles avec chiffrement et contrôle total sur vos publications.",
-      color: "#3b82f6"
-    },
-    {
-      icon: <Globe size={28} />,
-      title: "Accessibilité Mobile",
-      description: "Accédez à la plateforme depuis n'importe quel appareil avec une expérience optimisée pour mobile.",
-      color: "#f59e0b"
-    }
-  ];
-
-  const stats = [
-    { value: "5K+", label: "Étudiants Actifs", icon: <Users size={20} /> },
-    { value: "10K+", label: "Documents Partagés", icon: <FileText size={20} /> },
-    { value: "98%", label: "Taux de Satisfaction", icon: <TrendingUp size={20} /> },
-    { value: "24/7", label: "Disponibilité", icon: <Globe size={20} /> }
-  ];
-
-  const benefits = [
-    "Gagnez du temps dans vos recherches académiques",
-    "Collaborez efficacement avec vos pairs",
-    "Organisez vos documents par niveau et matière",
-    "Bénéficiez d'un espace de stockage sécurisé",
-    "Accédez à des ressources exclusives ENSA",
-    "Recevez des notifications personnalisées"
-  ];
-
-  const features = useMemo(
-    () => [
-      {
-        label: "Search",
-        title: "Student profiles & smart lookup",
-        desc: "Find students by name or academic level and access public profiles with visible posts and academic identity.",
-      },
-      {
-        label: "Community",
-        title: "Wall posts (normal & anonymous)",
-        desc: "Ask questions, share resources, and interact through comments. Post anonymously whenever you need privacy.",
-      },
-      {
-        label: "Library",
-        title: "Documents organized by level",
-        desc: "All shared resources are structured by academic level (AP1 → Engineering cycle) for fast access and clarity.",
-      },
-      {
-        label: "Move Together",
-        title: "Groups & topic discussions",
-        desc: "Create or join groups, invite classmates, and keep focused discussions for projects and learning circles.",
-      },
-      {
-        label: "Assistant",
-        title: "ENSAT academic chatbot",
-        desc: "Get quick guidance for common student questions: platform usage, orientation, and academic support.",
-      },
-    ],
-    []
-  );
-
-  // Coverflow state
-  const [active, setActive] = useState(0);
-  const [paused, setPaused] = useState(false);
-
-  const prev = () => setActive((p) => (p - 1 + features.length) % features.length);
-  const next = () => setActive((p) => (p + 1) % features.length);
-
+  // ✅ Tick: keep message visible + update it every second while locked
   useEffect(() => {
-    if (paused) return;
-    const t = setInterval(() => setActive((p) => (p + 1) % features.length), 4200);
-    return () => clearInterval(t);
-  }, [paused, features.length]);
+    if (!isLocked) return;
 
-  const rel = (i) => {
-    const n = features.length;
-    let d = i - active;
-    if (d > n / 2) d -= n;
-    if (d < -n / 2) d += n;
-    return d;
+    const intervalId = setInterval(() => {
+      const rawUntil = localStorage.getItem(LOGIN_LOCK_KEY);
+      const until = rawUntil ? Number(rawUntil) : 0;
+
+      if (!Number.isFinite(until) || until <= Date.now()) {
+        // unlock
+        localStorage.removeItem(LOGIN_LOCK_KEY);
+        localStorage.removeItem(LOGIN_LOCK_ACTIVE_KEY);
+        setLockUntil(0);
+        setFormError("");
+        return;
+      }
+
+      setLockUntil(until);
+      const secs = Math.ceil((until - Date.now()) / 1000);
+      setFormError(Too many login attempts. Please try again in ${formatMMSS(secs)}.);
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [isLocked]);
+
+  // Validation
+  const validateLoginField = (name, value) => {
+    switch (name) {
+      case "email":
+        if (!value) return "Email required";
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return "Invalid email format";
+        return "";
+
+      case "password":
+        if (!value) return "Password required";
+        if (value.length < 8) return "Minimum 8 characters";
+        return "";
+
+      default:
+        return "";
+    }
   };
 
-  // ✅ Measure header height and push content down correctly
-  const headerRef = useRef(null);
-  const [headerH, setHeaderH] = useState(0);
+  const handleChange = (field) => (e) => {
+    const value = e.target.value;
 
-  useLayoutEffect(() => {
-    const el = headerRef.current;
-    if (!el) return;
+    setFormData((prev) => ({ ...prev, [field]: value }));
 
-    const measure = () => {
-      const h = el.getBoundingClientRect().height || 0;
-      setHeaderH(Math.ceil(h));
+    const err = validateLoginField(field, value);
+    setErrors((prev) => ({ ...prev, [field]: err }));
+
+    // ✅ Do not auto-clear the lock message when locked
+    if (!isLocked && err === "" && formError) setFormError("");
+  };
+
+  const validateAllFields = () => {
+    const newErrors = {
+      email: validateLoginField("email", formData.email),
+      password: validateLoginField("password", formData.password),
     };
+    setErrors(newErrors);
+    return !Object.values(newErrors).some((e) => e !== "");
+  };
 
-    measure();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-    // Observe changes (responsive, font loading, etc.)
-    const ro = new ResizeObserver(() => measure());
-    ro.observe(el);
+    // ✅ If locked, keep the message (do not send request)
+    if (isLocked) {
+      setFormError(Too many login attempts. Please try again in ${formatMMSS(remainingSeconds)}.);
+      return;
+    }
 
-    window.addEventListener("resize", measure);
-    return () => {
-      window.removeEventListener("resize", measure);
-      ro.disconnect();
-    };
-  }, []);
+    setFormError("");
 
-  // ✅ Espace entre header et contenu (ajuste ici si tu veux plus/moins)
-  // 🔴 MODIF: grand espace
-  const HEADER_GAP = 600; // px (mets 220/260 si tu veux encore plus)
+    if (!validateAllFields()) {
+      setFormError("Please correct the errors above.");
+      return;
+    }
+
+    if (!formData.email || !formData.password) {
+      setFormError("Please fill in all fields.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const result = await login(formData);
+
+      if (!result.success) {
+        // ✅ RATE LIMIT -> persist lock + persist message visibility
+        if (result.errorCode === "RATE_LIMIT") {
+          const seconds = Number.isFinite(result.retryAfterSeconds)
+            ? Math.max(1, result.retryAfterSeconds)
+            : 120; // fallback only if backend doesn't send headers
+
+          const until = Date.now() + seconds * 1000;
+
+          localStorage.setItem(LOGIN_LOCK_KEY, String(until));
+          localStorage.setItem(LOGIN_LOCK_ACTIVE_KEY, "1");
+
+          setLockUntil(until);
+          setFormError(Too many login attempts. Please try again in ${formatMMSS(seconds)}.);
+
+          // clear password
+          setFormData((prev) => ({ ...prev, password: "" }));
+          return;
+        }
+
+        // other errors
+        setFormError(
+          result.error ||
+            "Incorrect login credentials. Please check your email and password."
+        );
+
+        setFormData((prev) => ({ ...prev, password: "" }));
+      }
+    } catch (err) {
+      console.error(err);
+
+      if (err.response?.status === 401) {
+        setFormError("Incorrect login credentials.");
+      } else if (err.response?.status === 404) {
+        setFormError("No account found with this email.");
+      } else if (err.response?.status >= 500) {
+        setFormError("Login service unavailable. Please try again later.");
+      } else {
+        setFormError("Connection error. Please check your network.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <>
-      <style>{`
-        :root{
-          --bg:#fbfaff;
-          --text:#0f172a;
-          --muted:#5b6476;
-          --card:#ffffff;
-          --line:rgba(140,120,255,.18);
+    <div className="login-page">
+      <div className="login-card">
+        {/* IMAGE */}
+        <div className="login-left">
+          <img src={loginImg} alt="Login Illustration" className="login-illustration" />
+        </div>
 
-          --p1:#7c3aed;
-          --p2:#a855f7;
-          --p3:#6d28d9;
+        {/* FORM */}
+        <div className="login-right">
+          <h2>Welcome Back!</h2>
+          <p className="subtitle">Sign in to continue</p>
 
-          --shadow: 0 2.5vw 6vw rgba(124,58,237,.14);
-          --shadow2: 0 1.6vw 4vw rgba(15,23,42,.10);
+          {/* ✅ SAME LOGIN DESIGN: red banner stays visible while locked */}
+          {formError && <div className="error-message">{formError}</div>}
 
-          --padX: clamp(4%, 6vw, 7%);
-        }
+          <form onSubmit={handleSubmit} noValidate>
+            <Input
+              label="EMAIL"
+              type="email"
+              placeholder="ex: user@example.com"
+              icon={<FiMail />}
+              value={formData.email}
+              onChange={handleChange("email")}
+              error={errors.email}
+              required
+              disabled={loading || isLocked}
+            />
 
-        *{ box-sizing:border-box; margin:0; padding:0; font-family: Inter, "Segoe UI", system-ui, -apple-system, Arial, sans-serif; }
+            <div style={{ position: "relative", marginBottom: "1.2rem" }}>
+              <Input
+                label="PASSWORD"
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter Your Password"
+                value={formData.password}
+                onChange={handleChange("password")}
+                error={errors.password}
+                required
+                disabled={loading || isLocked}
+              />
 
-        /* ✅ Force a predictable canvas even if App.css is weird */
-        html, body { height: 100%; }
-        body{
-          background:var(--bg);
-          color:var(--text);
-          overflow-x:hidden;
-        }
-
-        /* ✅ Landing isolation to override global wrappers */
-        .landingRoot{
-          width:100%;
-          min-height:100vh;
-          position: relative;
-          background: var(--bg);
-        }
-
-        /* ✅ HEADER fixed */
-        .landingHeader{
-          width:100%;
-          position: fixed;
-          top:0;
-          left:0;
-          z-index:999;
-          background: rgba(251,250,255,.82);
-          backdrop-filter: blur(12px);
-          border-bottom: 1px solid rgba(140,120,255,.18);
-        }
-        .headerIn{
-          width:100%;
-          padding: 14px var(--padX);
-          display:flex;
-          align-items:center;
-          justify-content:space-between;
-          gap: 16px;
-        }
-        .brand{
-          display:flex;
-          align-items:center;
-          gap: 12px;
-          cursor:pointer;
-          user-select:none;
-        }
-        .logoMark{
-          width: 52px;
-          height: 52px;
-          border-radius: 28%;
-          background:
-            radial-gradient(circle at 30% 25%, rgba(255,255,255,.9), rgba(255,255,255,0) 55%),
-            linear-gradient(135deg, var(--p1), var(--p2));
-          box-shadow: 0 1.2vw 2.6vw rgba(124,58,237,.22);
-          flex: 0 0 auto;
-        }
-        .brandTxt{ display:flex; flex-direction:column; line-height:1.05; }
-        .brandTxt .name{
-          font-weight: 900;
-          letter-spacing: .12em;
-          color: var(--p3);
-          font-size: 18px;
-        }
-        .brandTxt .sub{
-          font-size: 12px;
-          color: #6b7280;
-          margin-top: 6px;
-        }
-
-        .headerBtns{
-          display:flex;
-          gap: 12px;
-          align-items:center;
-          flex: 0 0 auto;
-        }
-        .btn{
-          cursor:pointer;
-          border-radius: 999px;
-          padding: .7em 1.25em;
-          font-weight: 700;
-          border: 1px solid rgba(124,58,237,.35);
-          background: rgba(255,255,255,.70);
-          color: var(--p3);
-          transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
-          font-size: 14px;
-          white-space: nowrap;
-        }
-        .btn:hover{ box-shadow: 0 .9vw 2vw rgba(124,58,237,.14); }
-        .btn:active{ transform: translateY(1px); }
-        .btn.primary{
-          background: linear-gradient(90deg, var(--p1), var(--p2));
-          border-color: transparent;
-          color:#fff;
-          box-shadow: 0 1vw 2.4vw rgba(124,58,237,.22);
-        }
-
-        /* ✅ Content starts under header + gap */
-        .landingContent{
-          width:100%;
-          min-height:100vh;
-        }
-
-        .section{
-          width:100%;
-          padding: clamp(28px, 7vw, 72px) var(--padX);
-          position:relative;
-        }
-
-        .hero{
-          /* ✅ IMPORTANT: no margin-top here (avoid overlap issues) */
-          background:
-            radial-gradient(70vw 40vw at 18% 0%, rgba(124,58,237,.18), rgba(124,58,237,0) 60%),
-            radial-gradient(70vw 40vw at 85% 10%, rgba(168,85,247,.16), rgba(168,85,247,0) 62%),
-            linear-gradient(180deg, #ffffff, rgba(244,242,255,1));
-          overflow:hidden;
-        }
-
-        .heroGrid{
-          width:100%;
-          display:grid;
-          grid-template-columns: 48% 52%;
-          gap: 4%;
-          align-items:center;
-        }
-
-        .heroTitle{
-          font-size: clamp(30px, 3.6vw, 60px);
-          line-height: 1.08;
-          letter-spacing: -0.02em;
-          margin-bottom: 14px;
-        }
-        .heroTitle span{ color: var(--p3); }
-        .heroText{
-          font-size: clamp(14px, 1.25vw, 18px);
-          line-height: 1.8;
-          color: var(--muted);
-          max-width: 95%;
-        }
-        .badgeRow{
-          margin-top: 18px;
-          display:flex;
-          flex-wrap:wrap;
-          gap: 10px;
-        }
-        .badge{
-          padding: .65em 1em;
-          border-radius: 999px;
-          border: 1px solid rgba(124,58,237,.18);
-          background: rgba(255,255,255,.7);
-          font-size: 13px;
-          color: #4c1d95;
-          font-weight: 800;
-        }
-
-        .imgShell{
-          width:100%;
-          border-radius: clamp(20px, 3vw, 44px);
-          overflow:hidden;
-          box-shadow: var(--shadow);
-          border: 1px solid rgba(140,120,255,.18);
-          background: rgba(255,255,255,.55);
-          position:relative;
-        }
-        .heroImg{
-          width:100%;
-          height: clamp(260px, 32vw, 440px);
-          object-fit: cover;
-          display:block;
-          transform: scale(1.02);
-          filter: saturate(1.05);
-        }
-
-        .about{
-          background: linear-gradient(180deg, rgba(244,242,255,1), rgba(251,250,255,1));
-          overflow:hidden;
-        }
-        .aboutGrid{
-          display:grid;
-          grid-template-columns: 44% 56%;
-          gap: 4%;
-          align-items:center;
-        }
-        .aboutImgWrap{
-          width:100%;
-          border-radius: clamp(18px, 2.6vw, 38px);
-          overflow:hidden;
-          box-shadow: var(--shadow2);
-          border: 1px solid rgba(140,120,255,.18);
-          background: rgba(255,255,255,.65);
-        }
-        .aboutImg{
-          width:100%;
-          height: clamp(240px, 28vw, 360px);
-          object-fit: cover;
-          display:block;
-        }
-        .aboutTitle{
-          font-size: clamp(22px, 2.4vw, 40px);
-          margin-bottom: 12px;
-          color: #1f2a44;
-          letter-spacing: -0.02em;
-        }
-        .aboutText{
-          font-size: clamp(14px, 1.15vw, 17px);
-          line-height: 1.85;
-          color: var(--muted);
-          max-width: 95%;
-        }
-
-        .features{ background: #ffffff; position:relative; overflow:hidden; }
-
-        .featHeader{
-          width:100%;
-          display:flex;
-          flex-direction:column;
-          align-items:center;
-          justify-content:center;
-          text-align:center;
-          margin-bottom: clamp(18px, 3.6vw, 40px);
-        }
-        .featTitle{
-          font-size: clamp(24px, 2.6vw, 44px);
-          color: var(--p3);
-          letter-spacing: -0.02em;
-        }
-        .featLine{
-          width: clamp(14%, 18vw, 26%);
-          height: 4px;
-          border-radius: 999px;
-          margin-top: 12px;
-          background: linear-gradient(90deg, var(--p1), var(--p2));
-          opacity: .9;
-        }
-
-        .coverflow{ width:100%; position:relative; padding: 2% 0 1%; }
-        .stage{
-          width:100%;
-          height: clamp(320px, 32vw, 460px);
-          position:relative;
-          perspective: 1200px;
-          transform-style: preserve-3d;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-        }
-        .card3d{
-          position:absolute;
-          width: min(54%, 680px);
-          max-width: 86%;
-          height: clamp(240px, 24vw, 340px);
-          border-radius: clamp(18px, 2.4vw, 34px);
-          background: rgba(255,255,255,.78);
-          border: 1px solid rgba(140,120,255,.22);
-          box-shadow: var(--shadow2);
-          backdrop-filter: blur(10px);
-          transform-style: preserve-3d;
-          transition: transform 600ms cubic-bezier(.2,.85,.2,1), opacity 600ms cubic-bezier(.2,.85,.2,1), filter 600ms;
-          overflow:hidden;
-        }
-
-        .cardTop{
-          padding:2% 5% 2%;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-        }
-
-        /* =========================================================
-           🔴 MODIFS SLIDER TEXT (centrage + design) — rien d’autre
-           ========================================================= */
-
-        .pill{
-          display:inline-flex;
-          align-items:center;
-          justify-content:center;
-          padding: .6em 1.1em;
-          border-radius: 999px;
-          border: 1px solid rgba(124,58,237,.22);
-          background: rgba(124,58,237,.08);
-          color: #4c1d95;
-          font-weight: 900;
-          font-size: 13px;
-          letter-spacing: .03em;
-          margin-top: 10%;
-        }
-
-        .cardBody{
-          padding: 0 5% 2%;
-          margin-top: 5%;
-        }
-
-        .cardBody h3{
-          width: 100%;
-          text-align:center;
-          font-size: clamp(20px, 2vw, 28px);
-          margin-bottom: 12px;
-          color:#0f172a;
-          letter-spacing: -0.02em;
-          line-height: 1.2;
-        }
-
-        .cardBody p{
-          width: min(92%, 560px);
-          text-align:center;
-          font-size: clamp(13px, 1.15vw, 16px);
-          line-height: 1.9;
-          color: var(--muted);
-          margin: 0 auto;
-        }
-
-        /* ========================================================= */
-
-        .navArrows{
-          width:100%;
-          display:flex;
-          justify-content:center;
-          gap: 12px;
-          margin-top: 18px;
-        }
-        .arrow{
-          width: 52px;
-          height: 52px;
-          border-radius: 999px;
-          border: 1px solid rgba(124,58,237,.22);
-          background: rgba(255,255,255,.75);
-          cursor:pointer;
-          font-weight: 900;
-          color:#5b21b6;
-        }
-
-        .dots{
-          width:100%;
-          display:flex;
-          justify-content:center;
-          gap: 10px;
-          margin-top: 14px;
-        }
-        .dot{
-          width: 12px;
-          height: 12px;
-          border-radius: 999px;
-          border: 1px solid rgba(124,58,237,.35);
-          background: rgba(124,58,237,.12);
-          cursor:pointer;
-          transition: width .25s ease, background .25s ease;
-        }
-        .dot.active{
-          width: 34px;
-          background: linear-gradient(90deg, var(--p1), var(--p2));
-          border-color: rgba(124,58,237,.18);
-        }
-
-        /* =========================================================
-           ✅ NEW DESIGN "HOW IT WORKS" (ONLY THIS PART CHANGED)
-           ========================================================= */
-
-        .how{
-          background:
-            radial-gradient(60vw 34vw at 18% 10%, rgba(124,58,237,.12), rgba(124,58,237,0) 60%),
-            radial-gradient(60vw 34vw at 82% 18%, rgba(168,85,247,.10), rgba(168,85,247,0) 62%),
-            linear-gradient(180deg, rgba(255,255,255,1), rgba(244,242,255,1));
-          overflow:hidden;
-        }
-
-        .howHeader{
-          width:100%;
-          display:flex;
-          flex-direction:column;
-          align-items:center;
-          justify-content:center;
-          text-align:center;
-          margin-bottom: clamp(26px, 4.2vw, 56px);
-        }
-
-        .howTitle{
-          font-size: clamp(26px, 2.8vw, 46px);
-          color: var(--p3);
-          letter-spacing: -0.02em;
-        }
-
-        .howLine{
-          width: 160px;
-          height: 4px;
-          border-radius: 999px;
-          margin-top: 12px;
-          background: linear-gradient(90deg, var(--p1), var(--p2));
-          opacity: .95;
-        }
-
-        .howGrid{
-          width:100%;
-          display:grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 24px;
-        }
-
-        .howCard{
-          position: relative;
-          background: rgba(255,255,255,.82);
-          border: 1px solid rgba(140,120,255,.18);
-          border-radius: 22px;
-          box-shadow: 0 24px 48px rgba(15,23,42,.12);
-          padding: 28px;
-          transition: transform .25s ease, box-shadow .25s ease;
-          overflow:hidden;
-        }
-
-        .howCard::before{
-          content:"";
-          position:absolute;
-          inset:-60px;
-          background:
-            radial-gradient(circle at 18% 15%, rgba(124,58,237,.22), transparent 55%),
-            radial-gradient(circle at 80% 35%, rgba(168,85,247,.18), transparent 58%);
-          opacity:.55;
-          filter: blur(18px);
-          pointer-events:none;
-        }
-
-        .howCard:hover{
-          transform: translateY(-8px);
-          box-shadow: 0 36px 64px rgba(15,23,42,.18);
-        }
-
-        .howStep{
-          position: relative;
-          width: 46px;
-          height: 46px;
-          border-radius: 14px;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          font-weight: 900;
-          color: #fff;
-          background: linear-gradient(135deg, var(--p1), var(--p2));
-          margin-bottom: 16px;
-          box-shadow: 0 14px 26px rgba(124,58,237,.22);
-          z-index: 1;
-        }
-
-        .howCard h3{
-          position: relative;
-          z-index: 1;
-          font-size: 18px;
-          margin-bottom: 10px;
-          color:#0f172a;
-        }
-
-        .howCard p{
-          position: relative;
-          z-index: 1;
-          font-size: 15px;
-          line-height: 1.75;
-          color: var(--muted);
-        }
-
-        /* ========================================================= */
-
-        footer{
-          width:100%;
-          padding: 24px var(--padX);
-          border-top: 1px solid rgba(140,120,255,.14);
-          background: rgba(255,255,255,.65);
-          text-align:center;
-          color:#6b7280;
-          font-size: 14px;
-        }
-
-        @media (max-width: 980px){
-          .heroGrid{ grid-template-columns: 1fr; }
-          .aboutGrid{ grid-template-columns: 1fr; }
-          .card3d{ width: 92%; }
-          .howGrid{ grid-template-columns: 1fr; }
-          .logoMark{ width: 46px; height:46px; }
-        }
-      `}</style>
-
-      <div className="landingRoot">
-        {/* HEADER */}
-        <header className="landingHeader" ref={headerRef}>
-          <div className="headerIn">
-            <div className="brand" onClick={() => navigate("/")}>
-              <div className="logoMark" />
-              <div className="brandTxt">
-                <div className="name">DOCENTRA</div>
-                <div className="sub">ENSAT Student Platform</div>
-              </div>
+              <span
+                onClick={() => !isLocked && setShowPassword(!showPassword)}
+                style={{
+                  position: "absolute",
+                  right: "1rem",
+                  top: "2.3rem",
+                  cursor: isLocked ? "not-allowed" : "pointer",
+                  color: "#666",
+                  display: "flex",
+                  alignItems: "center",
+                  zIndex: 10,
+                  transition: "color 0.2s",
+                  opacity: isLocked ? 0.5 : 1,
+                }}
+                onMouseEnter={(e) => !isLocked && (e.currentTarget.style.color = "#4a90e2")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#666")}
+              >
+                {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+              </span>
             </div>
 
-            <div className="headerBtns">
-              <button className="btn" onClick={() => navigate("/login")}>
-                Sign in
-              </button>
-              <button className="btn primary" onClick={() => navigate("/register")}>
-                Sign up
-              </button>
-            </div>
-          </div>
-        </header>
+            <div className="forgot-wrapper">
+              <span
+                className="forgot"
+                onClick={() => setShowForgotOptions((prev) => !prev)}
+              >
+                Forgot Password?
+              </span>
 
-        {/* CONTENT starts under header */}
-        <div className="landingContent" style={{ paddingTop: headerH + HEADER_GAP }}>
-          {/* HERO */}
-          <section className="section hero">
-            <div className="heroGrid">
-              <div>
-                <h1 className="heroTitle">
-                  Welcome to <span>Docentra</span>
-                  <br />
-                  your ENSAT student hub
-                </h1>
-                <p className="heroText">
-                  Docentra centralizes academic documents, supports collaborative posts (normal or anonymous),
-                  and improves student communication through groups, discussions, and a dedicated ENSAT chatbot.
-                </p>
-
-                <div className="badgeRow">
-                  <div className="badge">Library by level</div>
-                  <div className="badge">Anonymous posts</div>
-                  <div className="badge">Groups & discussions</div>
-                  <div className="badge">ENSAT chatbot</div>
+              {showForgotOptions && (
+                <div className="forgot-dropdown">
+                  <div onClick={() => navigate("/resetByCode")}>Reset by Code Secret</div>
+                  <div onClick={() => navigate("/resetByEmail")}>Reset by Email Link</div>
                 </div>
-              </div>
-
-              <div>
-                <div className="imgShell">
-                  <img className="heroImg" src={HERO_IMG} alt="Docentra hero visual" />
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* ABOUT */}
-          <section className="section about">
-            <div className="aboutGrid">
-              <div className="aboutImgWrap">
-                <img className="aboutImg" src={ABOUT_IMG} alt="About Docentra visual" />
-              </div>
-
-              <div>
-                <h2 className="aboutTitle">About the platform</h2>
-                <p className="aboutText">
-                  Docentra is designed for ENSAT daily academic life: students can share resources, ask for help,
-                  keep documents organized by level, join or create groups, and maintain focused discussions.
-                  The goal is simple: less time searching, more time learning and collaborating.
-                </p>
-              </div>
-            </div>
-          </section>
-
-          {/* FEATURES */}
-          <section
-            className="section features"
-            onMouseEnter={() => setPaused(true)}
-            onMouseLeave={() => setPaused(false)}
-          >
-            <div className="featHeader">
-              <h2 className="featTitle">Key Features</h2>
-              <div className="featLine" />
+              )}
             </div>
 
-            <div className="coverflow">
-              <div className="stage">
-                {features.map((f, i) => {
-                  const d = rel(i);
-                  const abs = Math.abs(d);
+            <Button
+              text={
+                isLocked
+                  ? "TRY AGAIN IN 2 MINUTES" // ✅ SEULE MODIFICATION: texte statique, sans compteur
+                  : loading
+                  ? "LOGGING IN..."
+                  : "LOGIN"
+              }
+              className="btn-login"
+              type="submit"
+              disabled={loading || isLocked}
+            />
+          </form>
 
-                  const translateX = d * 26;
-                  const rotateY = d * -18;
-                  const translateZ = 220 - abs * 120;
-                  const scale = 1 - abs * 0.12;
-
-                  const opacity = abs > 2 ? 0 : 1 - abs * 0.18;
-                  const blur = abs === 0 ? "blur(0px)" : `blur(${Math.min(2.2, abs * 0.9)}px)`;
-                  const zIndex = 100 - abs;
-
-                  return (
-                    <div
-                      key={i}
-                      className="card3d"
-                      style={{
-                        zIndex,
-                        opacity,
-                        filter: blur,
-                        transform: `
-                          translateX(${translateX}%)
-                          translateZ(${translateZ}px)
-                          rotateY(${rotateY}deg)
-                          scale(${scale})
-                        `,
-                      }}
-                      onClick={() => setActive(i)}
-                      role="button"
-                      aria-label={`Feature ${i + 1}`}
-                    >
-                      <div className="cardTop">
-                        <div className="pill">{f.label}</div>
-                        <div style={{ width: "1px", height: "1px", opacity: 0 }} />
-                      </div>
-                      <div className="cardBody">
-                        <h3>{f.title}</h3>
-                        <p>{f.desc}</p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="navArrows">
-                <button className="arrow" onClick={prev} aria-label="Previous">
-                  ‹
-                </button>
-                <button className="arrow" onClick={next} aria-label="Next">
-                  ›
-                </button>
-              </div>
-
-              <div className="dots">
-                {features.map((_, i) => (
-                  <button
-                    key={i}
-                    className={`dot ${i === active ? "active" : ""}`}
-                    onClick={() => setActive(i)}
-                    aria-label={`Go to feature ${i + 1}`}
-                  />
-                ))}
-              </div>
-            </div>
-          </section>
-
-          {/* HOW IT WORKS */}
-          <section className="section how">
-            <div className="howHeader">
-              <h2 className="howTitle">How it works</h2>
-              <div className="howLine" />
-            </div>
-
-            <div className="howGrid">
-              <div className="howCard">
-                <div className="howStep">01</div>
-                <h3>Create your account</h3>
-                <p>Sign up in seconds and set your academic level to access relevant resources.</p>
-              </div>
-
-              <div className="howCard">
-                <div className="howStep">02</div>
-                <h3>Join your level & groups</h3>
-                <p>Connect with classmates through groups and topic discussions for projects and learning.</p>
-              </div>
-
-              <div className="howCard">
-                <div className="howStep">03</div>
-                <h3>Share, ask, collaborate</h3>
-                <p>Post questions, share documents, and use the ENSAT chatbot for quick academic support.</p>
-              </div>
-            </div>
-          </section>
-
-          <footer>© {new Date().getFullYear()} Docentra — ENSA Tanger</footer>
+          <Button
+            text="CREATE AN ACCOUNT"
+            className="btn-create secondary"
+            onClick={() => navigate("/register")}
+          />
         </div>
       </div>
-    </>
+    </div>
   );
 }
