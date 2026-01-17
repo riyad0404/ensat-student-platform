@@ -1,4 +1,5 @@
-import { Routes, Route, Outlet, Navigate } from 'react-router-dom';
+"use client"
+import { Routes, Route, Outlet, Navigate,useNavigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import LoginPage from './pages/LoginPage';
 import LandingPage from './pages/Landing';
@@ -9,6 +10,11 @@ import ResetPasswordToken from './pages/ResetPasswordToken';
 import ProfilePage from './pages/Profile';
 import Sidebar from './components/Sidebar';
 import EditProfile from './pages/EditProfile';
+import ChatbotPage from "./pages/ChatbotPage";
+import ChatbotButton from "./components/ChatbotButton";
+import MessagesPage from './pages/MessagesPage';
+import GroupsPage from './pages/GroupsPage';
+import ConversationPage from './pages/ConversationPage';
 
 // HOC pour protéger les routes
 const RequireAuth = ({ children }) => {
@@ -59,23 +65,27 @@ const RequireAuthLayout = () => {
 };
 
 
+// Dans App.js - MainLayout
 const MainLayout = () => {
+  // On n'a plus besoin d'état ici puisque Sidebar gère son propre état
+  
   return (
     <div style={{ 
       display: 'flex', 
       minHeight: '100vh',
-      width: '100vw', // Force la largeur totale
-      overflowX: 'hidden' // Empêche le défilement horizontal
+      width: '100vw',
+      overflowX: 'hidden'
     }}>
       <Sidebar />
       <div style={{ 
         flex: 1, 
-        marginLeft: '270px',
+        marginLeft: '270px', // Largeur initiale
         backgroundColor: '#f5f5f5',
         minHeight: '100vh',
-        padding: '20px 0px',
+        padding: '20px',
         width: 'calc(100vw - 270px)',
-        overflowY: 'auto' // Permet le défilement vertical si besoin
+        overflowY: 'auto',
+        transition: 'margin-left 0.3s ease, width 0.3s ease'
       }}>
         <Outlet />
       </div>
@@ -114,29 +124,42 @@ const HomePage = () => {
   );
 };
 
+
 function App() {
+  const navigate = useNavigate()
+  const { user } = useAuth()
+
   return (
-    <Routes>
-       <Route path="/landing" element={<LandingPage />} />
-      {/* Routes protégées (nécessite authentification) */}
-      <Route element={<RequireAuthLayout />}>
+    <>
+      <Routes>
+        <Route path="/landing" element={<LandingPage />} />
+        {/* Routes protégées (nécessite authentification) avec Sidebar */}
+        <Route element={<RequireAuthLayout />}>
         <Route element={<MainLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/profile" element={<ProfilePage />} />
-           <Route path="/profile/edit" element={<EditProfile />} />
+          <Route path="/profile/edit" element={<EditProfile />} />
+          <Route path="/chatbot" element={<ChatbotPage />} />
+          <Route path="/messages" element={<MessagesPage />} />
+          <Route path="/groups" element={<GroupsPage />} />
+          <Route path="/groupes" element={<Navigate to="/groups" replace />} />
+          <Route path="/conversations/:id" element={<ConversationPage />} />
         </Route>
-      </Route>
-      
-      {/* Routes publiques (si déjà authentifié, redirige) */}
-      <Route element={<AlreadyAuthLayout />}>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/resetByemail" element={<ResetPasswordEmail />} />
-        <Route path="/resetByCode" element={<ResetPasswordCS />} />
-        <Route path="/reset-password/:token" element={<ResetPasswordToken />} />
-      </Route>
-    </Routes>
-  );
+        </Route>
+
+        {/* Routes publiques (si déjà authentifié, redirige) */}
+        <Route element={<AlreadyAuthLayout />}>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/resetByemail" element={<ResetPasswordEmail />} />
+          <Route path="/resetByCode" element={<ResetPasswordCS />} />
+          <Route path="/reset-password/:token" element={<ResetPasswordToken />} />
+        </Route>
+      </Routes>
+
+      {user && <ChatbotButton onClick={() => navigate("/chatbot")} />}
+    </>
+  )
 }
 
-export default App;
+export default App

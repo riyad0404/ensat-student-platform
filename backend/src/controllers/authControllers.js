@@ -189,7 +189,7 @@ export const forgotPasswordByEmail = async (req, res) => {
     await user.save();
 
     // Frontend page that will handle the reset (React route)
-    const resetUrl = `${process.env.CLIENT_URL}/reset-password/${resetToken}`;
+    const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
 
     const subject = 'Password Reset Instructions';
     const html = getResetPasswordEmailTemplate(
@@ -368,4 +368,6 @@ if (currentPassword || newPassword) {
     return res.status(500).json({ message: 'Erreur du serveur', error: error.message });
   }
 };
+
+
 

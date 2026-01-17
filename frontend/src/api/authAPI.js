@@ -109,7 +109,7 @@ export const authAPI = {
       // Log des données envoyées
       console.log('📤 Données envoyées:', JSON.stringify(userData, null, 2));
       
-      const response = await axiosInstance.put('/auth/update-profile', userData);
+      const response = await axiosInstance.put('/auth/edit-profile', userData);
       
       console.log('✅ Profil mis à jour:', response.data);
       return response.data;

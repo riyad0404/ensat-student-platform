@@ -9,6 +9,79 @@ const ABOUT_IMG =
 
 export default function Landing() {
   const navigate = useNavigate();
+  const [scrolled, setScrolled] = useState(false);
+
+  // Handle scroll for header
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    
+    // Set body class for this page
+    document.body.classList.add('landing-page');
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.body.classList.remove('landing-page');
+    };
+  }, []);
+
+  const features = [
+    {
+      icon: <Search size={28} />,
+      title: "Recherche Intelligente",
+      description: "Trouvez rapidement étudiants, documents et ressources par nom, niveau ou domaine d'étude avec notre moteur de recherche avancé.",
+      color: "#7c3aed"
+    },
+    {
+      icon: <Users size={28} />,
+      title: "Profils Étudiants",
+      description: "Consultez les profils publics détaillés avec publications, compétences, parcours académique et projets réalisés.",
+      color: "#a855f7"
+    },
+    {
+      icon: <FileText size={28} />,
+      title: "Publications Anonymes",
+      description: "Partagez vos questions et idées anonymement dans un espace sécurisé, visible uniquement par vous.",
+      color: "#ec4899"
+    },
+    {
+      icon: <MessageSquare size={28} />,
+      title: "Collaboration en Temps Réel",
+      description: "Discussions thématiques, groupes privés et chatbot d'assistance académique pour une collaboration optimale.",
+      color: "#10b981"
+    },
+    {
+      icon: <Shield size={28} />,
+      title: "Sécurité Maximale",
+      description: "Protection avancée des données personnelles avec chiffrement et contrôle total sur vos publications.",
+      color: "#3b82f6"
+    },
+    {
+      icon: <Globe size={28} />,
+      title: "Accessibilité Mobile",
+      description: "Accédez à la plateforme depuis n'importe quel appareil avec une expérience optimisée pour mobile.",
+      color: "#f59e0b"
+    }
+  ];
+
+  const stats = [
+    { value: "5K+", label: "Étudiants Actifs", icon: <Users size={20} /> },
+    { value: "10K+", label: "Documents Partagés", icon: <FileText size={20} /> },
+    { value: "98%", label: "Taux de Satisfaction", icon: <TrendingUp size={20} /> },
+    { value: "24/7", label: "Disponibilité", icon: <Globe size={20} /> }
+  ];
+
+  const benefits = [
+    "Gagnez du temps dans vos recherches académiques",
+    "Collaborez efficacement avec vos pairs",
+    "Organisez vos documents par niveau et matière",
+    "Bénéficiez d'un espace de stockage sécurisé",
+    "Accédez à des ressources exclusives ENSA",
+    "Recevez des notifications personnalisées"
+  ];
 
   const features = useMemo(
     () => [
