@@ -4,8 +4,8 @@ import '../styles/CreatePostModal.css';
 
 const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
   const [content, setContent] = useState('');
-  const [image, setImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [file, setFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
   const [niveau, setNiveau] = useState('GINF1');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -14,44 +14,46 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
   useEffect(() => {
     if (!isOpen) {
       setContent('');
-      setImage(null);
-      setImagePreview(null);
+      setFile(null);
+      setFilePreview(null);
       setNiveau('GINF1');
       setIsAnonymous(false);
       setError('');
     }
   }, [isOpen]);
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file && file.type.startsWith('image/')) {
-      setImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result);
-      reader.readAsDataURL(file);
-    } else {
-      alert('Veuillez sélectionner une image valide');
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      if (selectedFile.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => setFilePreview(reader.result);
+        reader.readAsDataURL(selectedFile);
+      } else {
+        setFilePreview(selectedFile.name);
+      }
     }
   };
 
 const handleSubmit = async (e) => {
   e.preventDefault();
-  
-  if (!content.trim() && !image) {
-    setError('Ajoutez du contenu ou une image');
+
+  if (!content.trim() && !file) {
+    setError('Ajoutez du contenu ou un fichier');
     return;
   }
 
   setLoading(true);
   setError('');
-  
+
   try {
     const formData = new FormData();
     formData.append('contenu', content.trim());
     formData.append('isAnonymat', isAnonymous ? 'true' : 'false');
-    
-    if (image) {
-      formData.append('file', image);
+
+    if (file) {
+      formData.append('file', file);
       formData.append('niveau', niveau);
     }
 
@@ -106,15 +108,25 @@ const handleSubmit = async (e) => {
               rows={5} 
             />
             
-            {imagePreview && (
-              <div className="image-preview">
-                <img src={imagePreview} alt="Aperçu" />
-                <button 
-                  type="button" 
-                  className="remove-image-btn" 
+            {filePreview && (
+              <div className="file-preview">
+                {file && file.type.startsWith('image/') ? (
+                  <img src={filePreview} alt="Aperçu" />
+                ) : (
+                  <div className="document-preview">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                      <polyline points="13 2 13 9 20 9"></polyline>
+                    </svg>
+                    <p>{filePreview}</p>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  className="remove-file-btn"
                   onClick={() => {
-                    setImage(null);
-                    setImagePreview(null);
+                    setFile(null);
+                    setFilePreview(null);
                   }}
                 >
                   ×
@@ -129,16 +141,16 @@ const handleSubmit = async (e) => {
                   <circle cx="8.5" cy="8.5" r="1.5"></circle>
                   <polyline points="21 15 16 10 5 21"></polyline>
                 </svg>
-                <span>Ajouter une photo</span>
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={handleImageChange} 
-                  style={{ display: 'none' }} 
+                <span>Ajouter un fichier</span>
+                <input
+                  type="file"
+                  accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt"
+                  onChange={handleFileChange}
+                  style={{ display: 'none' }}
                 />
               </label>
-              
-              {image && (
+
+              {file && (
                 <select 
                   value={niveau} 
                   onChange={(e) => setNiveau(e.target.value)}
@@ -199,10 +211,10 @@ const handleSubmit = async (e) => {
             <button type="button" className="cancel-btn" onClick={onClose}>
               Annuler
             </button>
-            <button 
-              type="submit" 
-              className="submit-btn" 
-              disabled={loading || (!content.trim() && !image)}
+            <button
+              type="submit"
+              className="submit-btn"
+              disabled={loading || (!content.trim() && !file)}
             >
               {loading ? '⏳ Publication...' : '📤 Publier'}
             </button>

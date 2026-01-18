@@ -36,6 +36,11 @@ const ConversationMember = sequelize.define(
       type: DataTypes.DATE,
       allowNull: true,
     },
+
+    lastReadAt: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     tableName: 'conversation_members',

@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import { Server } from 'socket.io';
 dotenv.config();
 import express from 'express';
 import { urlencoded } from 'express';
@@ -14,6 +15,7 @@ import sequelize from './database.js';
 import cookieParser from 'cookie-parser';
 import conversationRoutes from './routes/conversationRoutes.js';
 import reactionRoutes from "./routes/reactionroutes.js";
+import notificationRoutes from "./routes/notificationroutes.js";
 import userRoutes from './routes/userRoutes.js';
 import documentRoutes from "./routes/documentRoutes.js";
 import commentRoutes from "./routes/commentroutes.js";
@@ -46,6 +48,9 @@ app.use("/api/reactions", reactionRoutes);
 app.use("/api/documents", documentRoutes);
 app.use("/api/users", userRoutes);
 app.use('/api/conversations', conversationRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use('/api/chat', chatRoutes);
+
 
 
 
@@ -85,6 +90,35 @@ async function start() {
     process.exit(1);
   }
 }
+const io = new Server(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || 'http://localhost:5174',
+    credentials: true,
+  }
+});
+// Stocker les utilisateurs en ligne
+let onlineUsers = {}; // { userId: socketId }
+
+io.on('connection', (socket) => {
+  console.log('Utilisateur connecté:', socket.id);
+
+  // Quand un utilisateur se connecte, il envoie son ID
+  socket.on('user_connected', (userId) => {
+    onlineUsers[userId] = socket.id;
+    console.log('Utilisateurs en ligne:', onlineUsers);
+  });
+
+  // Déconnexion
+  socket.on('disconnect', () => {
+    for (let key in onlineUsers) {
+      if (onlineUsers[key] === socket.id) delete onlineUsers[key];
+    }
+    console.log('Utilisateur déconnecté:', socket.id);
+  });
+});
+
+// Exporter io et onlineUsers pour pouvoir les utiliser dans d'autres fichiers
+export { io, onlineUsers };
 
 // Graceful shutdown
 function gracefulShutdown() {

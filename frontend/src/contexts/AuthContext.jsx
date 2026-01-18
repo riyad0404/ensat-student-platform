@@ -131,104 +131,108 @@ export const AuthProvider = ({ children }) => {
   };
 
   // ✅ Inscription
-// ✅ Inscription (remplacer seulement cette fonction)
-const register = async (userData) => {
-  try {
-    console.log("📝 Inscription en cours...");
-    const result = await authAPI.register(userData);
+  // ✅ Inscription (remplacer seulement cette fonction)
+  const register = async (userData) => {
+    try {
+      console.log("📝 Inscription en cours...");
+      const result = await authAPI.register(userData);
 
-    console.log("✅ Réponse inscription:", result);
+      console.log("✅ Réponse inscription:", result);
 
-    if (result.message) {
-      console.log("✅ Inscription réussie! Redirection vers login...");
-      navigate("/login");
-      return { success: true, message: result.message };
-    }
+      if (result.message) {
+        console.log("✅ Inscription réussie! Redirection vers login...");
+        navigate("/login");
+        return { success: true, message: result.message };
+      }
 
-    // si ton backend renvoie autre chose que {message}, on reste prudent
-    return { success: true, ...result };
-  } catch (error) {
-    console.error("❌ Erreur inscription:", error);
+      // si ton backend renvoie autre chose que {message}, on reste prudent
+      return { success: true, ...result };
+    } catch (error) {
+      console.error("❌ Erreur inscription:", error);
 
-    // authAPI.register peut throw:
-    // 1) un AxiosError (error.response...)
-    // 2) un objet custom { status, message, data } (comme dans ton authAPI.js)
-    const status = error?.response?.status ?? error?.status ?? null;
+      // authAPI.register peut throw:
+      // 1) un AxiosError (error.response...)
+      // 2) un objet custom { status, message, data } (comme dans ton authAPI.js)
+      const status = error?.response?.status ?? error?.status ?? null;
 
-    // ✅ 429 RATE LIMIT
-    if (status === 429) {
-      const headers = error?.response?.headers ?? {};
-      const seconds = parseRateLimitSeconds(headers); // peut être null si header absent
+      // ✅ AJOUT MINIMAL: récupérer le payload backend
+      const backendData = error?.response?.data || error?.data || null;
 
-      const msg =
+      // ✅ 429 RATE LIMIT
+      if (status === 429) {
+        const headers = error?.response?.headers ?? {};
+        const seconds = parseRateLimitSeconds(headers); // peut être null si header absent
+
+        const msg =
+          error?.response?.data?.message ||
+          error?.response?.data?.error ||
+          error?.data?.message ||
+          error?.data?.error ||
+          error?.message ||
+          "Too many signup attempts. Please try again later.";
+
+        return {
+          success: false,
+          status: 429,
+          error: msg,
+          errorCode: "RATE_LIMIT",
+          retryAfterSeconds: seconds,
+          data: backendData, // ✅ AJOUT
+        };
+      }
+
+      // ✅ autres erreurs: construire un message propre
+      const rawMsg =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
         error?.data?.message ||
         error?.data?.error ||
         error?.message ||
-        "Too many signup attempts. Please try again later.";
+        "Registration failed. Please try again.";
 
+      const msgLower = String(rawMsg).toLowerCase();
+
+      // ✅ email déjà utilisé (409 ou message)
+      if (
+        status === 409 ||
+        (msgLower.includes("email") &&
+          (msgLower.includes("already") ||
+            msgLower.includes("exists") ||
+            msgLower.includes("duplicate") ||
+            msgLower.includes("in use")))
+      ) {
+        return {
+          success: false,
+          status: status ?? 409,
+          errorCode: "EMAIL_IN_USE",
+          error: "This email is already registered. Please use another email or login.",
+          data: backendData, // ✅ AJOUT
+        };
+      }
+
+      // ✅ secret code invalide (400 ou message)
+      if (status === 400 && (msgLower.includes("secret") || msgLower.includes("code"))) {
+        return {
+          success: false,
+          status: 400,
+          errorCode: "INVALID_SECRET_CODE",
+          error: "Invalid secret code. Please contact the administrator for the correct code.",
+          data: backendData, // ✅ AJOUT
+        };
+      }
+
+      // ✅ fallback
       return {
         success: false,
-        status: 429,
-        error: msg,
-        errorCode: "RATE_LIMIT",
-        retryAfterSeconds: seconds,
+        status,
+        errorCode: "GENERIC",
+        error: rawMsg,
+        data: backendData, // ✅ AJOUT
       };
     }
+  };
 
-    // ✅ autres erreurs: construire un message propre
-    const rawMsg =
-      error?.response?.data?.message ||
-      error?.response?.data?.error ||
-      error?.data?.message ||
-      error?.data?.error ||
-      error?.message ||
-      "Registration failed. Please try again.";
-
-    const msgLower = String(rawMsg).toLowerCase();
-
-    // ✅ email déjà utilisé (409 ou message)
-    if (
-      status === 409 ||
-      (msgLower.includes("email") &&
-        (msgLower.includes("already") ||
-          msgLower.includes("exists") ||
-          msgLower.includes("duplicate") ||
-          msgLower.includes("in use")))
-    ) {
-      return {
-        success: false,
-        status: status ?? 409,
-        errorCode: "EMAIL_IN_USE",
-        error: "This email is already registered. Please use another email or login.",
-      };
-    }
-
-    // ✅ secret code invalide (400 ou message)
-    if (
-      status === 400 &&
-      (msgLower.includes("secret") || msgLower.includes("code"))
-    ) {
-      return {
-        success: false,
-        status: 400,
-        errorCode: "INVALID_SECRET_CODE",
-        error:
-          "Invalid secret code. Please contact the administrator for the correct code.",
-      };
-    }
-
-    // ✅ fallback
-    return {
-      success: false,
-      status,
-      errorCode: "GENERIC",
-      error: rawMsg,
-    };
-  }
-};
-//deconnexion
+  //deconnexion
   const logout = async () => {
     try {
       console.log("👋 Déconnexion en cours...");
