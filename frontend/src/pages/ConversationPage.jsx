@@ -6,6 +6,7 @@ import '../styles/conversations.css';
 import { useAuth } from '../contexts/AuthContext';
 import ConversationSidebar from '../components/conversations/ConversationSidebar';
 import axios from 'axios';
+import { useSocket } from '../contexts/SocketContext';
 
 const ConversationPage = () => {
   const { id } = useParams();
@@ -25,15 +26,93 @@ const ConversationPage = () => {
   const [messageToDelete, setMessageToDelete] = useState(null);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const prevMessagesLength = useRef(0);
+  // Nouveaux états pour Typing et Online
+  const [typingUsers, setTypingUsers] = useState([]);
+  const [isOnline, setIsOnline] = useState(false);
+  const typingTimeoutRef = useRef(null);
+  const otherUserIdRef = useRef(null);
 
   const { user } = useAuth();
   const currentUserId = user?.iduser || user?.id;
+  const { socket } = useSocket();
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 3000);
-    return () => clearInterval(interval);
-  }, [id]);
+    // Mise à jour de la ref pour l'utilisateur distant (pour éviter re-render socket)
+    if (conversation?.otherUser?.iduser) {
+      otherUserIdRef.current = conversation.otherUser.iduser;
+      // Demander le statut en ligne si le backend le supporte
+      if (socket) socket.emit('check_online', conversation.otherUser.iduser);
+      // Signaler au serveur que JE suis connecté (pour que l'autre me voie en ligne)
+      if (socket) socket.emit('user_connected', currentUserId);
+    }
+  }, [id, conversation, socket]);
+
+  useEffect(() => {
+    
+    // Logique Socket.io
+    if (socket) {
+      // Rejoindre la "salle" de cette conversation spécifique
+      socket.emit('join_conversation', id);
+
+      // Écouter les nouveaux messages
+      const handleNewMessage = (newMsg) => {
+        // On vérifie si le message n'est pas déjà là (pour éviter les doublons)
+        setMessages((prevMessages) => {
+          // Ignorer mes propres messages venant du socket (car gérés en optimiste)
+          if (String(newMsg.senderId) === String(currentUserId)) return prevMessages;
+
+          const exists = prevMessages.some(m => (m.id || m.idmessage) === (newMsg.id || newMsg.idmessage));
+          if (exists) return prevMessages;
+          return [...prevMessages, newMsg];
+        });
+      };
+
+      // Gestion "En train d'écrire"
+      const handleTyping = ({ conversationId, userId, name }) => {
+        if (String(conversationId) === String(id) && String(userId) !== String(currentUserId)) {
+            setTypingUsers(prev => {
+                if (prev.some(u => String(u.userId) === String(userId))) return prev;
+                return [...prev, { userId, name }];
+            });
+        }
+      };
+
+      const handleStopTyping = ({ conversationId, userId }) => {
+        if (String(conversationId) === String(id)) {
+            setTypingUsers(prev => prev.filter(u => String(u.userId) !== String(userId)));
+        }
+      };
+
+      // Gestion "En ligne"
+      const handleUserOnline = (userId) => {
+        if (otherUserIdRef.current && String(otherUserIdRef.current) === String(userId)) {
+            setIsOnline(true);
+        }
+      };
+
+      const handleUserOffline = (userId) => {
+        if (otherUserIdRef.current && String(otherUserIdRef.current) === String(userId)) {
+            setIsOnline(false);
+        }
+      };
+
+      socket.on('receive_message', handleNewMessage);
+      socket.on('typing', handleTyping);
+      socket.on('stop_typing', handleStopTyping);
+      socket.on('user_online', handleUserOnline);
+      socket.on('user_offline', handleUserOffline);
+
+      return () => {
+        socket.off('receive_message', handleNewMessage);
+        socket.off('typing', handleTyping);
+        socket.off('stop_typing', handleStopTyping);
+        socket.off('user_online', handleUserOnline);
+        socket.off('user_offline', handleUserOffline);
+        socket.emit('leave_conversation', id);
+      };
+    }
+  }, [id, socket]); // On retire 'conversation' des dépendances pour éviter les re-joins
 
   useEffect(() => {
     const container = messagesContainerRef.current;
@@ -77,6 +156,13 @@ const ConversationPage = () => {
     e.preventDefault();
     if (!newMessage.trim()) return;
 
+    // Arrêter l'indicateur de frappe immédiatement
+    if (socket) {
+        socket.emit('stop_typing', { conversationId: id, userId: currentUserId });
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+    }
+
     if (editingMessageId) {
       try {
         await conversationAPI.editMessage(id, editingMessageId, newMessage);
@@ -88,13 +174,50 @@ const ConversationPage = () => {
         alert("Failed to edit message");
       }
     } else {
+      // 🚀 ENVOI OPTIMISTE (Affichage immédiat)
+      const tempId = Date.now();
+      const tempMsg = {
+          id: tempId,
+          content: newMessage,
+          senderId: currentUserId,
+          createdAt: new Date().toISOString(),
+          sentAt: new Date().toISOString(),
+          isTemp: true // Marqueur pour le style (opacité)
+      };
+
+      setMessages(prev => [...prev, tempMsg]);
+      setNewMessage('');
+
       try {
         const msg = await conversationAPI.sendMessage(id, newMessage);
-        setMessages([...messages, msg]);
-        setNewMessage('');
+        // Remplacer le message temporaire par le vrai message confirmé par le serveur
+        setMessages(prev => prev.map(m => (m.id === tempId) ? msg : m));
       } catch (error) {
         console.error("Erreur envoi", error);
+        // En cas d'erreur, on retire le message temporaire et on alerte
+        setMessages(prev => prev.filter(m => m.id !== tempId));
+        alert("Échec de l'envoi du message");
       }
+    }
+  };
+
+  // Gestion de la saisie avec indicateur de frappe
+  const handleTypingInput = (e) => {
+    const val = e.target.value;
+    setNewMessage(val);
+
+    if (socket && val.trim().length > 0) {
+        // Émettre 'typing' seulement si on ne l'a pas fait récemment
+        if (!typingTimeoutRef.current) {
+            socket.emit('typing', { conversationId: id, userId: currentUserId, name: user.prenom || user.nom });
+        }
+        
+        // Debounce pour arrêter de taper
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(() => {
+            socket.emit('stop_typing', { conversationId: id, userId: currentUserId });
+            typingTimeoutRef.current = null;
+        }, 3000);
     }
   };
 
@@ -329,8 +452,19 @@ const ConversationPage = () => {
           <h2 style={{ fontSize: '16px', margin: 0, color: '#111b21', fontWeight: '500' }}>{getConvName()}</h2>
           {isGroup && (
             <p style={{ fontSize: '13px', margin: 0, color: '#667781', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '200px' }}>
-              {conversation.members ? conversation.members.filter(m => !m.leftAt).map(m => m.prenom).join(', ') : conversation.description}
+              {typingUsers.length > 0 
+                ? <span style={{color: '#00a884', fontWeight: 'bold'}}>{typingUsers.map(u => u.name).join(', ')} is typing...</span>
+                : (conversation.members ? conversation.members.filter(m => !m.leftAt).map(m => m.prenom).join(', ') : conversation.description)
+              }
             </p>
+          )}
+          {!isGroup && (
+             <p style={{ fontSize: '13px', margin: 0, color: '#667781' }}>
+                {typingUsers.length > 0 
+                    ? <span style={{color: '#00a884', fontWeight: 'bold'}}>typing...</span>
+                    : (isOnline ? <span style={{color: '#00a884'}}>En ligne</span> : (conversation.otherUser?.niveau || "Student"))
+                }
+             </p>
           )}
         </div>
       </div>
@@ -365,6 +499,7 @@ const ConversationPage = () => {
                   fontSize: '14.2px',
                   lineHeight: '19px',
                   position: 'relative',
+                  opacity: msg.isTemp ? 0.7 : 1, // Feedback visuel pour l'envoi
               }}
             >
               {isGroup && !isOwn && (
@@ -398,7 +533,7 @@ const ConversationPage = () => {
         <input 
           className="composer-input" 
           value={newMessage} 
-          onChange={(e) => setNewMessage(e.target.value)} 
+          onChange={handleTypingInput} 
           placeholder={editingMessageId ? "Edit your message..." : "Type a message..."}
           style={{ flex: 1, padding: '8px 12px', borderRadius: '8px', border: editingMessageId ? '2px solid #00a884' : 'none', outline: 'none', fontSize: '15px', background: 'white', color: '#111b21' }}
         />

@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { AuthProvider } from './contexts/AuthContext';
+import { SocketProvider } from './contexts/SocketContext';
 
 // AJOUTER Material Icons 
 const materialIcons = document.createElement('link');
@@ -18,10 +19,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     {/* ⭐ AJOUTER BrowserRouter ICI */}
     <BrowserRouter>
       <AuthProvider>
-        <App />
+        <SocketProvider>
+          <App />
+        </SocketProvider>
       </AuthProvider>
     </BrowserRouter>
   </React.StrictMode>
 );
-
-

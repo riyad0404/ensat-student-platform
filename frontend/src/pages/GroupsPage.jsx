@@ -4,6 +4,7 @@ import { Users, Plus, Search, X, Camera } from 'lucide-react';
 import conversationAPI from '../api/conversationAPI';
 import '../styles/conversations.css';
 import { useAuth } from '../contexts/AuthContext';
+import { useSocket } from '../contexts/SocketContext';
 
 const GroupsPage = () => {
   const [groups, setGroups] = useState([]);
@@ -20,13 +21,23 @@ const GroupsPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const currentUserId = user?.iduser || user?.id;
+  const { socket } = useSocket();
 
   useEffect(() => {
     loadGroups();
-    // Polling pour mettre à jour la liste et les notifications
-    const interval = setInterval(loadGroups, 3000);
-    return () => clearInterval(interval);
-  }, []);
+    
+    if (socket) {
+      // Si le backend envoie un événement global "notification" ou "update_group_list"
+      // Demande à ton équipe le nom exact de l'événement
+      socket.on('notification', loadGroups);
+      socket.on('receive_message', loadGroups); // Rafraîchir si un message arrive (pour le compteur non-lu)
+
+      return () => {
+        socket.off('notification', loadGroups);
+        socket.off('receive_message', loadGroups);
+      };
+    }
+  }, [socket]);
 
   // Fonctions utilitaires pour gérer les différents formats de données possibles du backend
   const getGroupId = (g) => g.id || g.idconversation || g.id_conversation || g.conversationId || g.conversation_id;
