@@ -1,4 +1,4 @@
-/* PostCard.css - Version Corrigée */
+/* ========== STYLES DE BASE ========== */
 .post-card {
   width: 100%;
   background: white;
@@ -6,29 +6,27 @@
   padding: 24px;
   margin-bottom: 24px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
-  box-sizing: border-box;
 }
 
-/* FIX: Avatar à GAUCHE du nom */
+/* --- EN-TÊTE DU POST --- */
 .post-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 15px;
 }
 
 .post-author {
   display: flex;
-  align-items: center; /* Aligne l'image et le texte sur la même ligne */
+  align-items: center;
   gap: 12px;
 }
 
 .author-avatar {
-  width: 45px;
-  height: 45px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   object-fit: cover;
-  flex-shrink: 0;
 }
 
 .author-info {
@@ -37,24 +35,53 @@
 }
 
 .author-name {
-  font-size: 15px;
-  font-weight: 700;
-  color: #111827;
+  font-size: 16px;
+  font-weight: 600;
   margin: 0;
 }
 
 .author-role {
-  font-size: 12px;
+  font-size: 13px;
   color: #6b7280;
   margin: 0;
 }
 
-/* FIX: Boutons Like/Comment/Share sur UNE SEULE LIGNE */
+/* --- CONTENU DU POST --- */
+.post-content {
+  margin-bottom: 15px;
+}
+
+.post-text {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #1f2937;
+  margin: 0 0 15px 0;
+}
+
+.post-image-container {
+  width: 100%;
+  height: 350px;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 15px;
+  background-color: #f9fafb;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid #f3f4f6;
+}
+
+.post-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* --- STATS & PARTAGER --- */
 .post-stats {
   display: flex;
-  flex-direction: row; /* Force l'alignement horizontal */
-  align-items: center;
-  gap: 30px; /* Espace entre les boutons */
+  gap: 25px;
   padding: 15px 0;
   border-top: 1px solid #f3f4f6;
   margin-top: 10px;
@@ -66,50 +93,437 @@
   gap: 8px;
   background: none;
   border: none;
-  color: #667085;
   cursor: pointer;
+  color: #6b7280;
   font-size: 14px;
-  font-weight: 500;
-  padding: 0;
+  transition: color 0.2s;
 }
 
-/* FIX: Barre de commentaire allongée */
-.comment-form {
+.stat-btn:hover {
+  color: #374151;
+}
+
+.stat-btn.liked {
+  color: #ec4899;
+}
+
+/* ========== SECTION COMMENTAIRE ========== */
+.comment-section {
+  margin-top: 15px;
+}
+
+.comment-form-container {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 12px;
   margin-top: 15px;
-  width: 100%; /* Utilise toute la largeur de la carte */
+}
+
+.comment-input-wrapper {
+  display: flex;
+  align-items: center;
+  background-color: #f3f4f6;
+  border-radius: 25px;
+  padding: 0 15px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .comment-input {
-  flex: 1; /* S'allonge pour prendre tout l'espace */
-  background-color: #f3f4f6;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 25px;
+  flex: 1;
+  background: transparent;
+  border: none !important;
+  padding: 12px 10px;
   font-size: 14px;
+  outline: none !important;
+}
+
+.comment-input:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.comment-submit-icon-btn {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  outline: none !important;
+  box-shadow: none !important;
+  transition: opacity 0.2s;
+}
+
+.comment-submit-icon-btn:hover {
+  opacity: 0.7;
+}
+
+.comment-submit-icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ========== OPTIONS DE COMMENTAIRE AMÉLIORÉES ========== */
+.comment-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-left: 5px;
+}
+
+.anon-label {
+  font-size: 13px;
+  color: #6b7280;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ✅ Bouton de téléchargement stylé */
+.file-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f9fafb;
+  border: 1px dashed #d1d5db;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #6b7280;
+  transition: all 0.2s;
+  width: fit-content;
+}
+
+.file-upload-btn:hover {
+  background: #f3f4f6;
+  border-color: #a855f7;
+  color: #a855f7;
+}
+
+/* ✅ Container quand fichier sélectionné */
+.file-selected-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.file-name {
+  flex: 1;
+  font-size: 13px;
+  color: #374151;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-remove-btn {
+  background: #fee2e2;
+  color: #ef4444;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.file-remove-btn:hover {
+  background: #fecaca;
+}
+
+/* ✅ Sélecteur de niveau stylé */
+.niveau-select {
+  padding: 10px 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #374151;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.2s;
   outline: none;
 }
 
-.comment-submit-btn {
-  background: none;
-  border: none;
-  color: #a855f7;
-  cursor: pointer;
-  padding: 5px;
+.niveau-select:hover {
+  border-color: #a855f7;
+}
+
+.niveau-select:focus {
+  border-color: #a855f7;
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+}
+
+/* ========== LISTE DES COMMENTAIRES ========== */
+.comments-list {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.comment-item-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.comment-avatar-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.comment-bubble {
+  background-color: #f3f4f6;
+  padding: 10px 15px;
+  border-radius: 18px;
+  max-width: 85%;
+  flex: 1;
+}
+
+.comment-author-name {
+  font-weight: 700;
+  font-size: 13px;
+  margin: 0 0 4px 0;
+  color: #1f2937;
+}
+
+.comment-text {
+  font-size: 14px;
+  line-height: 1.4;
+  margin: 0;
+  color: #374151;
+  word-wrap: break-word;
+}
+
+/* ✅ Document dans commentaire */
+.comment-document {
+  margin-top: 10px;
+}
+
+.comment-image {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 8px;
+  object-fit: cover;
+  display: block;
+}
+
+.comment-file-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #374151;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.comment-file-link:hover {
+  background: #f9fafb;
+  border-color: #a855f7;
+}
+
+.file-name-link {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-niveau-badge {
+  font-size: 11px;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+/* Ajoutez ces styles à votre fichier PostCard.css existant */
+
+/* Container du document du post */
+.post-document-container {
+  margin-top: 12px;
 }
 
 /* Image du post */
-.post-image-container {
-  width: 100%;
-  border-radius: 12px;
-  overflow: hidden;
-  margin: 15px 0;
-}
-
 .post-image {
   width: 100%;
-  height: auto;
-  display: block;
+  max-height: 500px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+/* Formulaire de commentaire amélioré */
+.file-selected-container {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.file-name {
+  flex: 1;
+  font-size: 13px;
+  color: #374151;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-remove-btn {
+  background: #fee2e2;
+  color: #dc2626;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.file-remove-btn:hover {
+  background: #fecaca;
+  transform: scale(1.1);
+}
+
+.niveau-select {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 13px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.niveau-select:focus {
+  outline: none;
+  border-color: #a855f7;
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.1);
+}
+
+.file-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #374151;
+  transition: all 0.2s;
+  margin-top: 8px;
+}
+
+.file-upload-btn:hover {
+  background: #e5e7eb;
+  border-color: #a855f7;
+}
+
+.file-upload-btn svg {
+  flex-shrink: 0;
+}
+
+/* Documents des commentaires */
+.comment-document {
+  margin-top: 8px;
+}
+
+.comment-image {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.comment-file-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f3f4f6;
+  border-radius: 6px;
+  text-decoration: none;
+  color: #374151;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.comment-file-link:hover {
+  background: #e5e7eb;
+}
+
+.file-name-link {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-niveau-badge {
+  margin-left: auto;
+  font-size: 11px;
+  color: #6b7280;
+  background: #e5e7eb;
+  padding: 2px 6px;
+  border-radius: 4px;
+  flex-shrink: 0;
 }

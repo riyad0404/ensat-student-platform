@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom'; // Utilisez useNavigate
 import Feed from "../components/feed";
 import CreatePostModal from "../components/CreatePostModal";
 import { getAllPosts } from "../api/postAPI";
@@ -9,59 +9,39 @@ const HomePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  const location = useLocation();
+  const navigate = useNavigate();
 
+  // Chargement des posts
   useEffect(() => {
     fetchPosts();
-    // initial check handled below via location effect
   }, []);
 
-  const location = useLocation();
-
+  // Surveillance de l'URL pour ouvrir la modale
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('create') === '1') {
       setIsModalOpen(true);
-      // remove the query param without reloading
-      params.delete('create');
-      const newSearch = params.toString();
-      const newUrl = location.pathname + (newSearch ? `?${newSearch}` : '');
-      window.history.replaceState({}, '', newUrl);
+      // NETTOYAGE CRUCIAL : On retire le paramètre de l'URL sans recharger
+      // Cela permet au prochain clic sur le lien d'être détecté comme un changement
+      navigate('/', { replace: true }); 
     }
-  }, [location.search]);
+  }, [location.search, navigate]);
 
   const fetchPosts = async () => {
     try {
       setLoading(true);
       const data = await getAllPosts();
-      
-      console.log("Données reçues de l'API:", data);
-      
-      let postsArray = [];
-      
-      if (Array.isArray(data)) {
-        postsArray = data;
-      } else if (data.posts && Array.isArray(data.posts)) {
-        postsArray = data.posts;
-      } else if (data.data && Array.isArray(data.data)) {
-        postsArray = data.data;
-      }
-      
-      postsArray.sort((a, b) => 
-        new Date(b.createdAt || b.dateCreation) - new Date(a.createdAt || a.dateCreation)
-      );
-      
-      console.log("Posts formatés:", postsArray);
+      let postsArray = Array.isArray(data) ? data : (data.posts || data.data || []);
+      postsArray.sort((a, b) => new Date(b.createdAt || b.dateCreation) - new Date(a.createdAt || a.dateCreation));
       setPosts(postsArray);
-      
     } catch (err) {
-      console.error("Erreur lors du chargement des posts:", err);
-      setError(err.response?.data?.message || err.message || "Erreur de connexion");
+      setError(err.message || "Erreur de connexion");
     } finally {
       setLoading(false);
     }
   };
-
-  // removed unused handleNewPost
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
@@ -72,19 +52,18 @@ const HomePage = () => {
   };
 
   return (
-  <div style={{ width: '100%' }}> 
-    {/* Pas de margin-top ici, le MainLayout s'en occupe avec content-wrapper */}
-    {!loading && !error && posts.length > 0 && (
-      <Feed posts={posts} />
-    )}
-    
-    <CreatePostModal 
-      isOpen={isModalOpen}
-      onClose={handleCloseModal}
-      onPostCreated={handlePostCreated}
-    />
-  </div>
-);
+    <div style={{ width: '100%' }}> 
+      {!loading && !error && posts.length > 0 && <Feed posts={posts} />}
+      
+      {/* L'ajout d'une KEY force React à détruire/recréer le composant proprement */}
+      <CreatePostModal 
+        key={isModalOpen ? "open" : "closed"} 
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onPostCreated={handlePostCreated}
+      />
+    </div>
+  );
 };
 
 export default HomePage;

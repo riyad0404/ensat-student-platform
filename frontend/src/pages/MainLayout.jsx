@@ -1,21 +1,24 @@
 import Sidebar from "../components/Sidebar.jsx";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import TopBar from "../components/TopBar";
 import "../styles/MainLayout.css";
 
 const MainLayout = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <div className="layout">
       <Sidebar />
       <main className="main-content">
         {/* BOÎTE 1 : La barre qui RESTE en haut quoi qu'il arrive */}
-        <div className="sticky-header">
-          <div className="header-limit">
-             <TopBar onAddPost={() => navigate('/?create=1')} />
+        {location.pathname === '/' && (
+          <div className="sticky-header">
+            <div className="header-limit">
+               <TopBar onAddPost={() => navigate('/?create=1')} />
+            </div>
           </div>
-        </div>
+        )}
         
         {/* BOÎTE 2 : La zone qui défile dessous */}
         <div className="scroll-content">

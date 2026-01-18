@@ -45,7 +45,7 @@ const TopBar = ({ onAddPost }) => {
         <div className="search-container" ref={searchRef}>
           <input
             type="text"
-            placeholder="Search for friends, groups, pages"
+            placeholder="Search for friends.."
             className="search-input"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
