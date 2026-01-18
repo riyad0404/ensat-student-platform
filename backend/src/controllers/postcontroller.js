@@ -1,75 +1,87 @@
 import { Post } from "../models/post.js";
 import { User } from "../models/user.js";
 import { Document } from "../models/document.js";
+import { Op } from 'sequelize';
+
+// ===== CREATE POST ====
 
 export const createPost = async (req, res) => {
   try {
+    const { contenu, isAnonymat, niveau } = req.body;
     const iduser = req.user.iduser;
 
-    // DEBUG: afficher si req.file existe
-    console.log("📤 createPost reçu");
-    console.log("📦 req.file:", req.file ? `OUI - ${req.file.filename}` : "NON");
-    console.log("📝 req.body:", req.body);
+    console.log('🔵 Début création post');
+    console.log('📝 Body:', { contenu, isAnonymat, niveau });
+    console.log('📦 Files:', req.files?.length || 0);
 
-    // Postman en form-data => req.body = strings
-    let { contenu, typeContenu, isAnonymat = false, niveau } = req.body;
-
-    // convertir isAnonymat correctement (form-data => "true"/"false")
-    if (typeof isAnonymat === "string") {
-      isAnonymat = isAnonymat === "true";
-    }
-
-    // Si on upload un fichier, contenu peut être vide (selon ton besoin)
-    if (!contenu && !req.file) {
-      return res.status(400).json({ message: "contenu obligatoire " });
-    }
-    if (!typeContenu) {
-      return res.status(400).json({ message: "typeContenu obligatoire" });
-    }
-    // si un fichier est uploadé, le niveau est obligatoire
-if (req.file && !niveau) {
-  return res.status(400).json({
-    message: "Le niveau est obligatoire pour un document",
-  });
-}
-
-    // 1) créer le post
-    const post = await Post.create({
-      contenu: contenu || "",          // si fichier sans texte
-      typeContenu,                    // "TEXTE" | "LIEN" | "DOCUMENT"
-      isAnonymat,
+    // 1. Création du Post
+    const newPost = await Post.create({
+      contenu: contenu?.trim() || '',
+      typeContenu: (req.files && req.files.length > 0) ? "DOCUMENT" : "TEXTE",
+      isAnonymat: isAnonymat === 'true' || isAnonymat === true,
       iduser,
     });
 
-    // 2) si fichier => créer Document lié au post
-    let doc = null;
+    console.log('✅ Post créé ID:', newPost.idpost);
 
-    if (req.file) {
-      const baseUrl = `${req.protocol}://${req.get("host")}`;
-      const url = `${baseUrl}/uploads/${req.file.filename}`;
+    // 2. Création des Documents
+    if (req.files && req.files.length > 0) {
+      const promises = req.files.map(file => {
+        const ext = file.originalname.split('.').pop().toLowerCase();
+        console.log('📎 Création document:', file.originalname);
+        return Document.create({
+          filename: file.originalname,
+          url: `${req.protocol}://${req.get('host')}/uploads/${file.filename}`,
+          type: ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext) ? "IMAGE" : "DOCUMENT",
+          niveau: niveau || 'GINF1',
+          iduser,
+          idpost: newPost.idpost
+        });
+      });
+      await Promise.all(promises);
+      console.log('✅ Documents créés');
+    }
 
-      doc = await Document.create({
-        filename: req.file.originalname,
-        url,
-        type: "DOCUMENT",     // ou tu peux déduire selon mimetype
-        niveau: niveau || req.user.niveau || "UNKNOWN",
-        idpost: post.idpost,
-        idcomment: null,
-        iduser,
+    // 3. RÉCUPÉRER LE POST COMPLET
+    const postFinal = await Post.findByPk(newPost.idpost, {
+      include: [
+        { 
+          model: User, 
+          as: 'auteur', 
+          attributes: ['iduser', 'nom', 'prenom', 'photo', 'niveau'] 
+        },
+        { 
+          model: Document, 
+          as: 'documents',
+          required: false
+        }
+      ]
+    });
+
+    console.log('🔍 Post final récupéré:');
+    console.log('  - idpost:', postFinal.idpost);
+    console.log('  - contenu:', postFinal.contenu);
+    console.log('  - documents:', postFinal.documents);
+    console.log('  - nombre de documents:', postFinal.documents?.length || 0);
+    
+    if (postFinal.documents && postFinal.documents.length > 0) {
+      console.log('  - Premier document:', {
+        iddoc: postFinal.documents[0].iddoc,
+        filename: postFinal.documents[0].filename,
+        url: postFinal.documents[0].url,
+        type: postFinal.documents[0].type
       });
     }
-    // réponse finale
-    return res.status(201).json({
-      post,
-      document: doc,
-    });
+
+    console.log('📤 Envoi de la réponse au frontend');
+
+    return res.status(201).json(postFinal);
   } catch (error) {
-    console.error("createPost:", error);
-    return res.status(500).json({ message: "Erreur lors de la création du publication" });
+    console.error('❌ Erreur createPost:', error);
+    res.status(500).json({ message: "Erreur lors de la création" });
   }
 };
-
-// GET mur : tous les posts + auteur (respect anonymat)
+// ===== GET ALL POSTS =====
 export const getAllPosts = async (req, res) => {
   try {
     const posts = await Post.findAll({
@@ -84,6 +96,10 @@ export const getAllPosts = async (req, res) => {
           model: Document,
           as: "documents",
           required: false,
+          where: {
+            idpost: { [Op.ne]: null },
+            idcomment: null
+          }
         },
       ],
     });
@@ -91,20 +107,8 @@ export const getAllPosts = async (req, res) => {
     const result = posts.map((pInstance) => {
       const p = pInstance.toJSON();
 
-      // DEBUG: afficher l'anonymat et l'iduser
-      console.log(`📝 Post ${p.idpost}:`, {
-        isAnonymat: p.isAnonymat,
-        iduser: p.iduser,
-        req_user_iduser: req.user?.iduser,
-        auteur_before: p.auteur ? `${p.auteur.nom}` : "null"
-      });
-
-      // Si anonymat et ce n'est pas le propriétaire -> cacher auteur
       if (p.isAnonymat === true && Number(p.iduser) !== Number(req.user.iduser)) {
-        console.log(`  → Masquage auteur (anonyme et pas propriétaire)`);
         p.auteur = null;
-      } else {
-        console.log(`  → Affichage auteur`);
       }
 
       return p;
@@ -117,7 +121,7 @@ export const getAllPosts = async (req, res) => {
   }
 };
 
-// GET mes posts (iduser vient du cookie)
+// ===== GET MY POSTS =====
 export const getMyPosts = async (req, res) => {
   try {
     const iduser = req.user.iduser;
@@ -125,6 +129,17 @@ export const getMyPosts = async (req, res) => {
     const posts = await Post.findAll({
       where: { iduser },
       order: [["createdAt", "DESC"]],
+      include: [
+        {
+          model: Document,
+          as: "documents",
+          required: false,
+          where: {
+            idpost: { [Op.ne]: null },
+            idcomment: null
+          }
+        },
+      ],
     });
 
     return res.json(posts);
@@ -134,7 +149,7 @@ export const getMyPosts = async (req, res) => {
   }
 };
 
-// GET post by id
+// ===== GET POST BY ID =====
 export const getPostById = async (req, res) => {
   try {
     const idpost = Number(req.params.idpost);
@@ -151,6 +166,10 @@ export const getPostById = async (req, res) => {
           model: Document,
           as: "documents",
           required: false,
+          where: {
+            idpost: { [Op.ne]: null },
+            idcomment: null
+          }
         },
       ],
     });
@@ -169,7 +188,7 @@ export const getPostById = async (req, res) => {
   }
 };
 
-// UPDATE post (auteur seulement)
+// ===== UPDATE POST =====
 export const updatePost = async (req, res) => {
   try {
     const idpost = Number(req.params.idpost);
@@ -192,11 +211,11 @@ export const updatePost = async (req, res) => {
     return res.json(post);
   } catch (error) {
     console.error("updatePost:", error);
-    return res.status(500).json({ message: "Erreur lors de la  modification du publication" });
+    return res.status(500).json({ message: "Erreur modification du post" });
   }
 };
 
-// DELETE post (auteur seulement)
+// ===== DELETE POST =====
 export const deletePost = async (req, res) => {
   try {
     const idpost = Number(req.params.idpost);
