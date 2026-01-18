@@ -42,6 +42,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }) => {
 
   useEffect(() => {
     if (!post?.idpost) return;
+    
     const loadPostData = async () => {
       try {
         const [reactions, myStatus, postComments] = await Promise.all([
@@ -85,7 +86,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }) => {
 
       const newComment = await createComment(post.idpost, formData);
 
-      // ✅ Recharger tous les commentaires pour avoir les données à jour
+      // Recharger tous les commentaires
       const allComments = await getCommentsByPost(post.idpost);
       
       setComments(allComments);
@@ -116,7 +117,8 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }) => {
     }
   };
 
-  const postImageUrl = post.documents?.[0]?.url || post.document?.url || post.url;
+  // ✅ CORRECTION: Récupération du document du post
+  const postDoc = post.documents?.[0] || post.document || null;
 
   return (
     <div className="post-card">
@@ -138,18 +140,45 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }) => {
 
       <div className="post-content">
         <p className="post-text">{post.contenu}</p>
-        {postImageUrl && (
-          <div className="post-image-container">
-            <img 
-              src={postImageUrl} 
-              alt="Post content" 
-              className="post-image"
-              onError={(e) => {
-                console.error('❌ Erreur chargement image:', postImageUrl);
-                e.target.style.display = 'none';
-              }}
-            />
-          </div>
+        
+        {/* ✅ CORRECTION: Affichage du document */}
+        {postDoc && (
+          <>
+            {/* Si c'est une image */}
+            {(postDoc.type === 'IMAGE' || postDoc.url?.match(/\.(jpg|jpeg|png|gif|webp)$/i)) ? (
+              <div className="post-image-container">
+                <img 
+                  src={postDoc.url} 
+                  alt={postDoc.filename || "Post content"} 
+                  className="post-image"
+                />
+              </div>
+            ) : (
+              /* Si c'est un document */
+              <div className="post-document-container">
+                <a 
+                  href={postDoc.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="post-file-link"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                    <polyline points="13 2 13 9 20 9"></polyline>
+                  </svg>
+                  <div className="file-details">
+                    <span className="file-name">{postDoc.filename || 'Document'}</span>
+                    {postDoc.niveau && <span className="file-niveau-badge">{postDoc.niveau}</span>}
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                </a>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -221,7 +250,6 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }) => {
               Commenter anonymement
             </label>
             
-            {/* ✅ Affichage amélioré du fichier et niveau */}
             {commentFile ? (
               <div className="file-selected-container">
                 <div className="file-info">

@@ -4,8 +4,8 @@ import '../styles/CreatePostModal.css';
 
 const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
   const [content, setContent] = useState('');
-  const [file, setFile] = useState(null);
-  const [filePreview, setFilePreview] = useState(null);
+  const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [niveau, setNiveau] = useState('GINF1');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -14,97 +14,75 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
   useEffect(() => {
     if (!isOpen) {
       setContent('');
-      setFile(null);
-      setFilePreview(null);
+      setImage(null);
+      setImagePreview(null);
       setNiveau('GINF1');
       setIsAnonymous(false);
       setError('');
     }
   }, [isOpen]);
 
-  const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      // Accept images and documents
-      const allowedTypes = [
-        'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
-        'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'text/plain'
-      ];
-
-      if (allowedTypes.includes(selectedFile.type) || selectedFile.name.match(/\.(pdf|doc|docx|ppt|pptx|xls|xlsx|txt)$/i)) {
-        setFile(selectedFile);
-
-        if (selectedFile.type.startsWith('image/')) {
-          const reader = new FileReader();
-          reader.onloadend = () => setFilePreview(reader.result);
-          reader.readAsDataURL(selectedFile);
-        } else {
-          setFilePreview(null); // No preview for documents
-        }
-      } else {
-        alert('Type de fichier non supporté. Utilisez des images, PDF, documents Word, PowerPoint, Excel ou texte.');
-      }
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      setImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => setImagePreview(reader.result);
+      reader.readAsDataURL(file);
+    } else {
+      alert('Veuillez sélectionner une image valide');
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (!content.trim() && !image) {
+    setError('Ajoutez du contenu ou une image');
+    return;
+  }
 
-    if (!content.trim() && !file) {
-      setError('Ajoutez du contenu ou un fichier');
-      return;
+  setLoading(true);
+  setError('');
+  
+  try {
+    const formData = new FormData();
+    formData.append('contenu', content.trim());
+    formData.append('isAnonymat', isAnonymous ? 'true' : 'false');
+    
+    if (image) {
+      formData.append('file', image);
+      formData.append('niveau', niveau);
     }
 
-    if (file && !niveau) {
-      setError('Le niveau est obligatoire pour un document');
-      return;
+    console.log('🔵 Envoi au backend...');
+    const response = await createPost(formData);
+    
+    console.log('🔍 Réponse complète du backend:', response);
+    console.log('📎 Documents dans la réponse:', response.documents);
+    console.log('📊 Type de documents:', typeof response.documents);
+    console.log('📊 Est un array?', Array.isArray(response.documents));
+    
+    if (response.documents && response.documents.length > 0) {
+      console.log('✅ Document trouvé:', response.documents[0]);
+    } else {
+      console.log('❌ Aucun document dans la réponse!');
     }
 
-    setLoading(true);
-    setError('');
-
-    try {
-      const formData = new FormData();
-      formData.append('contenu', content.trim());
-      formData.append('isAnonymat', isAnonymous ? 'true' : 'false');
-
-      if (file) {
-        formData.append('typeContenu', 'DOCUMENT');
-        formData.append('file', file);
-        formData.append('niveau', niveau);
-      } else {
-        formData.append('typeContenu', 'TEXTE');
-      }
-
-      console.log('📤 Création du post...');
-      const newPost = await createPost(formData);
-      console.log('✅ Post créé:', newPost);
-
-      if (onPostCreated) {
-        onPostCreated(newPost);
-      }
-
-      onClose();
-
-    } catch (err) {
-      console.error('❌ Erreur création post:', err);
-      setError(err.response?.data?.message || 'Erreur lors de la création du post');
-    } finally {
-      setLoading(false);
+    if (onPostCreated) {
+      console.log('📤 Envoi du post à HomePage...');
+      onPostCreated(response);
     }
-  };
-
-  const getFileIcon = (fileType) => {
-    if (fileType.startsWith('image/')) return '🖼️';
-    if (fileType === 'application/pdf') return '📄';
-    if (fileType.includes('word') || fileType.includes('document')) return '📝';
-    if (fileType.includes('powerpoint') || fileType.includes('presentation')) return '📊';
-    if (fileType.includes('excel') || fileType.includes('spreadsheet')) return '📈';
-    return '📎';
-  };
+    
+    onClose();
+    
+  } catch (err) {
+    console.error('❌ Erreur:', err);
+    setError(err.response?.data?.message || 'Erreur');
+  } finally {
+    setLoading(false);
+  }
+};
 
   if (!isOpen) return null;
 
@@ -115,28 +93,28 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
           <h2>Créer un post</h2>
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
-
+        
         <form onSubmit={handleSubmit}>
           <div className="modal-body">
             {error && <div className="error-message">{error}</div>}
-
-            <textarea
-              className="post-textarea"
-              placeholder="Qu'avez-vous en tête ?"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={5}
+            
+            <textarea 
+              className="post-textarea" 
+              placeholder="Qu'avez-vous en tête ?" 
+              value={content} 
+              onChange={(e) => setContent(e.target.value)} 
+              rows={5} 
             />
-
-            {filePreview && file?.type.startsWith('image/') && (
+            
+            {imagePreview && (
               <div className="image-preview">
-                <img src={filePreview} alt="Aperçu" />
-                <button
-                  type="button"
-                  className="remove-image-btn"
+                <img src={imagePreview} alt="Aperçu" />
+                <button 
+                  type="button" 
+                  className="remove-image-btn" 
                   onClick={() => {
-                    setFile(null);
-                    setFilePreview(null);
+                    setImage(null);
+                    setImagePreview(null);
                   }}
                 >
                   ×
@@ -144,44 +122,28 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
               </div>
             )}
 
-            {file && !file.type.startsWith('image/') && (
-              <div className="file-preview">
-                <div className="file-info">
-                  <span className="file-icon">{getFileIcon(file.type)}</span>
-                  <span className="file-name">{file.name}</span>
-                  <button
-                    type="button"
-                    className="remove-file-btn"
-                    onClick={() => {
-                      setFile(null);
-                      setFilePreview(null);
-                    }}
-                  >
-                    ×
-                  </button>
-                </div>
-              </div>
-            )}
-
             <div className="upload-section">
               <label className="upload-btn">
-                <span>📎 Joindre un fichier</span>
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.webp"
-                  onChange={handleFileChange}
-                  style={{ display: 'none' }}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{marginRight: '6px'}}>
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                  <polyline points="21 15 16 10 5 21"></polyline>
+                </svg>
+                <span>Ajouter une photo</span>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleImageChange} 
+                  style={{ display: 'none' }} 
                 />
               </label>
-
-              {file && (
-                <select
-                  value={niveau}
+              
+              {image && (
+                <select 
+                  value={niveau} 
                   onChange={(e) => setNiveau(e.target.value)}
                   className="niveau-select-modal"
-                  required
                 >
-                  <option value="">📚 Sélectionner le niveau</option>
                   <optgroup label="Prépa">
                     <option value="AP1">AP1</option>
                     <option value="AP2">AP2</option>
@@ -222,8 +184,8 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
 
             <div className="publication-mode-container">
               <span className="mode-label">Mode de publication</span>
-              <div
-                className={`mode-switch ${isAnonymous ? 'is-anonymous' : 'is-public'}`}
+              <div 
+                className={`mode-switch ${isAnonymous ? 'is-anonymous' : 'is-public'}`} 
                 onClick={() => setIsAnonymous(!isAnonymous)}
               >
                 <div className="mode-option public">Public</div>
@@ -232,17 +194,17 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
               </div>
             </div>
           </div>
-
+          
           <div className="modal-footer">
             <button type="button" className="cancel-btn" onClick={onClose}>
               Annuler
             </button>
-            <button
-              type="submit"
-              className="submit-btn"
-              disabled={loading || (!content.trim() && !file)}
+            <button 
+              type="submit" 
+              className="submit-btn" 
+              disabled={loading || (!content.trim() && !image)}
             >
-              {loading ? ' Publication...' : ' Publier'}
+              {loading ? '⏳ Publication...' : '📤 Publier'}
             </button>
           </div>
         </form>

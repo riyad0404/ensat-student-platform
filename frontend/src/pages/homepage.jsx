@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation, useNavigate } from 'react-router-dom'; // Utilisez useNavigate
+import { useLocation, useNavigate } from 'react-router-dom';
 import Feed from "../components/feed";
 import CreatePostModal from "../components/CreatePostModal";
 import { getAllPosts } from "../api/postAPI";
@@ -13,18 +13,14 @@ const HomePage = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Chargement des posts
   useEffect(() => {
     fetchPosts();
   }, []);
 
-  // Surveillance de l'URL pour ouvrir la modale
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get('create') === '1') {
       setIsModalOpen(true);
-      // NETTOYAGE CRUCIAL : On retire le paramètre de l'URL sans recharger
-      // Cela permet au prochain clic sur le lien d'être détecté comme un changement
       navigate('/', { replace: true }); 
     }
   }, [location.search, navigate]);
@@ -47,15 +43,16 @@ const HomePage = () => {
     setIsModalOpen(false);
   };
 
-  const handlePostCreated = (newPost) => {
-    setPosts([newPost, ...posts]);
+  // ✅ CORRECTION: Recharger tous les posts
+  const handlePostCreated = async (newPost) => {
+    console.log('✅ Post créé, rechargement des posts...');
+    await fetchPosts(); // Recharge TOUS les posts depuis le serveur
   };
 
   return (
     <div style={{ width: '100%' }}> 
       {!loading && !error && posts.length > 0 && <Feed posts={posts} />}
       
-      {/* L'ajout d'une KEY force React à détruire/recréer le composant proprement */}
       <CreatePostModal 
         key={isModalOpen ? "open" : "closed"} 
         isOpen={isModalOpen}
