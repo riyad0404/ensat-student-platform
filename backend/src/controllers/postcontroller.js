@@ -11,8 +11,6 @@ export const createPost = async (req, res) => {
     const iduser = req.user.iduser;
 
     console.log('🔵 Début création post');
-    console.log('📝 Body:', { contenu, isAnonymat, niveau });
-    console.log('📦 Files:', req.files?.length || 0);
 
     // 1. Création du Post
     const newPost = await Post.create({
@@ -24,25 +22,32 @@ export const createPost = async (req, res) => {
 
     console.log('✅ Post créé ID:', newPost.idpost);
 
-    // 2. Création des Documents
+    // 2. Création des Documents - CORRECTION ICI
     if (req.files && req.files.length > 0) {
       const promises = req.files.map(file => {
         const ext = file.originalname.split('.').pop().toLowerCase();
-        console.log('📎 Création document:', file.originalname);
+        
+        console.log('📎 Création document POUR POST:', {
+          filename: file.originalname,
+          idpost: newPost.idpost,
+          idcomment: null // <-- IMPORTANT
+        });
+        
         return Document.create({
           filename: file.originalname,
           url: `${req.protocol}://${req.get('host')}/uploads/${file.filename}`,
           type: ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext) ? "IMAGE" : "DOCUMENT",
           niveau: niveau || 'GINF1',
           iduser,
-          idpost: newPost.idpost
+          idpost: newPost.idpost,
+          idcomment: null // <-- CORRECTION CRITIQUE ICI
         });
       });
       await Promise.all(promises);
-      console.log('✅ Documents créés');
+      console.log('✅ Documents créés avec idcomment: null');
     }
 
-    // 3. RÉCUPÉRER LE POST COMPLET
+    // 3. Récupération avec vérification
     const postFinal = await Post.findByPk(newPost.idpost, {
       include: [
         { 
@@ -53,27 +58,39 @@ export const createPost = async (req, res) => {
         { 
           model: Document, 
           as: 'documents',
-          required: false
+          required: false,
+          where: { idcomment: null } // <-- Même filtre que getAllPosts
         }
       ]
     });
 
-    console.log('🔍 Post final récupéré:');
-    console.log('  - idpost:', postFinal.idpost);
-    console.log('  - contenu:', postFinal.contenu);
-    console.log('  - documents:', postFinal.documents);
-    console.log('  - nombre de documents:', postFinal.documents?.length || 0);
+    // VÉRIFICATION DÉTAILLÉE
+    console.log('🔍 POST FINAL VÉRIFICATION:');
+    console.log('- Post ID:', postFinal.idpost);
+    console.log('- Nombre de documents:', postFinal.documents?.length || 0);
     
     if (postFinal.documents && postFinal.documents.length > 0) {
-      console.log('  - Premier document:', {
-        iddoc: postFinal.documents[0].iddoc,
-        filename: postFinal.documents[0].filename,
-        url: postFinal.documents[0].url,
-        type: postFinal.documents[0].type
+      postFinal.documents.forEach((doc, i) => {
+        console.log(`- Document ${i + 1}:`, {
+          iddoc: doc.iddoc,
+          filename: doc.filename,
+          idpost: doc.idpost,
+          idcomment: doc.idcomment, // <-- DOIT ÊTRE null
+          url: doc.url
+        });
       });
+    } else {
+      console.log('⚠️  AUCUN DOCUMENT TROUVÉ AVEC idcomment: null !');
+      
+      // Vérifiez tous les documents sans filtre
+      const allDocs = await Document.findAll({
+        where: { idpost: newPost.idpost }
+      });
+      console.log('📦 Tous les documents pour ce post:', allDocs.map(d => ({
+        iddoc: d.iddoc,
+        idcomment: d.idcomment
+      })));
     }
-
-    console.log('📤 Envoi de la réponse au frontend');
 
     return res.status(201).json(postFinal);
   } catch (error) {
