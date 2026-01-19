@@ -1,5 +1,5 @@
 import { Notification } from "../models/notification.js";
-import { io, onlineUsers } from "../index.js"; // <- socket.io exporté de index.js
+import { io, onlineUsers } from "../server.js";
 
 export const NOTIF_TYPES = {
   REACTION_PUB: "REACTION_PUB",
@@ -33,7 +33,7 @@ export async function createNotification({
   });
 
   // 2. Émission temps réel si utilisateur en ligne
-  const socketId = onlineUsers[toUserId];
+  const socketId = onlineUsers.get(String(toUserId));
   if (socketId) {
     io.to(socketId).emit("receive_notification", notif);
   }
