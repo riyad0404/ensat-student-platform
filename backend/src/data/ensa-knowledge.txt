@@ -8,26 +8,59 @@ L’École Nationale des Sciences Appliquées de Tanger (ENSA Tanger) est une gr
 
 ## Filières du Cycle Ingénieur (3 ans après les AP)
 
-### Génie Informatique (GINF / GI
+### Génie Informatique (GINF / GI)
 Développement logiciel, IA, Big Data, cybersécurité, cloud, DevOps, full-stack. Très forte demande au Maroc et à l’international.
 
-### Génie Industriel et LogistiqueGIND / GIL
+**Options et Description Détaillée :**  
+La filière vise à former des ingénieurs polyvalents pour concevoir, développer et gérer des systèmes informatiques avancés, avec un focus particulier sur les sciences de données, l'intelligence artificielle, l’ingénierie logicielle et les systèmes d’information. Compétences clés : Programmation (Python, Java, C++), développement web (PHP, JavaScript, frameworks), résolution de problèmes complexes.  
+- **Option Génie Logiciel** : Conception, développement et maintenance d'applications logicielles complexes (méthodologies agile, tests, qualité).  
+- **Option Systèmes d'Information** : Gestion et analyse de données en entreprise (bases de données, ERP, business intelligence, sécurité SI).  
+- **Focus Intelligence Artificielle** (intégré fortement, non option séparée) : Conception de modèles d'IA, apprentissage automatique, data science pour résoudre des problèmes complexes et améliorer les processus.  
+Débouchés : Ingénieur IA, data scientist, développeur logiciel, consultant SI, chef de projet informatique.
+
+### Génie Industriel et Logistique (GIND / GIL)
 Optimisation des processus, supply chain, lean management, logistique, qualité. Chef de filière : Pr. BOUMANE Abderazzak.
 
-### Génie des Systèmes Électroniques et AutomatiqueGSEA
+**Options et Description Détaillée :**  
+Aucune option spécifique (formation générale). Formation pour concevoir et piloter des systèmes industriels complexes (techniques, organisationnels, financiers, durables). Compétences : Optimisation processus, management supply chain, qualité.  
+Débouchés : Directeur production, responsable qualité, ingénieur process/logistique.
+
+### Génie des Systèmes Électroniques et Automatique (GSEA)
 Électronique, automatisme, robotique, systèmes embarqués, IoT, industrie 4.0.
 
-### Génie des Systèmes de Télécommunications et RéseauxGSTR
+**Options et Description Détaillée :**  
+Aucune option spécifique (formation générale). Maîtrise microélectronique, informatique industrielle, CAO, contrôle/commande, robotique.  
+Débouchés : Ingénieur bureau d'études, responsable fabrication, directeur technique électronique/robotique.
+
+### Génie des Systèmes de Télécommunications et Réseaux (GSTR)
 Réseaux avancés, 5G/6G, cybersécurité réseaux, télécoms.
 
-### Génie Énergétique et Environnement IndustrielG2EI
+**Options et Description Détaillée :**  
+Aucune option spécifique (formation générale). Conception et gestion de systèmes de transmission d'information, réseaux avancés.  
+Débouchés : Ingénieur réseaux, administrateur systèmes télécoms.
+
+### Génie Énergétique et Environnement Industriel (G2EI)
 Énergies renouvelables, efficacité énergétique, audit énergétique, développement durable.
 
-### Génie Systèmes et RéseauxGSR
+**Options et Description Détaillée :**  
+Aucune option spécifique (formation générale). Gestion énergétique, optimisation environnementale, technologies vertes.  
+Débouchés : Ingénieur énergie renouvelable, auditeur énergétique, responsable durabilité.
+
+### Génie Systèmes et Réseaux (GSR)
 Administration systèmes/réseaux, cloud computing, DevOps.
 
-### Cybersécurité et CyberIntelligenceGCYS (nouvelle filière très demandée)
+**Options et Description Détaillée :**  
+Aucune option spécifique (formation générale). Gestion infrastructures IT, réseaux avancés, sécurité.  
+Débouchés : Administrateur systèmes/réseaux, ingénieur cloud/DevOps.
+
+### Cybersécurité et CyberIntelligence (GCYS) (nouvelle filière très demandée)
 Cryptographie, pentesting, sécurité des SI, IA appliquée à la cybersécurité.
+
+**Options et Description Détaillée :**  
+Aucune option spécifique (formation générale). Protection systèmes, réponse aux menaces, IA en cybersécurité.  
+Débouchés : Expert cybersécurité, consultant cyberintelligence.
+
+**Note :** Pour plus d'informations détaillées sur les modules par semestre ou mises à jour, consultez le site officiel ensat.ac.ma.
 
 ## Conseils d’orientation
 - Tu aimes coder → GINF
@@ -38,7 +71,6 @@ Cryptographie, pentesting, sécurité des SI, IA appliquée à la cybersécurit�
 Toutes les filières ont d’excellents débouchés. Stages obligatoires + PFE en entreprise.
 
 ## Liste complète des professeurs et responsables (2024-2025)
-
 ### Département Mathématiques & Informatique (MI)
 - AMAL Youssef – yamal@uae.ac.ma
 - AZYAT Abdelilah – aazyat@uae.ac.ma
@@ -54,7 +86,6 @@ Toutes les filières ont d’excellents débouchés. Stages obligatoires + PFE e
 - GOUY Rabia – r.gouy@uae.ac.ma
 - ZOUGARI Tarik – tzougari@uae.ac.ma
 - DRISSI Ahmed – Mathématiques & Cryptologie
-
 ### Département Génie Électrique & Industriel (GEI)
 - BOUMANE Abderazzak – aboumane@uae.ac.ma – Chef de filière Génie Industriel & Logistique (GIL)
 - TOUHAMI Fakhita – ftouhami@uae.ac.ma – Électronique, Hyperfréquences
@@ -63,7 +94,6 @@ Toutes les filières ont d’excellents débouchés. Stages obligatoires + PFE e
 - CHATER Youness – ychater@uae.ac.ma
 - BEN SAID AMRANI Nabil – nbensaidamrani@uae.ac.ma
 - BOUAJAJ Adel – a.bouajaj@uae.ac.ma
-
 ### Autres professeurs connus
 - JOUILEL Naima – njouilel@uae.ac.ma
 - KADI Ilham – i.kadi@uae.ac.ma
@@ -73,10 +103,8 @@ Toutes les filières ont d’excellents débouchés. Stages obligatoires + PFE e
 - MOUSSA Ahmed – Directeur de l’ENSA Tanger
 
 ## Application – Cahier des charges complet (FAQ intégrée)
-
 ### Contexte & Objectifs
 Plateforme web interne pour tous les étudiants ENSA Tanger (AP1 → 3e année ingénieur, toutes filières : GINF, GIND, GSR, G2EI, GSTR, GSEA, GCYS, etc.). Objectif : partager cours, documents, conseils, questions, trouver facilement des étudiants, communiquer de manière sécurisée.
-
 ### 1. Authentification & Inscription
 - Création de compte : Nom, Prénom, Email, Mot de passe, Filière, Niveau (1 à 5), Photo (optionnelle)
 - Connexion : email + mot de passe
@@ -84,39 +112,56 @@ Plateforme web interne pour tous les étudiants ENSA Tanger (AP1 → 3e année i
   a) Lien de réinitialisation par email
   b) Code secret défini à l’inscription
 - Modification profil : mot de passe, photo, filière, niveau, bio
-
 ### 2. Profil utilisateur
 Affiche : photo, nom, filière, niveau, bio + liste des posts publics + section privée pour voir uniquement ses propres posts anonymes.
-
 ### 3. Mur de publications (Feed)
 - Publier du texte, image, document
 - Mode normal (nom visible) ou anonyme
 - Commenter en normal ou anonyme
 - Flux chronologique des derniers posts
-
 ### 4. Bibliothèque de documents
 - Documents classés par niveau (AP1, AP2, 1A, 2A, 3A GINF/GIL/etc.)
 - Ajout direct ou automatique depuis posts/commentaires/groupes
 - Formats acceptés : PDF, Word, PowerPoint, images, etc.
-
 ### 5. Synchronisation automatique des documents
 Tout document uploadé (post, commentaire, ajout direct, groupe) est automatiquement ajouté à la bibliothèque selon le niveau choisi.
-
 ### 6. Recherche d’étudiants
 Barre de recherche : soit par nom + prénom, soit par niveau uniquement (un critère à la fois).
-
 ### 7. Messagerie privée (optionnelle)
 Messages directs entre étudiants + historique des conversations.
-
 ### 8. Groupes privés (optionnels)
 Création de groupe avec nom + description, invitations, acceptation/refus.
+
+## Double Diplômes et Mobilité Internationale
+L'ENSA Tanger propose des programmes de double diplomation depuis plusieurs années, permettant aux étudiants (principalement en fin de cycle ingénieur) de passer leur dernière année à l'étranger et d'obtenir le diplôme d'ingénieur d'État marocain + celui de l'établissement partenaire. Éligibilité : Bon dossier académique, sélection sur notes et motivation. Avantages : Expérience internationale, réseau élargi, meilleure employabilité.
+- Partenaires principaux : INSA Lyon (France, partenariat fondateur depuis 1998), réseau INSA France, Université de Technologies de Belfort-Montbéliard (UTBM, France), UFR Sciences Fondamentales et Appliquées (Université Paul Verlaine de Metz, France).
+- Autres opportunités : Programmes Erasmus+ pour mobilité (1-2 semestres), bourses pour masters double-diplômants via l'Université Abdelmalek Essaâdi.
+- Mises à jour 2025 : Appels à candidatures pour bourses Erasmus Mundus et mobilités en Europe/Asie.
+
+## Partenariats Internationaux
+L'ENSA Tanger développe de nombreux partenariats pour la formation, la recherche et la mobilité (plus de 20 conventions via l'UAE).
+- Partenaires académiques clés : INSA Lyon (recherche et formation), UTBM Belfort-Montbéliard, universités françaises (échanges et double diplômes), Université de Porto (Portugal, Erasmus+).
+- Autres : Collaborations avec institutions en Corée du Sud (bourses masters/doctorats), Belgique, Canada (Québec), Allemagne (GIZ pour écoles d'été).
+- Partenariats industriels : Renault Tanger, Tanger Med, Bosch, Siemens, Huawei (stages, projets recherche en IA et industrie 4.0).
+- Focus : Mobilité étudiants/enseignants, co-supervision de thèses, projets communs (ex. : hydrogène vert, IA).
+
+## Vie Étudiante : Clubs, Associations et Événements
+La vie parascolaire est animée par l'Association des Étudiants (ADE ENSA Tanger), qui coordonne clubs et événements pour développer soft skills, networking et engagement.
+- Association principale : ADE ENSA Tanger (gère événements, soutien parascolaire ; Instagram : ade.ensat).
+- Clubs actifs : Club Robotique, Club Entrepreneuriat, Club Cyber, Club Culturel, Club Speak Up (communication/leadership), Club ENIAC (informatique), Eco Club (environnement), Chess Club, et autres thématiques par filière.
+- Événements marquants 2025 :
+  - Forum Ingénieurs du Nord : 7-8 novembre 2025 (thème Industrie 5.0, networking avec entreprises).
+  - 12e Workshop Serious Game #RSE (responsabilité sociétale).
+  - Green Hydrogen Day/Summer School (focus énergie verte, hackathons).
+  - Cérémonie de remise des diplômes (juillet), Journée Alumni (juin), participations à MEDays, Rail Industry Summit, Gameathon FactiCITÉ (UNESCO).
+  - Autres : Ateliers recrutement, conférences, tournois esports.
 
 ## Règles du chatbot
 Tu es un assistant sympa et précis pour les étudiants de l’ENSA Tanger. Tu réponds uniquement aux questions sur :
 - les filières et l’orientation
 - les professeurs et responsables
 - l’utilisation de la plateforme (cette appli)
-- les questions ailleurs aussi tu peux donner leurs repnses
-Tu réponds toujours selon la langue que l'utilisateur utilise, de façon claire et concise. Si la question est hors sujet → « Désolé, je ne peux répondre qu’aux questions sur l’ENSA Tanger, les filières, les profs et l’utilisation de l’application. »
+- les questions ailleurs aussi tu peux donner leurs réponses
+Tu réponds toujours selon la langue que l'utilisateur utilise, de façon claire et concise. 
 
 # Fin du document de connaissances
