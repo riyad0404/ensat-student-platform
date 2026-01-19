@@ -1,15 +1,19 @@
 "use client"
+import { Routes, Route, Outlet, Navigate,useNavigate } from 'react-router-dom';
+import { useAuth } from './contexts/AuthContext';
+import LoginPage from './pages/LoginPage';
+import LandingPage from './pages/Landing';
+import Register from './pages/Register';
+import ResetPasswordCS from './pages/ResetPassword-CS';
+import ResetPasswordEmail from './pages/ResetPassword-email';
+import ResetPasswordToken from './pages/ResetPasswordToken';
+import ProfilePage from './pages/Profile';
+import Sidebar from './components/Sidebar';
+import EditProfile from './pages/EditProfile';
+import ChatbotPage from "./pages/ChatbotPage";
+import ChatbotButton from "./components/ChatbotButton";
 
-import { Routes, Route, Outlet, Navigate, useNavigate } from "react-router-dom"
-import { useAuth } from "./contexts/AuthContext"
-import LoginPage from "./pages/LoginPage"
-import Register from "./pages/Register"
-import ResetPasswordCS from "./pages/ResetPassword-CS"
-import ResetPasswordEmail from "./pages/ResetPassword-email"
-import ResetPasswordToken from "./pages/ResetPasswordToken"
-import ChatbotPage from "./pages/ChatbotPage"
-import ChatbotButton from "./components/ChatbotButton"
-
+// HOC pour protéger les routes
 const RequireAuth = ({ children }) => {
   const { user, loading } = useAuth()
 
@@ -100,6 +104,7 @@ function App() {
   return (
     <>
       <Routes>
+        <Route path="/landing" element={<LandingPage />} />
         {/* Routes protégées (nécessite authentification) */}
         <Route element={<RequireAuthLayout />}>
           <Route path="/" element={<HomePage />} />

@@ -90,3 +90,88 @@ export const getMyReactionsOnPost = async (req, res) => {
     return res.status(500).json({ message: "Erreur mes réactions" });
   }
 };
+export const toggleReactionOnComment = async (req, res) => {
+  try {
+    const iduser = req.user.iduser;
+    const idcomment = Number(req.body.idcomment);
+    const { typeReaction } = req.body;
+
+    if (!idcomment) {
+      return res.status(400).json({ message: "idcomment obligatoire" });
+    }
+
+    if (!typeReaction || !ALLOWED.has(typeReaction)) {
+      return res.status(400).json({ message: "typeReaction invalide" });
+    }
+
+    const existing = await Reaction.findOne({
+      where: { iduser, idcomment, typeReaction },
+    });
+
+    // toggle OFF
+    if (existing) {
+      await existing.destroy();
+      return res.json({ message: "Réaction supprimée", removed: true });
+    }
+
+    // toggle ON
+    const reaction = await Reaction.create({
+      iduser,
+      idcomment,
+      idpost: null,
+      typeReaction,
+    });
+
+    return res.status(201).json(reaction);
+  } catch (error) {
+    console.error("toggleReactionOnComment:", error);
+    return res.status(500).json({ message: "Erreur réaction commentaire" });
+  }
+};
+export const getReactionCountsByComment = async (req, res) => {
+  try {
+    const idcomment = Number(req.params.idcomment);
+    if (!idcomment) {
+      return res.status(400).json({ message: "idcomment invalide" });
+    }
+
+    const likes = await Reaction.count({
+      where: { idcomment, typeReaction: "LIKE" },
+    });
+
+    const loves = await Reaction.count({
+      where: { idcomment, typeReaction: "LOVE" },
+    });
+
+    return res.json({ idcomment, likes, loves });
+  } catch (error) {
+    console.error("getReactionCountsByComment:", error);
+    return res.status(500).json({ message: "Erreur compte réactions commentaire" });
+  }
+};
+export const getMyReactionsOnComment = async (req, res) => {
+  try {
+    const iduser = req.user.iduser;
+    const idcomment = Number(req.params.idcomment);
+
+    if (!idcomment) {
+      return res.status(400).json({ message: "idcomment invalide" });
+    }
+
+    const my = await Reaction.findAll({
+      where: { iduser, idcomment },
+      attributes: ["typeReaction"],
+    });
+
+    const types = my.map((r) => r.typeReaction);
+
+    return res.json({
+      idcomment,
+      hasLike: types.includes("LIKE"),
+      hasLove: types.includes("LOVE"),
+    });
+  } catch (error) {
+    console.error("getMyReactionsOnComment:", error);
+    return res.status(500).json({ message: "Erreur mes réactions commentaire" });
+  }
+};

@@ -28,7 +28,7 @@ Message.belongsTo(Conversation, { foreignKey: 'idconversation' });
 User.hasMany(Message, { foreignKey: 'senderId' });
 Message.belongsTo(User, { foreignKey: 'senderId', as: 'sender' });
 
-export { User, Conversation, ConversationMember, Message, Post, Document, Reaction, Comment };
+export { User, Conversation, ConversationMember, Message, Post, Document, Reaction, Comment, ConversationChat, MessageChat };
 // Posts and Documents
 Post.hasMany(Document, { foreignKey: "idpost", as: "documents" });
 Document.belongsTo(Post, { foreignKey: "idpost", as: "post" });
@@ -41,6 +41,9 @@ Reaction.belongsTo(Post, { foreignKey: "idpost" });
 // Users and Reactions
 User.hasMany(Reaction, { foreignKey: "iduser" });
 Reaction.belongsTo(User, { foreignKey: "iduser" });
+Comment.hasMany(Reaction, { foreignKey: "idcomment", as: "reactions" });
+Reaction.belongsTo(Comment, { foreignKey: "idcomment", as: "comment" });
+
 // Post -> Comment
 Post.hasMany(Comment, { foreignKey: "idpost", as: "comments" });
 Comment.belongsTo(Post, { foreignKey: "idpost", as: "post" });
@@ -54,8 +57,13 @@ Comment.hasMany(Comment, { foreignKey: "idparent", as: "replies" });
 Comment.belongsTo(Comment, { foreignKey: "idparent", as: "parent" });
 
 // Comment -> Document (car documents.idcomment existe)
-Comment.hasMany(Document, { foreignKey: "idcomment", as: "documents" });
-Document.belongsTo(Comment, { foreignKey: "idcomment", as: "comment" });
+// Document -> User
+Document.belongsTo(User, { foreignKey: "iduser", as: "auteur" });
+User.hasMany(Document, { foreignKey: "iduser" });
+// Document -> Comment (optionnel mais recommandé)
+// Comment -> Documents
+Comment.hasMany(Document, {foreignKey: "idcomment",as: "documents",});
+Document.belongsTo(Comment, {foreignKey: "idcomment",as: "comment",});
 // Chat Associations
 User.hasMany(ConversationChat, { 
   foreignKey: 'userId', 
@@ -79,5 +87,5 @@ MessageChat.belongsTo(ConversationChat, {
   foreignKey: 'idConvChat', 
   as: 'conversationChat' 
 });
-export { ConversationChat, MessageChat };
+
 
