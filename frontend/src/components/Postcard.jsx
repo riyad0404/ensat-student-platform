@@ -284,7 +284,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }) => {
                     <option value="GINF2">GINF2</option>
                     <option value="GINF3">GINF3</option>
                   </optgroup>
-                  <optgroup label="Génie Logiciel">
+                  <optgroup label="Génie logistique et industrielle">
                     <option value="GIL1">GIL1</option>
                     <option value="GIL2">GIL2</option>
                     <option value="GIL3">GIL3</option>
@@ -294,7 +294,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }) => {
                     <option value="GSR2">GSR2</option>
                     <option value="GSR3">GSR3</option>
                   </optgroup>
-                  <optgroup label="Génie Électrique et Informatique Industrielle">
+                  <optgroup label="Génie environnements ">
                     <option value="G2EI1">G2EI1</option>
                     <option value="G2EI2">G2EI2</option>
                     <option value="G2EI3">G2EI3</option>
@@ -304,7 +304,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }) => {
                     <option value="GSEA2">GSEA2</option>
                     <option value="GSEA3">GSEA3</option>
                   </optgroup>
-                  <optgroup label="Génie des Systèmes de Communication">
+                  <optgroup label="Génie Cyber et securite">
                     <option value="GSYC1">GSYC1</option>
                     <option value="GSYC2">GSYC2</option>
                     <option value="GSYC3">GSYC3</option>

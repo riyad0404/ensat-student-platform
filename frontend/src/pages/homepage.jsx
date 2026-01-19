@@ -25,19 +25,32 @@ const HomePage = () => {
     }
   }, [location.search, navigate]);
 
-  const fetchPosts = async () => {
-    try {
-      setLoading(true);
-      const data = await getAllPosts();
-      let postsArray = Array.isArray(data) ? data : (data.posts || data.data || []);
-      postsArray.sort((a, b) => new Date(b.createdAt || b.dateCreation) - new Date(a.createdAt || a.dateCreation));
-      setPosts(postsArray);
-    } catch (err) {
-      setError(err.message || "Erreur de connexion");
-    } finally {
-      setLoading(false);
+ const fetchPosts = async () => {
+  try {
+    setLoading(true);
+    const data = await getAllPosts();
+    
+    // DEBUG: Vérifiez la structure
+    console.log('📥 Posts reçus:', data);
+    if (data && data.length > 0) {
+      console.log('🔍 Premier post:', {
+        id: data[0].idpost,
+        contenu: data[0].contenu,
+        hasDocuments: !!data[0].documents,
+        documentsCount: data[0].documents?.length || 0,
+        documents: data[0].documents
+      });
     }
-  };
+    
+    let postsArray = Array.isArray(data) ? data : (data.posts || data.data || []);
+    postsArray.sort((a, b) => new Date(b.createdAt || b.dateCreation) - new Date(a.createdAt || a.dateCreation));
+    setPosts(postsArray);
+  } catch (err) {
+    setError(err.message || "Erreur de connexion");
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleCloseModal = () => {
     setIsModalOpen(false);

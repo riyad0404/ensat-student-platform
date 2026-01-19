@@ -2,7 +2,7 @@ import axiosInstance from './axiosConfig';
 
 export const getAllPosts = async () => {
   try {
-    const response = await axiosInstance.get('/posts');
+    const response = await axiosInstance.get('/posts'); // Doit correspondre à votre route backend
     return response.data;
   } catch (error) {
     console.error('Error fetching posts:', error);
