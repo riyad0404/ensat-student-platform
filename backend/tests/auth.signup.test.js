@@ -10,7 +10,7 @@ describe("Auth - Signup", () => {
       email: "testuser@example.com",
       password: "Password123!",
       niveau: "3A",
-      secretCode: 1234,
+      secretCode: 123456,
     };
 
     const res = await request(app)

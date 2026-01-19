@@ -13,7 +13,7 @@ describe("Auth - Login", () => {
       email: "login@example.com",
       password: hashed,
       niveau: "3A",
-      secretCode: 1234,
+      secretCode: 123456,
     });
 
     const res = await request(app)
