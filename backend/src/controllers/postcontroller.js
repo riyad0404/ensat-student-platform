@@ -7,98 +7,66 @@ import { Op } from 'sequelize';
 
 export const createPost = async (req, res) => {
   try {
-    const { contenu, isAnonymat, niveau } = req.body;
-    const iduser = req.user.iduser;
+    const iduser = req.user?.iduser;
+    if (!iduser) return res.status(401).json({ message: "Utilisateur non authentifié" });
 
-    console.log('🔵 Début création post');
+    let { contenu, typeContenu, isAnonymat = false, niveau } = req.body;
 
-    // 1. Création du Post
-    const newPost = await Post.create({
-      contenu: contenu?.trim() || '',
-      typeContenu: (req.files && req.files.length > 0) ? "DOCUMENT" : "TEXTE",
-      isAnonymat: isAnonymat === 'true' || isAnonymat === true,
+    // Conversion correcte du boolean depuis form-data
+    if (typeof isAnonymat === "string") isAnonymat = isAnonymat === "true";
+
+    // Validations de base
+    if (!contenu && !req.file) {
+      return res.status(400).json({ message: "Contenu ou fichier obligatoire" });
+    }
+
+    // Sécurité : Forcer le type DOCUMENT si un fichier est présent
+    if (req.file) {
+      typeContenu = "DOCUMENT";
+      if (!niveau) {
+        // Supprimer le fichier uploadé car la requête va échouer
+        fs.unlinkSync(req.file.path); 
+        return res.status(400).json({ message: "Le niveau est obligatoire pour un document" });
+      }
+    }
+
+    // 1) Créer le post
+    const post = await Post.create({
+      contenu: contenu || "",
+      typeContenu: typeContenu || "TEXTE",
+      isAnonymat,
       iduser,
     });
 
-    console.log('✅ Post créé ID:', newPost.idpost);
+    // 2) Si fichier => Créer Document lié
+    let doc = null;
+    if (req.file) {
+      // ✅ Correction des backticks ici
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
+      const url = `${baseUrl}/uploads/${req.file.filename}`;
 
-    // 2. Création des Documents - CORRECTION ICI
-    if (req.files && req.files.length > 0) {
-      const promises = req.files.map(file => {
-        const ext = file.originalname.split('.').pop().toLowerCase();
-        
-        console.log('📎 Création document POUR POST:', {
-          filename: file.originalname,
-          idpost: newPost.idpost,
-          idcomment: null // <-- IMPORTANT
-        });
-        
-        return Document.create({
-          filename: file.originalname,
-          url: `${req.protocol}://${req.get('host')}/uploads/${file.filename}`,
-          type: ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext) ? "IMAGE" : "DOCUMENT",
-          niveau: niveau || 'GINF1',
-          iduser,
-          idpost: newPost.idpost,
-          idcomment: null // <-- CORRECTION CRITIQUE ICI
-        });
+      doc = await Document.create({
+        filename: req.file.originalname,
+        url,
+        type: "DOCUMENT",
+        niveau: niveau || "UNKNOWN",
+        idpost: post.idpost,
+        iduser,
       });
-      await Promise.all(promises);
-      console.log('✅ Documents créés avec idcomment: null');
     }
 
-    // 3. Récupération avec vérification
-    const postFinal = await Post.findByPk(newPost.idpost, {
-      include: [
-        { 
-          model: User, 
-          as: 'auteur', 
-          attributes: ['iduser', 'nom', 'prenom', 'photo', 'niveau'] 
-        },
-        { 
-          model: Document, 
-          as: 'documents',
-          required: false,
-          where: { idcomment: null } // <-- Même filtre que getAllPosts
-        }
-      ]
-    });
+    return res.status(201).json({ post, document: doc });
 
-    // VÉRIFICATION DÉTAILLÉE
-    console.log('🔍 POST FINAL VÉRIFICATION:');
-    console.log('- Post ID:', postFinal.idpost);
-    console.log('- Nombre de documents:', postFinal.documents?.length || 0);
-    
-    if (postFinal.documents && postFinal.documents.length > 0) {
-      postFinal.documents.forEach((doc, i) => {
-        console.log(`- Document ${i + 1}:`, {
-          iddoc: doc.iddoc,
-          filename: doc.filename,
-          idpost: doc.idpost,
-          idcomment: doc.idcomment, // <-- DOIT ÊTRE null
-          url: doc.url
-        });
-      });
-    } else {
-      console.log('⚠️  AUCUN DOCUMENT TROUVÉ AVEC idcomment: null !');
-      
-      // Vérifiez tous les documents sans filtre
-      const allDocs = await Document.findAll({
-        where: { idpost: newPost.idpost }
-      });
-      console.log('📦 Tous les documents pour ce post:', allDocs.map(d => ({
-        iddoc: d.iddoc,
-        idcomment: d.idcomment
-      })));
-    }
-
-    return res.status(201).json(postFinal);
   } catch (error) {
-    console.error('❌ Erreur createPost:', error);
-    res.status(500).json({ message: "Erreur lors de la création" });
+    // Nettoyage en cas d'erreur serveur
+    if (req.file) fs.unlinkSync(req.file.path);
+    
+    console.error("Erreur createPost:", error);
+    return res.status(500).json({ message: "Erreur lors de la création de la publication" });
   }
 };
-// ===== GET ALL POSTS =====
+// ===== GET ALL POSTS ====
+
 export const getAllPosts = async (req, res) => {
   try {
     const posts = await Post.findAll({
@@ -112,20 +80,22 @@ export const getAllPosts = async (req, res) => {
         {
           model: Document,
           as: "documents",
-          required: false,
+          required: false, // 👈 Garde le post même s'il n'y a pas de document
           where: {
-            idpost: { [Op.ne]: null },
-            idcomment: null
+            // Simplification : On cherche juste si idcomment est nul
+            // car l'association s'occupe déjà de idpost
+            idcomment: null 
           }
         },
       ],
     });
 
     const result = posts.map((pInstance) => {
-      const p = pInstance.toJSON();
+      const p = pInstance.get({ plain: true }); // Plus propre que toJSON()
 
-      if (p.isAnonymat === true && Number(p.iduser) !== Number(req.user.iduser)) {
-        p.auteur = null;
+      // Gestion de l'anonymat
+      if (p.isAnonymat && Number(p.iduser) !== Number(req.user.iduser)) {
+        p.auteur = { nom: "Anonyme", prenom: "", photo: null }; 
       }
 
       return p;
@@ -133,7 +103,7 @@ export const getAllPosts = async (req, res) => {
 
     return res.json(result);
   } catch (error) {
-    console.error("getAllPosts:", error);
+    console.error("Détails de l'erreur getAllPosts:", error);
     return res.status(500).json({ message: "Erreur affichage posts" });
   }
 };
