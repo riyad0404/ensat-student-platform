@@ -1,7 +1,7 @@
 "use client"
 
 import { MessageCircle } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 const styles = {
   floatingButton: {
@@ -58,6 +58,34 @@ const styles = {
 
 export default function ChatbotButton({ onClick }) {
   const [showTooltip, setShowTooltip] = useState(false)
+  const [isChatbotPage, setIsChatbotPage] = useState(false)
+
+  useEffect(() => {
+    // Fonction pour vérifier le pathname
+    const checkPath = () => {
+      setIsChatbotPage(window.location.pathname === '/chatbot')
+    }
+
+    // Vérifier au montage
+    checkPath()
+
+    // Écouter les changements de navigation
+    window.addEventListener('popstate', checkPath)
+    
+    // Vérifier périodiquement (pour les navigations sans popstate)
+    const interval = setInterval(checkPath, 100)
+
+    // Nettoyage
+    return () => {
+      window.removeEventListener('popstate', checkPath)
+      clearInterval(interval)
+    }
+  }, [])
+
+  // Ne rien afficher si on est sur la page chatbot
+  if (isChatbotPage) {
+    return null
+  }
 
   return (
     <div style={{ position: "relative" }}>

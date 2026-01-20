@@ -22,12 +22,12 @@ import {
 const API_BASE_URL = "http://localhost:5000/api/chat"
 
 const styles = {
-container: {
+  container: {
   display: "flex", // Aligne les éléments horizontalement
   flexDirection: "row", // Éléments sur une ligne
   width: "100%", // Assure que le container prend toute la largeur
   height: "100vh", // Prend toute la hauteur de la fenêtre
-  background: "#f9f8fa", // Couleur de fond
+  background: "#ffffff", // Couleur de fond
 },
   backgroundPattern: {
     position: "absolute",
@@ -45,8 +45,8 @@ sidebar: {
   top: 0,
   bottom: 0,
   width: "320px", // Largeur du sidebar
-  background: "#f9f8fa",
-  backdropFilter: "blur(20px)",
+  background: "#ffffff",
+  backdropFilter: "blur(20px)", // Flou d'arrière-plan
   boxShadow: "2px 0 16px rgba(0, 0, 0, 0.04)",
   zIndex: 20,
   transition: "transform 0.3s ease",
@@ -167,19 +167,26 @@ mainContentExpanded: {
   marginLeft: 0, // Lorsque le sidebar est caché, la conversation occupe toute la largeur
 },
 header: {
-  background: "#f9f8fa", // Couleur de fond du header
-  backdropFilter: "blur(20px)", // Flou d'arrière-plan
-  color: "#4a5568", // Couleur du texte
-  padding: "1rem 2rem", // Réduction de la hauteur du header
-  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.03)", // Ombre pour profondeur
-  borderBottom: "1px solid rgba(227, 52, 254, 0.06)", // Bordure du bas
-  position: "fixed", // Fixe le header en haut de la page
-  top: 0, // Fixe en haut de la fenêtre
-  left: "320px", // Place le header directement après le sidebar
-  right: 0, // Le header s'étend jusqu'à la fin de la fenêtre
-  width: "calc(100% - 320px)", // Prend toute la largeur disponible, après le sidebar
-  zIndex: 10, // Assure que le header soit au-dessus
-  margin: "0", // Suppression de toute marge externe pour éviter l'espace
+  background: "#ffffff",
+  backdropFilter: "blur(20px)",
+  color: "#4a5568",
+  padding: "1rem 2rem",
+  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.03)",
+  borderBottom: "1px solid rgba(227, 52, 254, 0.06)",
+  position: "fixed",
+  top: 0,
+  left: 0,
+  right: 0,
+  width: "100%",
+  zIndex: 10,
+  margin: "0",
+  transition: "padding-left 0.3s ease",
+},
+headerOpen: {
+  paddingLeft: "calc(320px + 2rem)",
+},
+headerClosed: {
+  paddingLeft: "calc(2rem + 3rem)",
 },
 
   headerContent: {
@@ -187,6 +194,7 @@ header: {
     justifyContent: "space-between", // Aligne le logo à gauche et le statut à droite
     alignItems: "center", // Aligne les éléments verticalement
     width: "100%", // Assure que le contenu occupe toute la largeur du header
+    transition: "margin-left 0.3s ease",
   },
   logo: {
     display: "flex",
@@ -196,12 +204,18 @@ header: {
   logoCircle: {
     width: "3.5rem",
     height: "3.5rem",
-    background: "linear-gradient(90deg, #E334FE, #A6048E)",
     borderRadius: "1rem",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     boxShadow: "0 4px 16px rgba(227, 52, 254, 0.15)",
+    background: "#ffffff",
+  },
+  logoImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: "1rem",
+    objectFit: "contain",
   },
   title: {
     fontSize: "1.5rem",
@@ -345,17 +359,15 @@ header: {
     borderRadius: "50%",
     animation: "bounce 1s infinite",
   },
-  inputArea: {
-  background: "#f9f8fa", // Garde le fond actuel pour s'harmoniser avec le thème
-  backdropFilter: "blur(20px)", // Garde l'effet de flou d'arrière-plan
-  borderTop: "1px solid rgba(227, 52, 254, 0.06)", // Conserve la bordure supérieure
-  padding: "1rem 1.5rem", // Un peu plus d'espace interne à gauche et à droite pour un meilleur confort
-  boxShadow: "0 2px 10px rgba(0, 0, 0, 0.05)", // Ombre plus douce pour un effet plus léger
-  zIndex: 10, // Garde la priorité de l'élément
-  borderRadius: "0.75rem", // Coins arrondis pour une forme plus douce
-  transition: "all 0.3s ease-in-out", // Pour une transition fluide lors des changements
-}
-,
+inputArea: {
+  background: "#ffffff",
+  backdropFilter: "blur(20px)",
+  borderTop: "1px solid rgba(227, 52, 254, 0.06)",
+  padding: "1rem 1.5rem",
+  boxShadow: "0 -2px 10px rgba(0, 0, 0, 0.02)", // Ombre inversée vers le haut
+  zIndex: 10,
+  position: "relative", // Ajouté pour le positionnement
+},
   inputContent: {
     maxWidth: "56rem",
     margin: "0 auto",
@@ -668,7 +680,8 @@ const RichContent = ({ content }) => {
 export default function ChatbotInterface() {
   const { user } = useAuth()
  const [isChatbotInterface, setIsChatbotInterface] = useState(true); 
- 
+ const [sidebarOpen, setSidebarOpen] = useState(true)
+
 useEffect(() => {
   if (window.location.pathname === '/chatbot') {
     setIsChatbotInterface(true); // On est dans l'interface chatbot
@@ -679,7 +692,6 @@ useEffect(() => {
 
   const [conversations, setConversations] = useState([])
   const [currentConversationId, setCurrentConversationId] = useState(null)
-  const [sidebarOpen, setSidebarOpen] = useState(true)
   const [showHistoryModal, setShowHistoryModal] = useState(false);
 
 // Fonction pour afficher/masquer le modal d'historique
@@ -968,8 +980,7 @@ const toggleHistoryModal = () => {
     </button>
 
     <div style={{ ...styles.mainContent, ...(sidebarOpen ? {} : styles.mainContentExpanded) }}>
-      <div style={styles.header}>
-        <div style={styles.headerContent}>
+<div style={{ ...styles.header, ...(sidebarOpen ? styles.headerOpen : styles.headerClosed) }}>        <div style={{ ...styles.headerContent, transition: "all 0.3s ease" }}>
   <div style={styles.logo}>
     <div style={styles.logoCircle}>
       {/* Remplacer l'icône par l'image logo.png avec fond transparent */}
@@ -1207,4 +1218,3 @@ const toggleHistoryModal = () => {
 );
 
 }
-
