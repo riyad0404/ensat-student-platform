@@ -57,6 +57,7 @@ export const transferOwnership = async (req, res) => {
 import { Conversation, ConversationMember, Message, User } from '../models/associations.js';
 import { Op } from 'sequelize';
 import sequelize from '../database.js';
+import { io } from '../server.js';
 
 /**
  * Small helper: checks if a user is an active member of a conversation
@@ -366,6 +367,12 @@ export const sendMessage = async (req, res) => {
       { where: { idconversation } }
     );
 
+    // --- SOCKET.IO EMIT ---
+    // Notify all users in the conversation room
+    io.to(String(idconversation)).emit('receive_message', msg);
+    // Global notification for new message (for group list updates, etc.)
+    io.emit('notification', { type: 'NEW_MESSAGE', conversationId: idconversation });
+    // --- END SOCKET.IO ---
     return res.status(201).json(msg);
   } catch (error) {
     console.error('sendMessage error:', error);
