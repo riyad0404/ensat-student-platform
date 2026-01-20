@@ -57,25 +57,21 @@
   margin: 0 0 15px 0;
 }
 
-/* --- IMAGE CADRÉE --- */
+/* --- IMAGE PLEINE LARGEUR VISIBLE EN ENTIER --- */
 .post-image-container {
   width: 100%;
-  height: 350px;
   border-radius: 12px;
   overflow: hidden;
   margin-top: 15px;
   background-color: #f9fafb;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   border: 1px solid #f3f4f6;
 }
 
 .post-image {
   width: 100%;
-  height: 100%;
-  object-fit: contain;
+  height: auto;
   display: block;
+  border-radius: 12px;
 }
 
 /* --- STATS & PARTAGER --- */
@@ -105,6 +101,15 @@
 
 .stat-btn.liked {
   color: #ec4899;
+}
+
+/* ✅ Style pour le bouton bookmark */
+.stat-btn.bookmarked {
+  color: #a855f7;
+}
+
+.stat-btn.bookmarked:hover {
+  color: #7c3aed;
 }
 
 /* --- SECTION COMMENTAIRE --- */
@@ -191,6 +196,13 @@
   background-color: #f9fafb;
 }
 
+.post-file-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: space-between;
+}
+
 .post-file-link {
   display: flex;
   align-items: center;
@@ -198,14 +210,14 @@
   text-decoration: none;
   color: #374151;
   transition: all 0.2s;
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
 }
 
 .post-file-link:hover {
   color: #a855f7;
   background-color: #f3f4f6;
-  border-radius: 8px;
-  padding: 8px;
-  margin: -8px;
 }
 
 .file-details {
@@ -230,6 +242,48 @@
   font-weight: 600;
   border-radius: 4px;
   width: fit-content;
+}
+
+/* ✅ Bouton de téléchargement dans le post */
+.download-btn {
+  background: #a855f7;
+  border: none;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  color: white;
+}
+
+.download-btn:hover {
+  background: #7c3aed;
+  transform: scale(1.05);
+}
+
+.download-btn svg {
+  stroke: white;
+}
+
+/* ✅ Bouton de téléchargement petit (dans commentaires) */
+.download-btn-small {
+  background: transparent;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  color: #a855f7;
+  border-radius: 4px;
+}
+
+.download-btn-small:hover {
+  background: #f3f4f6;
+  color: #7c3aed;
 }
 
 /* --- UPLOAD DE FICHIER DANS COMMENTAIRE --- */
@@ -311,6 +365,13 @@
   object-fit: cover;
 }
 
+.comment-file-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+}
+
 .comment-file-link {
   display: flex;
   align-items: center;
@@ -322,7 +383,7 @@
   text-decoration: none;
   color: #374151;
   transition: all 0.2s;
-  width: fit-content;
+  flex: 1;
 }
 
 .comment-file-link:hover {
@@ -335,6 +396,8 @@
   font-weight: 500;
   color: #1f2937;
 }
+
+/* --- LISTE DES COMMENTAIRES --- */
 .comments-list {
   margin-top: 15px;
   display: flex;
@@ -365,13 +428,13 @@
 .comment-avatar-small {
   width: 32px;
   height: 32px;
-  min-width: 32px; /* Force la largeur minimale */
-  min-height: 32px; /* Force la hauteur minimale */
+  min-width: 32px;
+  min-height: 32px;
   border-radius: 50%;
   object-fit: cover;
-  flex-shrink: 0; /* Empêche l'avatar de rétrécir */
-  background-color: #e5e7eb; /* Couleur de fond pendant le chargement */
-  display: block; /* Empêche les espaces blancs */
+  flex-shrink: 0;
+  background-color: #e5e7eb;
+  display: block;
 }
 
 /* ✅ Bulle de commentaire */

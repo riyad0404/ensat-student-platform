@@ -23,8 +23,8 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }) => {
   const [comments, setComments] = useState([]);
   const [commentCount, setCommentCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
 
-  // Avatar par défaut en SVG
   const defaultAvatar = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%23e5e7eb'/%3E%3Cpath d='M16 16a5 5 0 100-10 5 5 0 000 10zm0 2c-5.33 0-10 2.67-10 6v2h20v-2c0-3.33-4.67-6-10-6z' fill='%239ca3af'/%3E%3C/svg%3E";
 
   const [showMenu, setShowMenu] = useState(false);
@@ -54,7 +54,11 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }) => {
         setLikeCount(reactions?.likes || reactions?.LIKE || 0);
         setIsLiked(myStatus?.hasLike || myStatus?.typeReaction === 'LIKE');
         setComments(postComments || []);
-        setCommentCount(postComments?.length || 0); 
+        setCommentCount(postComments?.length || 0);
+        
+        // Vérifier si le post est bookmarké
+        const bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]');
+        setIsBookmarked(bookmarks.some(b => b.idpost === post.idpost));
       } catch (error) {
         console.error("Erreur chargement:", error);
       }
@@ -85,8 +89,6 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }) => {
       }
 
       const newComment = await createComment(post.idpost, formData);
-
-      // Recharger tous les commentaires
       const allComments = await getCommentsByPost(post.idpost);
       
       setComments(allComments);
@@ -117,7 +119,59 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }) => {
     }
   };
 
-  // ✅ CORRECTION: Récupération du document du post
+  // ✅ Fonction pour télécharger un document (CORRIGÉE)
+  const handleDownload = async (doc) => {
+    try {
+      const response = await fetch(doc.url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = window.document.createElement('a');
+      link.href = url;
+      link.download = doc.filename || 'document';
+      window.document.body.appendChild(link);
+      link.click();
+      window.URL.revokeObjectURL(url);
+      window.document.body.removeChild(link);
+    } catch (error) {
+      console.error('Erreur téléchargement:', error);
+      alert('Erreur lors du téléchargement');
+    }
+  };
+
+  // ✅ Fonction pour gérer les bookmarks
+  const handleBookmark = () => {
+    try {
+      const bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]');
+      
+      if (isBookmarked) {
+        // Retirer des bookmarks
+        const newBookmarks = bookmarks.filter(b => b.idpost !== post.idpost);
+        localStorage.setItem('bookmarks', JSON.stringify(newBookmarks));
+        setIsBookmarked(false);
+        alert('Retiré des favoris');
+      } else {
+        // Ajouter aux bookmarks
+        bookmarks.push({
+          idpost: post.idpost,
+          contenu: post.contenu,
+          auteur: post.auteur,
+          isAnonymat: post.isAnonymat,
+          documents: post.documents,
+          dateCreation: post.dateCreation || new Date().toISOString()
+        });
+        localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+        setIsBookmarked(true);
+        alert('Ajouté aux favoris');
+      }
+      
+      // Dispatch event pour notifier le changement
+      window.dispatchEvent(new Event('bookmarksUpdated'));
+    } catch (error) {
+      console.error('Erreur bookmark:', error);
+      alert('Erreur lors de l\'enregistrement');
+    }
+  };
+
   const postDoc = post.documents?.[0] || post.document || null;
 
   return (
@@ -141,10 +195,8 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }) => {
       <div className="post-content">
         <p className="post-text">{post.contenu}</p>
         
-        {/* ✅ CORRECTION: Affichage du document */}
         {postDoc && (
           <>
-            {/* Si c'est une image */}
             {(postDoc.type === 'IMAGE' || postDoc.url?.match(/\.(jpg|jpeg|png|gif|webp)$/i)) ? (
               <div className="post-image-container">
                 <img 
@@ -154,28 +206,35 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }) => {
                 />
               </div>
             ) : (
-              /* Si c'est un document */
               <div className="post-document-container">
-                <a 
-                  href={postDoc.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="post-file-link"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-                    <polyline points="13 2 13 9 20 9"></polyline>
-                  </svg>
-                  <div className="file-details">
-                    <span className="file-name">{postDoc.filename || 'Document'}</span>
-                    {postDoc.niveau && <span className="file-niveau-badge">{postDoc.niveau}</span>}
-                  </div>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                  </svg>
-                </a>
+                <div className="post-file-wrapper">
+                  <a 
+                    href={postDoc.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="post-file-link"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                      <polyline points="13 2 13 9 20 9"></polyline>
+                    </svg>
+                    <div className="file-details">
+                      <span className="file-name">{postDoc.filename || 'Document'}</span>
+                      {postDoc.niveau && <span className="file-niveau-badge">{postDoc.niveau}</span>}
+                    </div>
+                  </a>
+                  <button 
+                    onClick={() => handleDownload(postDoc)}
+                    className="download-btn"
+                    title="Télécharger"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                  </button>
+                </div>
               </div>
             )}
           </>
@@ -184,36 +243,62 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }) => {
 
       <div className="post-stats">
         <button className={`stat-btn ${isLiked ? 'liked' : ''}`} onClick={handleLike}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill={isLiked ? "#ec4899" : "none"} stroke={isLiked ? "#ec4899" : "currentColor"} strokeWidth="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" /></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill={isLiked ? "#ec4899" : "none"} stroke={isLiked ? "#ec4899" : "currentColor"} strokeWidth="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+          </svg>
           <span>{likeCount} Likes</span>
         </button>
 
         <button className="stat-btn" onClick={() => setShowComments(!showComments)}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
           <span>{commentCount} Commentaires</span>
+        </button>
+
+        <button 
+          className={`stat-btn ${isBookmarked ? 'bookmarked' : ''}`} 
+          onClick={handleBookmark}
+          title={isBookmarked ? "Retirer des favoris" : "Ajouter aux favoris"}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill={isBookmarked ? "#a855f7" : "none"} stroke={isBookmarked ? "#a855f7" : "currentColor"} strokeWidth="2">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>{isBookmarked ? 'Enregistré' : 'Enregistrer'}</span>
         </button>
 
         <button className="stat-btn" onClick={() => {
             navigator.clipboard.writeText(`${window.location.origin}/post/${post.idpost}`);
             alert("Lien copié !");
           }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+            <polyline points="16 6 12 2 8 6"></polyline>
+            <line x1="12" y1="2" x2="12" y2="15"></line>
+          </svg>
           <span>Partager</span>
         </button>
       </div>
 
       <div className="comment-section">
-        <form onSubmit={handleCommentSubmit} className="comment-form-container">
+        <div className="comment-form-container">
           <div className="comment-input-wrapper">
             <input
               type="text"
               placeholder="Écrivez votre commentaire..."
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleCommentSubmit(e);
+                }
+              }}
               className="comment-input"
             />
             <button 
-              type="submit" 
+              type="button" 
+              onClick={handleCommentSubmit}
               className="comment-submit-icon-btn" 
               disabled={(!commentText.trim() && !commentFile) || loading}
             >
@@ -326,7 +411,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }) => {
               </label>
             )}
           </div>
-        </form>
+        </div>
 
         {showComments && (
           <div className="comments-list">
@@ -365,19 +450,32 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated }) => {
                             className="comment-image"
                           />
                         ) : (
-                          <a 
-                            href={commentDoc.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="comment-file-link"
-                          >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-                              <polyline points="13 2 13 9 20 9"></polyline>
-                            </svg>
-                            <span className="file-name-link">{commentDoc.filename}</span>
-                            <span className="file-niveau-badge">{commentDoc.niveau}</span>
-                          </a>
+                          <div className="comment-file-wrapper">
+                            <a 
+                              href={commentDoc.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="comment-file-link"
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                                <polyline points="13 2 13 9 20 9"></polyline>
+                              </svg>
+                              <span className="file-name-link">{commentDoc.filename}</span>
+                              {commentDoc.niveau && <span className="file-niveau-badge">{commentDoc.niveau}</span>}
+                            </a>
+                            <button 
+                              onClick={() => handleDownload(commentDoc)}
+                              className="download-btn-small"
+                              title="Télécharger"
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="7 10 12 15 17 10"></polyline>
+                                <line x1="12" y1="15" x2="12" y2="3"></line>
+                              </svg>
+                            </button>
+                          </div>
                         )}
                       </div>
                     )}

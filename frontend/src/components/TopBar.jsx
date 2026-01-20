@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { searchUsers } from "../api/postAPI"; // Assurez-vous d'avoir créé cette fonction
+import { searchUsers } from "../api/postAPI";
 import "../styles/TopBar.css";
 
 const TopBar = ({ onAddPost }) => {
@@ -34,7 +34,7 @@ const TopBar = ({ onAddPost }) => {
         setResults([]);
         setShowResults(false);
       }
-    }, 300); // Délai de 300ms
+    }, 300);
 
     return () => clearTimeout(searchTimer);
   }, [query]);
@@ -57,7 +57,11 @@ const TopBar = ({ onAddPost }) => {
             <div className="search-results-dropdown">
               {results.length > 0 ? (
                 results.map((user) => (
-                  <div key={user.iduser} className="search-result-item" onClick={() => setShowResults(false)}>
+                  <div 
+                    key={user.iduser} 
+                    className="search-result-item" 
+                    onClick={() => setShowResults(false)}
+                  >
                     <img 
                       src={user.photo || "/default-avatar.png"} 
                       alt="Avatar" 
