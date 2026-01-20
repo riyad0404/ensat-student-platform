@@ -3,6 +3,7 @@ import path from "path";
 import { Comment } from "../models/comment.js";
 import { Post } from "../models/post.js";
 import { Document } from "../models/document.js";
+import { User } from "../models/user.js";
 
 const UPLOAD_DIR =
   process.env.UPLOAD_DIR || path.join(process.cwd(), "uploads");
@@ -12,74 +13,111 @@ const UPLOAD_DIR =
 // =========================
 export const createComment = async (req, res) => {
   try {
+    const { idpost, contenu, isAnonymat } = req.body;
     const iduser = req.user.iduser;
-    const idpost = Number(req.body.idpost);
+
+    console.log('📦 req.files:', req.files ? `OUI - ${req.files.length} fichier(s)` : 'NON');
+    console.log('📝 req.body:', req.body);
 
     if (!idpost) {
-      return res.status(400).json({ message: "idpost obligatoire" });
+      return res.status(400).json({ message: "idpost manquant" });
     }
 
-    // Vérifier que le post existe
-    const post = await Post.findByPk(idpost);
-    if (!post) {
-      return res.status(404).json({ message: "Post introuvable" });
+    if (!contenu?.trim() && (!req.files || req.files.length === 0)) {
+      return res.status(400).json({ message: "Le commentaire doit contenir du texte ou un fichier" });
     }
 
-    const contenu = (req.body.contenu ?? "").trim();
-    const lien = (req.body.lien ?? "").trim();
-    const isAnonymat =
-      req.body.isAnonymat === true || req.body.isAnonymat === "true";
- 
-        const niveau = (req.body.niveau ?? "").trim();
-    // Récupérer tous les fichiers possibles
-    const files = [];
-    if (Array.isArray(req.files)) files.push(...req.files);
-    if (req.file) files.push(req.file);
+    let typeContenu = "TEXTE";
+    if (req.files && req.files.length > 0) {
+      typeContenu = "DOCUMENT";
+    }
 
-    // Validation métier
-    if (!contenu && !lien && files.length === 0) {
-      return res.status(400).json({
-        message: "Un commentaire doit contenir texte, lien ou fichier.",
-      });
-    }
-  if (files.length > 0 && !niveau) {
-      return res.status(400).json({
-        message: "Le niveau est obligatoire pour un document.",
-      });
-    }
-    // Créer le commentaire
-    const comment = await Comment.create({
-      contenu: contenu || null,
-      lien: lien || null,
-      isAnonymat,
-      idpost,
+    // ✅ 1. Créer le commentaire
+    const newComment = await Comment.create({
+      contenu: contenu?.trim() || '',
+      typeContenu,
+      isAnonymat: isAnonymat === 'true' || isAnonymat === true,
       iduser,
+      idpost: parseInt(idpost),
+      idparent: null,
     });
 
-    // Créer les documents liés
-    let documents = [];
-    if (files.length > 0) {
-      const baseUrl = `${req.protocol}://${req.get("host")}`;
+    console.log('✅ Commentaire créé:', newComment.idcomment);
 
-      documents = await Promise.all(
-        files.map((f) =>
-          Document.create({
-            filename: f.originalname,
-            url: `${baseUrl}/uploads/${f.filename}`,
-            type: guessDocType(f.mimetype, f.originalname),
-            niveau,
-            idpost: null,
-            idcomment: comment.idcomment,
-            iduser,
-          })
-        )
-      );
+    // ✅ 2. Si fichier, créer le document
+    if (req.files && req.files.length > 0) {
+      const file = req.files[0];
+      const { niveau } = req.body;
+
+      if (!niveau) {
+        await newComment.destroy();
+        return res.status(400).json({ message: "Le niveau est obligatoire pour un document" });
+      }
+
+      const ext = file.originalname.split('.').pop().toLowerCase();
+      let docType = "DOCUMENT";
+      if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+        docType = "IMAGE";
+      } else if (['xls', 'xlsx', 'csv'].includes(ext)) {
+        docType = "TABLEUR";
+      } else if (['ppt', 'pptx'].includes(ext)) {
+        docType = "PRESENTATION";
+      }
+
+      const newDocument = await Document.create({
+        filename: file.originalname,
+        url: `${req.protocol}://${req.get('host')}/uploads/${file.filename}`,
+        type: docType,
+        niveau,
+        iduser,
+        idpost: parseInt(idpost), // ✅ IMPORTANT
+        idcomment: newComment.idcomment, // ✅ IMPORTANT
+      });
+
+      console.log('✅ Document créé:', {
+        iddoc: newDocument.iddoc,
+        filename: newDocument.filename,
+        idcomment: newDocument.idcomment,
+        idpost: newDocument.idpost
+      });
     }
 
-    return res.status(201).json({ comment, documents });
+    // ✅ 3. Récupérer le commentaire avec relations
+    const commentWithRelations = await Comment.findByPk(newComment.idcomment, {
+      include: [
+        {
+          model: User,
+          as: 'auteur',
+          attributes: ['iduser', 'nom', 'prenom', 'photo', 'niveau'],
+        },
+        {
+          model: Document,
+          as: 'documents',
+          required: false,
+        },
+      ],
+    });
+
+    console.log('✅ Commentaire récupéré avec relations:', {
+      idcomment: commentWithRelations.idcomment,
+      hasDocuments: !!commentWithRelations.documents,
+      documentsCount: commentWithRelations.documents?.length || 0,
+      documents: commentWithRelations.documents?.map(d => ({
+        iddoc: d.iddoc,
+        filename: d.filename,
+        url: d.url
+      }))
+    });
+
+    return res.status(201).json(commentWithRelations);
+
   } catch (error) {
-    console.error("createComment:", error);
-    return res.status(500).json({ message: "Erreur création commentaire" });
+    console.error('❌ createComment ERROR:', error);
+    console.error('Stack:', error.stack);
+    return res.status(500).json({ 
+      message: "Erreur lors de la création du commentaire",
+      error: error.message 
+    });
   }
 };
 // =========================
@@ -123,27 +161,47 @@ export const getCommentById = async (req, res) => {
 // =========================
 export const getCommentsByPost = async (req, res) => {
   try {
-    const idpost = Number(req.params.idpost);
-    if (!idpost) {
-      return res.status(400).json({ message: "idpost invalide" });
-    }
+    const { idpost } = req.params;
+    
+    console.log('🔍 Récupération commentaires pour post:', idpost);
 
     const comments = await Comment.findAll({
       where: { idpost },
-      order: [["createdAt", "ASC"]],
       include: [
         {
-          model: Document,
-          as: "documents",
-          required: false,
+          model: User,
+          as: 'auteur',
+          attributes: ['iduser', 'nom', 'prenom', 'photo', 'niveau']
         },
+        {
+          model: Document,
+          as: 'documents',
+          required: false
+        }
       ],
+      order: [['createdAt', 'ASC']]
     });
 
-    return res.json(comments);
+    console.log('📝 Nombre de commentaires trouvés:', comments.length);
+    
+    // Log détaillé de chaque commentaire
+    comments.forEach((c, index) => {
+      console.log(`📌 Commentaire ${index + 1}:`, {
+        idcomment: c.idcomment,
+        contenu: c.contenu?.substring(0, 20),
+        hasDocuments: !!c.documents,
+        documentsCount: c.documents?.length || 0,
+        documentsData: c.documents
+      });
+    });
+
+    return res.status(200).json(comments);
   } catch (error) {
-    console.error("getCommentsByPost:", error);
-    return res.status(500).json({ message: "Erreur affichage commentaires" });
+    console.error("❌ getCommentsByPost ERROR:", error);
+    return res.status(500).json({ 
+      message: "Erreur récupération commentaires",
+      error: error.message 
+    });
   }
 };
 

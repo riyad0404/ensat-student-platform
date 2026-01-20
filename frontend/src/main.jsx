@@ -14,14 +14,12 @@ document.head.appendChild(materialIcons);
 
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    {/* ⭐ AJOUTER BrowserRouter ICI */}
-    <BrowserRouter>
-      <AuthProvider>
-        <App />
-      </AuthProvider>
-    </BrowserRouter>
-  </React.StrictMode>
+  // Removed React.StrictMode for development flicker debugging
+  <BrowserRouter>
+    <AuthProvider>
+      <App />
+    </AuthProvider>
+  </BrowserRouter>
 );
 
 
