@@ -12,12 +12,14 @@ import morgan from "morgan";
 
 import authRoutes from "./routes/authroutes.js";
 import conversationRoutes from "./routes/conversationRoutes.js";
+
 import reactionRoutes from "./routes/reactionroutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import documentRoutes from "./routes/documentRoutes.js";
 import commentRoutes from "./routes/commentroutes.js";
 import postRoutes from "./routes/postroutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
+import notificationRoutes from "./routes/notificationroutes.js";
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -46,9 +48,11 @@ app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/reactions", reactionRoutes);
 app.use("/api/documents", documentRoutes);
+
 app.use("/api/users", userRoutes);
 app.use("/api/conversations", conversationRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {

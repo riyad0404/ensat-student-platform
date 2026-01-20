@@ -28,6 +28,8 @@ async function start() {
         credentials: true,
       },
     });
+    // Attach io to the Express app for controller access
+    app.set("io", io);
 
     // --- SOCKET.IO USER PRESENCE & ROOMS ---
     io.on("connection", (socket) => {
