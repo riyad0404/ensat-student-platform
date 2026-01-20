@@ -58,7 +58,7 @@ describe("Post Integration", () => {
 
     expect(res.body.post.idpost).toBeDefined();
     expect(res.body.post.contenu).toBe(postPayload.contenu);
-    expect(res.body.post.typeContenu).toBe(postPayload.typeContenu);
+    expect(res.body.post.typeContenu).toBe("DOCUMENT");
     expect(res.body.post.isAnonymat).toBe(postPayload.isAnonymat);
 
     const postInDb = await Post.findOne({ where: { idpost: res.body.post.idpost } });
@@ -216,7 +216,7 @@ describe("Post Integration", () => {
       .send(postPayload)
       .expect(400);
 
-    expect(res.body.message).toBe("contenu obligatoire ");
+   expect(res.body.message).toBe("Contenu ou fichier obligatoire");
   });
 
   it("should reject post creation without token", async () => {
