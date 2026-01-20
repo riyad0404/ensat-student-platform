@@ -131,104 +131,108 @@ export const AuthProvider = ({ children }) => {
   };
 
   // ✅ Inscription
-// ✅ Inscription (remplacer seulement cette fonction)
-const register = async (userData) => {
-  try {
-    console.log("📝 Inscription en cours...");
-    const result = await authAPI.register(userData);
+  // ✅ Inscription (remplacer seulement cette fonction)
+  const register = async (userData) => {
+    try {
+      console.log("📝 Inscription en cours...");
+      const result = await authAPI.register(userData);
 
-    console.log("✅ Réponse inscription:", result);
+      console.log("✅ Réponse inscription:", result);
 
-    if (result.message) {
-      console.log("✅ Inscription réussie! Redirection vers login...");
-      navigate("/login");
-      return { success: true, message: result.message };
-    }
+      if (result.message) {
+        console.log("✅ Inscription réussie! Redirection vers login...");
+        navigate("/login");
+        return { success: true, message: result.message };
+      }
 
-    // si ton backend renvoie autre chose que {message}, on reste prudent
-    return { success: true, ...result };
-  } catch (error) {
-    console.error("❌ Erreur inscription:", error);
+      // si ton backend renvoie autre chose que {message}, on reste prudent
+      return { success: true, ...result };
+    } catch (error) {
+      console.error("❌ Erreur inscription:", error);
 
-    // authAPI.register peut throw:
-    // 1) un AxiosError (error.response...)
-    // 2) un objet custom { status, message, data } (comme dans ton authAPI.js)
-    const status = error?.response?.status ?? error?.status ?? null;
+      // authAPI.register peut throw:
+      // 1) un AxiosError (error.response...)
+      // 2) un objet custom { status, message, data } (comme dans ton authAPI.js)
+      const status = error?.response?.status ?? error?.status ?? null;
 
-    // ✅ 429 RATE LIMIT
-    if (status === 429) {
-      const headers = error?.response?.headers ?? {};
-      const seconds = parseRateLimitSeconds(headers); // peut être null si header absent
+      // ✅ AJOUT MINIMAL: récupérer le payload backend
+      const backendData = error?.response?.data || error?.data || null;
 
-      const msg =
+      // ✅ 429 RATE LIMIT
+      if (status === 429) {
+        const headers = error?.response?.headers ?? {};
+        const seconds = parseRateLimitSeconds(headers); // peut être null si header absent
+
+        const msg =
+          error?.response?.data?.message ||
+          error?.response?.data?.error ||
+          error?.data?.message ||
+          error?.data?.error ||
+          error?.message ||
+          "Too many signup attempts. Please try again later.";
+
+        return {
+          success: false,
+          status: 429,
+          error: msg,
+          errorCode: "RATE_LIMIT",
+          retryAfterSeconds: seconds,
+          data: backendData, // ✅ AJOUT
+        };
+      }
+
+      // ✅ autres erreurs: construire un message propre
+      const rawMsg =
         error?.response?.data?.message ||
         error?.response?.data?.error ||
         error?.data?.message ||
         error?.data?.error ||
         error?.message ||
-        "Too many signup attempts. Please try again later.";
+        "Registration failed. Please try again.";
 
+      const msgLower = String(rawMsg).toLowerCase();
+
+      // ✅ email déjà utilisé (409 ou message)
+      if (
+        status === 409 ||
+        (msgLower.includes("email") &&
+          (msgLower.includes("already") ||
+            msgLower.includes("exists") ||
+            msgLower.includes("duplicate") ||
+            msgLower.includes("in use")))
+      ) {
+        return {
+          success: false,
+          status: status ?? 409,
+          errorCode: "EMAIL_IN_USE",
+          error: "This email is already registered. Please use another email or login.",
+          data: backendData, // ✅ AJOUT
+        };
+      }
+
+      // ✅ secret code invalide (400 ou message)
+      if (status === 400 && (msgLower.includes("secret") || msgLower.includes("code"))) {
+        return {
+          success: false,
+          status: 400,
+          errorCode: "INVALID_SECRET_CODE",
+          error: "Invalid secret code. Please contact the administrator for the correct code.",
+          data: backendData, // ✅ AJOUT
+        };
+      }
+
+      // ✅ fallback
       return {
         success: false,
-        status: 429,
-        error: msg,
-        errorCode: "RATE_LIMIT",
-        retryAfterSeconds: seconds,
+        status,
+        errorCode: "GENERIC",
+        error: rawMsg,
+        data: backendData, // ✅ AJOUT
       };
     }
+  };
 
-    // ✅ autres erreurs: construire un message propre
-    const rawMsg =
-      error?.response?.data?.message ||
-      error?.response?.data?.error ||
-      error?.data?.message ||
-      error?.data?.error ||
-      error?.message ||
-      "Registration failed. Please try again.";
-
-    const msgLower = String(rawMsg).toLowerCase();
-
-    // ✅ email déjà utilisé (409 ou message)
-    if (
-      status === 409 ||
-      (msgLower.includes("email") &&
-        (msgLower.includes("already") ||
-          msgLower.includes("exists") ||
-          msgLower.includes("duplicate") ||
-          msgLower.includes("in use")))
-    ) {
-      return {
-        success: false,
-        status: status ?? 409,
-        errorCode: "EMAIL_IN_USE",
-        error: "This email is already registered. Please use another email or login.",
-      };
-    }
-
-    // ✅ secret code invalide (400 ou message)
-    if (
-      status === 400 &&
-      (msgLower.includes("secret") || msgLower.includes("code"))
-    ) {
-      return {
-        success: false,
-        status: 400,
-        errorCode: "INVALID_SECRET_CODE",
-        error:
-          "Invalid secret code. Please contact the administrator for the correct code.",
-      };
-    }
-
-    // ✅ fallback
-    return {
-      success: false,
-      status,
-      errorCode: "GENERIC",
-      error: rawMsg,
-    };
-  }
-};
-//deconnexion
+  //deconnexion
   const logout = async () => {
     try {
       console.log("👋 Déconnexion en cours...");
@@ -241,28 +245,90 @@ const register = async (userData) => {
     }
   };
 
-  // ✅ Mise à jour du profil
-  const updateProfile = async (updatedData) => {
-    try {
-      console.log("🔄 Mise à jour du profil...", updatedData);
-      const response = await authAPI.updateProfile(updatedData);
-
-      console.log("✅ Profil mis à jour:", response);
-
-      if (response.user) {
-        setUser(response.user);
-        return { success: true, user: response.user };
+  // ✅ Mise à jour du profil (NOUVELLE FONCTION)
+// ✅ Mise à jour du profil
+const updateProfile = async (updatedData) => {
+  try {
+    console.log('🔄 Mise à jour du profil - Données reçues:', updatedData);
+    
+    // Log spécifique pour les photos
+    if (updatedData.photo) {
+      if (updatedData.photo === '') {
+        console.log('🗑️ Suppression de photo demandée');
       } else {
-        return { success: false, error: "Profile not updated" };
+        console.log('🖼️ Photo envoyée, taille:', updatedData.photo.length, 'caractères');
+        console.log('🖼️ Type photo:', updatedData.photo.substring(0, 50) + '...');
       }
-    } catch (error) {
-      console.error("❌ Erreur mise à jour profil:", error);
-      return {
-        success: false,
-        error: error.response?.data?.error || "Update error",
+    }
+    
+    const response = await authAPI.updateProfile(updatedData);
+    
+    console.log('✅ Réponse du backend:', response);
+    
+    if (response.user) {
+      setUser(response.user);
+      return { 
+        success: true, 
+        user: response.user,
+        message: response.message || 'Profil mis à jour avec succès'
+      };
+    } else if (response.message) {
+      // Rafraîchir les données utilisateur après mise à jour
+      try {
+        const userResponse = await authAPI.verifyToken();
+        if (userResponse.user) {
+          setUser(userResponse.user);
+        }
+      } catch (refreshError) {
+        console.log('⚠️ Impossible de rafraîchir les données utilisateur:', refreshError);
+      }
+      
+      return { 
+        success: true,
+        message: response.message
+      };
+    } else {
+      return { 
+        success: false, 
+        error: response.error || response.message || 'Profil non mis à jour' 
       };
     }
-  };
+  } catch (error) {
+    console.error('❌ ERREUR DÉTAILLÉE updateProfile:');
+    console.error('Message:', error.message);
+    console.error('Stack:', error.stack);
+    
+    if (error.response) {
+      console.error('Status:', error.response.status);
+      console.error('Status Text:', error.response.statusText);
+      console.error('Data:', error.response.data);
+      console.error('Headers:', error.response.headers);
+      
+      const errorMessage = error.response.data?.error || 
+                          error.response.data?.message || 
+                          error.response.data?.details ||
+                          'Erreur de mise à jour';
+      
+      return { 
+        success: false, 
+        error: errorMessage,
+        status: error.response.status
+      };
+    } else if (error.request) {
+      console.error('Request:', error.request);
+      return { 
+        success: false, 
+        error: 'Pas de réponse du serveur' 
+      };
+    } else {
+      console.error('Error:', error.message);
+      return { 
+        success: false, 
+        error: error.message || 'Erreur de connexion' 
+      };
+    }
+  }
+};
 
   return (
     <AuthContext.Provider

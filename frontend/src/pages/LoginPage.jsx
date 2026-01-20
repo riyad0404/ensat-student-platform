@@ -101,7 +101,7 @@ export default function LoginPage() {
 
       case "password":
         if (!value) return "Password required";
-        if (value.length < 6) return "Minimum 6 characters";
+        if (value.length < 8) return "Minimum 8 characters";
         return "";
 
       default:

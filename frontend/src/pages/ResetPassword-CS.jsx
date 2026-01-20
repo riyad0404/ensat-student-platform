@@ -1,4 +1,4 @@
-// src/pages/ResetPasswordByCode.jsx
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./../styles/login.css";
@@ -7,6 +7,7 @@ import { FiEye, FiEyeOff } from "react-icons/fi"; // Ajout des icônes
 import Input from "../components/input";
 import Button from "../components/button";
 import axios from "axios";
+import { validatePasswordField, applyPasswordPolicyBackendError } from "../utils/authValidation";
 
 export default function ResetPasswordByCode() {
   const navigate = useNavigate();
@@ -45,9 +46,7 @@ export default function ResetPasswordByCode() {
         return "";
         
       case "newPassword":
-        if (!value) return "Password required";
-        if (value.length < 6) return "Minimum 6 characters";
-        return "";
+        return validatePasswordField(value);
         
       case "confirmPassword":
         if (!value) return "Confirmation required";
@@ -118,7 +117,19 @@ export default function ResetPasswordByCode() {
       setTimeout(() => navigate("/login"), 2000);
       
     } catch (err) {
-      setError("❌ Invalid or expired Code secret");
+      const backendData = err.response?.data;
+
+      const applied = applyPasswordPolicyBackendError({
+        backendData,
+        setError,
+        setFieldErrors: setErrors,
+        passwordFieldName: "newPassword",
+      });
+
+      if (!applied) {
+        setError("❌ Invalid or expired Code secret");
+      }
+
       console.error(err);
     } finally {
       setLoading(false);
@@ -167,7 +178,6 @@ export default function ResetPasswordByCode() {
               required
             />
             
-          
             <div style={{ position: 'relative', marginBottom: '1.2rem' }}>
               <Input 
                 label="NEW PASSWORD" 
@@ -197,7 +207,6 @@ export default function ResetPasswordByCode() {
                 {showNewPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
               </span>
             </div>
-            
             
             <div style={{ position: 'relative', marginBottom: '1.2rem' }}>
               <Input 

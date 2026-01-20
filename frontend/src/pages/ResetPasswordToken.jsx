@@ -1,4 +1,4 @@
-// src/pages/ResetPasswordToken.jsx
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import "./../styles/login.css";
@@ -7,6 +7,7 @@ import Button from "../components/button.jsx";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import axios from "axios";
 import resetImg from "../assets/login-illustration.png";
+import { validatePasswordField, applyPasswordPolicyBackendError } from "../utils/authValidation";
 
 export default function ResetPasswordToken() {
   const navigate = useNavigate();
@@ -43,9 +44,7 @@ export default function ResetPasswordToken() {
   const validateField = (fieldName, value) => {
     switch (fieldName) {
       case "password":
-        if (!value) return "Password required";
-        if (value.length < 6) return "Minimum 6 characters";
-        return "";
+        return validatePasswordField(value);
         
       case "confirmPassword":
         if (!value) return "Confirmation required";
@@ -190,7 +189,18 @@ export default function ResetPasswordToken() {
       } else if (err.response?.status === 404) {
         setError("User not found. The account may have been deleted.");
       } else if (err.response?.status === 400) {
-        setError("Invalid password. Please use a stronger password.");
+        const backendData = err.response?.data;
+
+        const applied = applyPasswordPolicyBackendError({
+          backendData,
+          setError,
+          setFieldErrors: setErrors,
+          passwordFieldName: "password",
+        });
+
+        if (!applied) {
+          setError("Invalid password. Please use a stronger password.");
+        }
       } else {
         setError(serverMessage);
       }

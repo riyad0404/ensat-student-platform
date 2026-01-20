@@ -6,6 +6,7 @@ import { Comment } from "./comment.js";
 import { Conversation } from './conversation.js';
 import { ConversationMember } from './conversationMember.js';
 import { Message } from './message.js';
+import { Notification } from './notification.js';
 import { ConversationChat } from './ConversationChat.js';
 import { MessageChat } from './MessageChat.js';
 
@@ -64,6 +65,13 @@ User.hasMany(Document, { foreignKey: "iduser" });
 // Comment -> Documents
 Comment.hasMany(Document, {foreignKey: "idcomment",as: "documents",});
 Document.belongsTo(Comment, {foreignKey: "idcomment",as: "comment",});
+// Notification -> User (destinataire)
+Notification.belongsTo(User, { foreignKey: 'idDestinataire', as: 'destinataire' });
+User.hasMany(Notification, { foreignKey: 'idDestinataire', as: 'notificationsReceived' });
+
+// Notification -> User (source)
+Notification.belongsTo(User, { foreignKey: 'idSourceUser', as: 'sourceUser' });
+User.hasMany(Notification, { foreignKey: 'idSourceUser', as: 'notificationsSent' });
 // Chat Associations
 User.hasMany(ConversationChat, { 
   foreignKey: 'userId', 
