@@ -1,5 +1,5 @@
 "use client"
-
+import { FileText } from "lucide-react"; 
 import { useState, useRef, useEffect } from "react"
 import { useAuth } from "../contexts/AuthContext"
 import {
@@ -22,12 +22,13 @@ import {
 const API_BASE_URL = "http://localhost:5000/api/chat"
 
 const styles = {
-  container: {
-    minHeight: "100vh",
-    background: "#f9f8fa",
-    position: "relative",
-    overflow: "hidden",
-  },
+container: {
+  display: "flex", // Aligne les éléments horizontalement
+  flexDirection: "row", // Éléments sur une ligne
+  width: "100%", // Assure que le container prend toute la largeur
+  height: "100vh", // Prend toute la hauteur de la fenêtre
+  background: "#f9f8fa", // Couleur de fond
+},
   backgroundPattern: {
     position: "absolute",
     top: 0,
@@ -38,20 +39,22 @@ const styles = {
       "radial-gradient(circle at 20% 50%, rgba(227, 52, 254, 0.03) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(227, 52, 254, 0.02) 0%, transparent 50%)",
     pointerEvents: "none",
   },
-  sidebar: {
-    position: "fixed",
-    left: "320px", // global sidebar width
-    top: 0,
-    bottom: 0,
-    width: "320px",
-    background: "#f9f8fa", // Changed from white to match the main background
-    backdropFilter: "blur(20px)",
-    boxShadow: "2px 0 16px rgba(0, 0, 0, 0.04)",
-    zIndex: 20,
-    transition: "transform 0.3s ease",
-    display: "flex",
-    flexDirection: "column",
-  },
+sidebar: {
+  position: "fixed",
+  left: 0, // Aligné à gauche
+  top: 0,
+  bottom: 0,
+  width: "320px", // Largeur du sidebar
+  background: "#f9f8fa",
+  backdropFilter: "blur(20px)",
+  boxShadow: "2px 0 16px rgba(0, 0, 0, 0.04)",
+  zIndex: 20,
+  transition: "transform 0.3s ease",
+  display: "flex",
+  flexDirection: "column",
+  padding: "0",
+  margin: "0",
+},
   sidebarHidden: {
     transform: "translateX(-100%)",
   },
@@ -153,32 +156,37 @@ const styles = {
     zIndex: 30,
     transition: "all 0.3s",
   },
-  mainContent: {
-    marginLeft: "640px", // global sidebar + chatbot sidebar
-    transition: "margin-left 0.3s ease",
-    display: "flex",
-    flexDirection: "column",
-    height: "100vh",
-  },
-  mainContentExpanded: {
-    marginLeft: 0,
-  },
-  header: {
-    background: "#f9f8fa", // Changed from white to match the main background
-    backdropFilter: "blur(20px)",
-    color: "#4a5568",
-    padding: "1.5rem 1rem",
-    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.03)",
-    borderBottom: "1px solid rgba(227, 52, 254, 0.06)",
-    position: "relative",
-    zIndex: 10,
-  },
+mainContent: {
+  marginLeft: "320px", // Le contenu commence après le sidebar
+  transition: "margin-left 0.3s ease", // Transition pour l'ouverture/fermeture du sidebar
+  display: "flex",
+  flexDirection: "column",
+  height: "100vh", // Remplir toute la hauteur
+},
+mainContentExpanded: {
+  marginLeft: 0, // Lorsque le sidebar est caché, la conversation occupe toute la largeur
+},
+header: {
+  background: "#f9f8fa", // Couleur de fond du header
+  backdropFilter: "blur(20px)", // Flou d'arrière-plan
+  color: "#4a5568", // Couleur du texte
+  padding: "1rem 2rem", // Réduction de la hauteur du header
+  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.03)", // Ombre pour profondeur
+  borderBottom: "1px solid rgba(227, 52, 254, 0.06)", // Bordure du bas
+  position: "fixed", // Fixe le header en haut de la page
+  top: 0, // Fixe en haut de la fenêtre
+  left: "320px", // Place le header directement après le sidebar
+  right: 0, // Le header s'étend jusqu'à la fin de la fenêtre
+  width: "calc(100% - 320px)", // Prend toute la largeur disponible, après le sidebar
+  zIndex: 10, // Assure que le header soit au-dessus
+  margin: "0", // Suppression de toute marge externe pour éviter l'espace
+},
+
   headerContent: {
-    maxWidth: "56rem",
-    margin: "0 auto",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
+    display: "flex", // Utilise flexbox pour l'alignement des éléments
+    justifyContent: "space-between", // Aligne le logo à gauche et le statut à droite
+    alignItems: "center", // Aligne les éléments verticalement
+    width: "100%", // Assure que le contenu occupe toute la largeur du header
   },
   logo: {
     display: "flex",
@@ -222,14 +230,15 @@ const styles = {
     margin: 0,
     fontWeight: "500",
   },
-  messagesContainer: {
-    flex: 1,
-    maxWidth: "56rem",
-    margin: "0 auto",
-    padding: "2rem 1rem",
-    overflowY: "auto",
-    width: "100%",
-  },
+ messagesContainer: {
+  flex: 1,
+  maxWidth: "56rem",
+  margin: "0 auto",
+  padding: "2rem 1rem",
+  paddingTop: "9rem",  // Ajouter un espace pour que les messages ne soient pas recouverts par le header
+  overflowY: "auto",
+  width: "100%",
+},
   messageWrapper: {
     display: "flex",
     marginBottom: "1.5rem",
@@ -337,13 +346,16 @@ const styles = {
     animation: "bounce 1s infinite",
   },
   inputArea: {
-    background: "#f9f8fa", // Changed from white to match the main background
-    backdropFilter: "blur(20px)",
-    borderTop: "1px solid rgba(227, 52, 254, 0.06)",
-    padding: "1.5rem 1rem",
-    boxShadow: "0 -2px 8px rgba(0, 0, 0, 0.03)",
-    zIndex: 10,
-  },
+  background: "#f9f8fa", // Garde le fond actuel pour s'harmoniser avec le thème
+  backdropFilter: "blur(20px)", // Garde l'effet de flou d'arrière-plan
+  borderTop: "1px solid rgba(227, 52, 254, 0.06)", // Conserve la bordure supérieure
+  padding: "1rem 1.5rem", // Un peu plus d'espace interne à gauche et à droite pour un meilleur confort
+  boxShadow: "0 2px 10px rgba(0, 0, 0, 0.05)", // Ombre plus douce pour un effet plus léger
+  zIndex: 10, // Garde la priorité de l'élément
+  borderRadius: "0.75rem", // Coins arrondis pour une forme plus douce
+  transition: "all 0.3s ease-in-out", // Pour une transition fluide lors des changements
+}
+,
   inputContent: {
     maxWidth: "56rem",
     margin: "0 auto",
@@ -454,6 +466,136 @@ const styles = {
     marginTop: "0.5rem",
     flexShrink: 0,
   },
+historyIcon: {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "40px",  // Taille du fond
+  height: "40px", // Taille du fond
+  borderRadius: "8px",  // Bordure arrondie pour un effet rectangle
+  backgroundColor: "#6366f1",  // Couleur du fond (identique au bouton de nouvelle conversation)
+  cursor: "pointer",
+  transition: "all 0.3s",
+  ":hover": {
+    transform: "scale(1.1)",  // Effet de zoom lors du survol
+  },
+  boxShadow: "0 4px 8px rgba(0, 0, 0, 0.15)", // Ombre légère pour plus de profondeur
+},
+
+historyIconInside: {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: "18px", // Réduire la taille de l'icône à l'intérieur du cercle
+  height: "18px", // Réduire la taille de l'icône à l'intérieur du cercle
+  boxShadow: "0 2px 4px rgba(0, 0, 0, 0.2)", // Ombre légère autour de l'icône pour l'effet de profondeur
+}
+,
+historyModal: {
+  position: "fixed",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  background: "rgba(0, 0, 0, 0.5)",
+  zIndex: 1000,
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  backdropFilter: "blur(8px)", // Flou de l'arrière-plan
+  borderRadius: "10px", // Arrondir les bords du modal
+  padding: "1rem",
+},
+
+modalContent: {
+  background: "#fff",
+  borderRadius: "1rem",
+  padding: "2rem",
+  width: "90%",
+  maxWidth: "600px", // Taille max du modal
+  boxShadow: "0 4px 12px rgba(0, 0, 0, 0.1)", // Ombre pour un effet de profondeur
+},
+
+modalHeader: {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: "1rem",
+},
+
+modalTitle: {
+  fontSize: "1.25rem",
+  fontWeight: "600",
+  color: "#333",
+},
+
+closeModalBtn: {
+  background: "transparent",
+  border: "none",
+  cursor: "pointer",
+  padding: "0.5rem",
+},
+
+conversationsList: {
+  maxHeight: "400px",
+  overflowY: "auto",
+  marginBottom: "1rem",
+},
+
+conversationItem: {
+  display: "flex",
+  justifyContent: "space-between",
+  padding: "1rem",
+  marginBottom: "1rem",
+  backgroundColor: "rgba(227, 52, 254, 0.1)", // Couleur de fond claire pour chaque conversation
+  borderRadius: "0.75rem",
+  cursor: "pointer",
+  transition: "all 0.3s ease",
+  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.1)",
+},
+
+conversationTitle: {
+  fontSize: "1rem",
+  fontWeight: "500",
+  color: "#333",
+},
+
+conversationDate: {
+  fontSize: "0.875rem",
+  color: "#718096",
+  marginTop: "0.25rem",
+},
+
+deleteBtn: {
+  background: "transparent",
+  border: "none",
+  cursor: "pointer",
+  padding: "0.5rem",
+  transition: "all 0.3s ease",
+  ":hover": {
+    color: "#DC2626",
+  },
+},
+
+newConvBtn: {
+  width: "100%",
+  padding: "1rem",
+  background: "#6366f1",
+  color: "white",
+  border: "none",
+  borderRadius: "1rem",
+  cursor: "pointer",
+  fontSize: "1rem",
+  fontWeight: "600",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "0.5rem",
+  boxShadow: "0 4px 12px rgba(99, 102, 241, 0.2)",
+  transition: "all 0.3s ease",
+},
+
+
 }
 
 const RichContent = ({ content }) => {
@@ -525,11 +667,25 @@ const RichContent = ({ content }) => {
 
 export default function ChatbotInterface() {
   const { user } = useAuth()
+ const [isChatbotInterface, setIsChatbotInterface] = useState(true); 
+ 
+useEffect(() => {
+  if (window.location.pathname === '/chatbot') {
+    setIsChatbotInterface(true); // On est dans l'interface chatbot
+  } else {
+    setIsChatbotInterface(false); // On est dans une autre page
+  }
+}, [window.location.pathname]);
 
   const [conversations, setConversations] = useState([])
   const [currentConversationId, setCurrentConversationId] = useState(null)
   const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
 
+// Fonction pour afficher/masquer le modal d'historique
+const toggleHistoryModal = () => {
+  setShowHistoryModal(!showHistoryModal);
+}; 
   const [messages, setMessages] = useState([
     {
       id: 1,
@@ -565,105 +721,104 @@ export default function ChatbotInterface() {
     }
   }
 
-  const createNewConversation = async () => {
-    if (!user?.iduser) {
-      console.error("Utilisateur non connecté")
-      return
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/conversation/new`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ userId: user.iduser }),
-      })
-      const data = await response.json()
-      console.log("[v0] Nouvelle conversation créée:", data)
-
-      setCurrentConversationId(data.conversationId)
-      setMessages([
-        {
-          id: 1,
-          type: "bot",
-          text: "Bienvenue! Je suis l'assistant virtuel de l'ENSA Tanger. Comment puis-je vous aider aujourd'hui?",
-          time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
-        },
-      ])
-
-      await loadConversations()
-    } catch (error) {
-      console.error("Erreur lors de la création de la conversation:", error)
-    }
+ const createNewConversation = async () => {
+  if (!user?.iduser) {
+    console.error("Utilisateur non connecté");
+    return;
   }
+
+  // Fermer le modal d'historique
+  setShowHistoryModal(false);
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/conversation/new`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ userId: user.iduser }),
+    });
+    const data = await response.json();
+    console.log("[v0] Nouvelle conversation créée:", data);
+
+    setCurrentConversationId(data.conversationId); // Met à jour l'ID de la conversation
+    setMessages([ // Initialisation des messages pour la nouvelle conversation
+      {
+        id: 1,
+        type: "bot",
+        text: "Bienvenue! Je suis l'assistant virtuel de l'ENSA Tanger. Comment puis-je vous aider aujourd'hui?",
+        time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
+      },
+    ]);
+
+    await loadConversations(); // Recharge la liste des conversations
+  } catch (error) {
+    console.error("Erreur lors de la création de la conversation:", error);
+  }
+};
+
 
   const loadConversation = async (conversationId) => {
-    if (!user?.iduser) {
-      console.error("Utilisateur non connecté")
-      return
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/conversation/${conversationId}/messages?userId=${user.iduser}`)
-      const data = await response.json()
-      console.log("[v0] Messages chargés:", data.messages)
-
-      const formattedMessages = data.messages.map((msg, index) => ({
-        id: index + 1,
-        type: msg.role,
-        text: msg.content,
-        time: new Date(msg.timestamp).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
-      }))
-
-      setMessages(formattedMessages)
-      setCurrentConversationId(conversationId)
-    } catch (error) {
-      console.error("Erreur lors du chargement de la conversation:", error)
-    }
+  if (!user?.iduser) {
+    console.error("Utilisateur non connecté");
+    return;
   }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/conversation/${conversationId}/messages?userId=${user.iduser}`);
+    const data = await response.json();
+    console.log("[v0] Messages chargés:", data.messages);
+
+    const formattedMessages = data.messages.map((msg, index) => ({
+      id: index + 1,
+      type: msg.role,
+      text: msg.content,
+      time: new Date(msg.timestamp).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
+    }));
+
+    setMessages(formattedMessages);
+    setCurrentConversationId(conversationId); // Mettez à jour l'ID de la conversation
+
+    // Ferme le modal d'historique
+    setShowHistoryModal(false); 
+  } catch (error) {
+    console.error("Erreur lors du chargement de la conversation:", error);
+  }
+};
+
 
   const deleteConversation = async (conversationId, e) => {
-    e.stopPropagation()
+  e.stopPropagation(); // Empêche la propagation de l'événement pour ne pas déclencher la sélection de la conversation
 
-    if (!user?.iduser) {
-      console.error("Utilisateur non connecté")
-      return
-    }
-
-    try {
-      await fetch(`${API_BASE_URL}/conversation/${conversationId}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ userId: user.iduser }),
-      })
-      console.log("[v0] Conversation supprimée:", conversationId)
-
-      if (currentConversationId === conversationId) {
-        setCurrentConversationId(null)
-        setMessages([
-          {
-            id: 1,
-            type: "bot",
-            text: "Bienvenue! Je suis l'assistant virtuel de l'ENSA Tanger. Comment puis-je vous aider aujourd'hui?",
-            time: new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
-          },
-        ])
-      }
-
-      await loadConversations()
-    } catch (error) {
-      console.error("Erreur lors de la suppression de la conversation:", error)
-    }
+  if (!user?.iduser) {
+    console.error("Utilisateur non connecté");
+    return;
   }
+
+  try {
+    await fetch(`${API_BASE_URL}/conversation/${conversationId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ userId: user.iduser }),
+    });
+    console.log("[v0] Conversation supprimée:", conversationId);
+
+    // Recharge les conversations après la suppression
+    await loadConversations();
+  } catch (error) {
+    console.error("Erreur lors de la suppression de la conversation:", error);
+  }
+};
+
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }
 
   useEffect(() => {
+    
     scrollToBottom()
   }, [messages])
 
@@ -765,286 +920,291 @@ export default function ChatbotInterface() {
   }
 
   return (
-    <div style={styles.container}>
-      <style>{`
-        @keyframes bounce {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-0.5rem); }
-        }
-        .dot:nth-child(2) { animation-delay: 0.1s; }
-        .dot:nth-child(3) { animation-delay: 0.2s; }
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.5; }
-        }
-        @keyframes slideIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes slideInRight {
-          from { opacity: 0; transform: translateX(100%); }
-          to { opacity: 1; transform: translateX(0); }
-        }
-      `}</style>
+  <div style={styles.container}>
+    <style>{`
+      @keyframes bounce {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-0.5rem); }
+      }
+      .dot:nth-child(2) { animation-delay: 0.1s; }
+      .dot:nth-child(3) { animation-delay: 0.2s; }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+      }
+      @keyframes slideIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(100%); }
+        to { opacity: 1; transform: translateX(0); }
+      }
+    `}</style>
 
-      <div style={styles.backgroundPattern} />
+    <div style={styles.backgroundPattern} />
 
-      {showCopyNotification && (
-        <div style={styles.copyNotification}>
-          <Check size={20} />
-          <span>Message copié avec succès!</span>
-        </div>
-      )}
-
-      <button
-        style={styles.toggleSidebarBtn}
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-        onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
-        onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
-      >
-        {sidebarOpen ? <X size={20} color="#E334FE" /> : <Menu size={20} color="#E334FE" />}
-      </button>
-
-      <div style={{ ...styles.sidebar, ...(sidebarOpen ? {} : styles.sidebarHidden) }}>
-        <div style={styles.sidebarHeader}>
-          <h2 style={styles.sidebarTitle}>Conversations</h2>
-          <button
-            style={styles.newConvBtn}
-            onClick={createNewConversation}
-            onMouseOver={(e) => (e.currentTarget.style.transform = "translateY(-2px)")}
-            onMouseOut={(e) => (e.currentTarget.style.transform = "translateY(0)")}
-          >
-            <Plus size={20} />
-            Nouvelle conversation
-          </button>
-        </div>
-
-        <div style={styles.conversationsList}>
-          {conversations.length === 0 ? (
-            <p style={{ textAlign: "center", color: "#a0aec0", fontSize: "0.875rem", marginTop: "2rem" }}>
-              Aucune conversation
-            </p>
-          ) : (
-            conversations.map((conv) => (
-              <div
-                key={conv.idConvChat}
-                style={{
-                  ...styles.conversationItem,
-                  ...(currentConversationId === conv.idConvChat ? styles.conversationItemActive : {}),
-                }}
-                onClick={() => loadConversation(conv.idConvChat)}
-                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.08)")}
-                onMouseOut={(e) =>
-                  (e.currentTarget.style.backgroundColor =
-                    currentConversationId === conv.idConvChat ? "rgba(227, 52, 254, 0.08)" : "rgba(227, 52, 254, 0.04)")
-                }
-              >
-                <div style={styles.conversationInfo}>
-                  <div style={styles.conversationTitle}>{conv.titre}</div>
-                  <div style={styles.conversationDate}>{formatDate(conv.updatedAt)}</div>
-                </div>
-                <button
-                  style={styles.deleteBtn}
-                  onClick={(e) => deleteConversation(conv.idConvChat, e)}
-                  onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(245, 101, 101, 0.2)")}
-                  onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "rgba(245, 101, 101, 0.08)")}
-                  title="Supprimer"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            ))
-          )}
-        </div>
+    {showCopyNotification && (
+      <div style={styles.copyNotification}>
+        <Check size={20} />
+        <span>Message copié avec succès!</span>
       </div>
+    )}
 
-      <div style={{ ...styles.mainContent, ...(sidebarOpen ? {} : styles.mainContentExpanded) }}>
-        <div style={styles.header}>
-          <div style={styles.headerContent}>
-            <div style={styles.logo}>
-              <div style={styles.logoCircle}>
-                <Sparkles color="white" size={24} />
-              </div>
-              <div>
-                <h1 style={styles.title}>DocentraBot</h1>
-                <div style={styles.statusContainer}>
-                  <div style={styles.statusDot} />
-                  <p style={styles.status}>En ligne</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+    {/* Afficher l'icône uniquement si isChatbotInterface est faux */}
+    {!isChatbotInterface && (
+  <button style={styles.toggleSidebarBtn}>
+    <MessageCircle size={32} color="#E334FE" /> {/* Icône du chatbot */}
+  </button>
+)}
 
-        <div style={styles.messagesContainer}>
-          <div>
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                style={{
-                  ...styles.messageWrapper,
-                  ...(message.type === "user" ? styles.messageWrapperUser : styles.messageWrapperBot),
-                }}
-              >
-                {message.type === "bot" && (
-                  <div style={styles.avatarWrapper}>
-                    <div style={styles.botAvatar}>
-                      <Bot color="white" size={20} />
-                    </div>
-                  </div>
-                )}
+    <button
+      style={styles.toggleSidebarBtn}
+      onClick={() => setSidebarOpen(!sidebarOpen)}
+      onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
+      onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+    >
+      {sidebarOpen ? <X size={20} color="#E334FE" /> : <Menu size={20} color="#E334FE" />}
+    </button>
 
-                <div>
-                  <div
-                    style={{
-                      ...styles.messageBubble,
-                      ...(message.type === "user" ? styles.messageBubbleUser : styles.messageBubbleBot),
-                    }}
-                  >
-                    <div style={styles.messageText}>
-                      {message.type === "bot" ? <RichContent content={message.text} /> : message.text}
-                    </div>
-                    <div style={styles.messageFooter}>
-                      <span
-                        style={{
-                          ...styles.messageTime,
-                          ...(message.type === "user" ? styles.messageTimeUser : styles.messageTimeBot),
-                        }}
-                      >
-                        <Clock size={12} />
-                        {message.time}
-                      </span>
-                      {message.type === "bot" && (
-                        <div style={styles.actionButtons}>
-                          <button
-                            style={styles.actionBtn}
-                            onClick={() => copyMessage(message.text)}
-                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.15)")}
-                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.06)")}
-                            title="Copier le message"
-                          >
-                            <Copy style={{ width: "1rem", height: "1rem", color: "#E334FE" }} />
-                          </button>
-                          <button
-                            style={styles.actionBtn}
-                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.15)")}
-                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.06)")}
-                            title="Utile"
-                          >
-                            <ThumbsUp style={{ width: "1rem", height: "1rem", color: "#E334FE" }} />
-                          </button>
-                          <button
-                            style={styles.actionBtn}
-                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.15)")}
-                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.06)")}
-                            title="Pas utile"
-                          >
-                            <ThumbsDown style={{ width: "1rem", height: "1rem", color: "#E334FE" }} />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
+    <div style={{ ...styles.mainContent, ...(sidebarOpen ? {} : styles.mainContentExpanded) }}>
+      <div style={styles.header}>
+        <div style={styles.headerContent}>
+  <div style={styles.logo}>
+    <div style={styles.logoCircle}>
+      {/* Remplacer l'icône par l'image logo.png avec fond transparent */}
+      <img
+        src="/images/logo.png" // Le chemin vers l'image logo sans fond
+        alt="Logo"
+        style={{
+          width: '3.5rem',
+          height: '3.5rem',
+          objectFit: 'contain', // Assurer que l'image garde ses proportions
+          background: 'transparent', // Assurer qu'il n'y a pas de fond coloré
+        }}
+      />
+    </div>
+    <div>
+      <h1 style={styles.title}>DocentraBot</h1>
+      <div style={styles.statusContainer}>
+        <div style={styles.statusDot} />
+        <p style={styles.status}>En ligne</p>
+      </div>
+    </div>
+  </div>
+  <div style={styles.historyIcon} onClick={toggleHistoryModal}>
+    <div style={styles.historyIconInside}>
+      <FileText size={38} color="#FFFFFF" /> {/* Ancienne icône d'historique */}
+    </div>
+  </div>
+</div>
 
-                {message.type === "user" && (
-                  <div style={styles.userAvatar}>
-                    <User color="#E334FE" size={20} />
-                  </div>
-                )}
-              </div>
-            ))}
-            {isLoading && (
-              <div style={styles.messageWrapper}>
+      </div>
+      <div style={styles.messagesContainer}>
+        <div>
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              style={{
+                ...styles.messageWrapper,
+                ...(message.type === "user" ? styles.messageWrapperUser : styles.messageWrapperBot),
+              }}
+            >
+              {message.type === "bot" && (
                 <div style={styles.avatarWrapper}>
                   <div style={styles.botAvatar}>
                     <Bot color="white" size={20} />
                   </div>
                 </div>
-                <div style={styles.messageBubbleBot}>
-                  <div style={styles.loadingDots}>
-                    <div className="dot" style={styles.dot}></div>
-                    <div className="dot" style={styles.dot}></div>
-                    <div className="dot" style={styles.dot}></div>
+              )}
+
+              <div>
+                <div
+                  style={{
+                    ...styles.messageBubble,
+                    ...(message.type === "user" ? styles.messageBubbleUser : styles.messageBubbleBot),
+                  }}
+                >
+                  <div style={styles.messageText}>
+                    {message.type === "bot" ? <RichContent content={message.text} /> : message.text}
+                  </div>
+                  <div style={styles.messageFooter}>
+                    <span
+                      style={{
+                        ...styles.messageTime,
+                        ...(message.type === "user" ? styles.messageTimeUser : styles.messageTimeBot),
+                      }}
+                    >
+                      <Clock size={12} />
+                      {message.time}
+                    </span>
+                    {message.type === "bot" && (
+                      <div style={styles.actionButtons}>
+                        <button
+                          style={styles.actionBtn}
+                          onClick={() => copyMessage(message.text)}
+                          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.15)")}
+                          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.06)")}
+                          title="Copier le message"
+                        >
+                          <Copy style={{ width: "1rem", height: "1rem", color: "#E334FE" }} />
+                        </button>
+                        <button
+                          style={styles.actionBtn}
+                          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.15)")}
+                          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.06)")}
+                          title="Utile"
+                        >
+                          <ThumbsUp style={{ width: "1rem", height: "1rem", color: "#E334FE" }} />
+                        </button>
+                        <button
+                          style={styles.actionBtn}
+                          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.15)")}
+                          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.06)")}
+                          title="Pas utile"
+                        >
+                          <ThumbsDown style={{ width: "1rem", height: "1rem", color: "#E334FE" }} />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-            )}
-            <div ref={messagesEndRef} />
+
+              {message.type === "user" && (
+                <div style={styles.userAvatar}>
+                  <User color="#E334FE" size={20} />
+                </div>
+              )}
+            </div>
+          ))}
+          {isLoading && (
+            <div style={styles.messageWrapper}>
+              <div style={styles.avatarWrapper}>
+                <div style={styles.botAvatar}>
+                  <Bot color="white" size={20} />
+                </div>
+              </div>
+              <div style={styles.messageBubbleBot}>
+                <div style={styles.loadingDots}>
+                  <div className="dot" style={styles.dot}></div>
+                  <div className="dot" style={styles.dot}></div>
+                  <div className="dot" style={styles.dot}></div>
+                </div>
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
+
+      {showHistoryModal && (
+        <div style={styles.historyModal}>
+          <div style={styles.modalContent}>
+            <div style={styles.modalHeader}>
+              <h3 style={styles.modalTitle}>Historique des Conversations</h3>
+              <button onClick={toggleHistoryModal} style={styles.closeModalBtn}>
+                <X size={20} color="#E334FE" />
+              </button>
+            </div>
+            <div style={styles.conversationsList}>
+              {conversations.map((conv) => (
+                <div key={conv.idConvChat} style={styles.conversationItem}>
+                  <div style={styles.conversationInfo} onClick={() => loadConversation(conv.idConvChat)}>
+                    <div style={styles.conversationTitle}>{conv.titre}</div>
+                    <div style={styles.conversationDate}>{formatDate(conv.updatedAt)}</div>
+                  </div>
+                  <button
+                    style={styles.deleteBtn}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Empêche la propagation pour éviter de charger la conversation
+                      deleteConversation(conv.idConvChat, e); // Appel de la fonction pour supprimer la conversation
+                    }}
+                  >
+                    <Trash2 size={18} color="#DC2626" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button style={styles.newConvBtn} onClick={createNewConversation}>
+              Nouvelle conversation
+            </button>
           </div>
         </div>
+      )}
 
-        <div style={styles.inputArea}>
-          <div style={styles.inputContent}>
-            <div style={styles.quickButtons}>
-              <button
-                style={styles.quickBtn}
-                onClick={() => handleQuickQuestion("Qu'est-ce que l'ENSA Tanger?")}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.background = "#6366f1"
-                  e.currentTarget.style.color = "white"
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.background = "rgba(227, 52, 254, 0.06)"
-                  e.currentTarget.style.color = "#E334FE"
-                }}
-                disabled={isLoading}
-              >
-                <Sparkles size={14} />
-                Qu'est-ce que l'ENSA?
-              </button>
-              <button
-                style={styles.quickBtn}
-                onClick={() => handleQuickQuestion("Quelles sont les filières disponibles à l'ENSA Tanger?")}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.background = "#6366f1"
-                  e.currentTarget.style.color = "white"
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.background = "rgba(227, 52, 254, 0.06)"
-                  e.currentTarget.style.color = "#E334FE"
-                }}
-                disabled={isLoading}
-              >
-                <MessageCircle size={14} />
-                Filières disponibles
-              </button>
-            </div>
-            <div
-              style={styles.inputWrapper}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#E334FE")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(227, 52, 254, 0.12)")}
+      <div style={styles.inputArea}>
+        <div style={styles.inputContent}>
+          <div style={styles.quickButtons}>
+            <button
+              style={styles.quickBtn}
+              onClick={() => handleQuickQuestion("Qu'est-ce que l'ENSA Tanger?")}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = "#6366f1";
+                e.currentTarget.style.color = "white";
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = "rgba(227, 52, 254, 0.06)";
+                e.currentTarget.style.color = "#E334FE";
+              }}
+              disabled={isLoading}
             >
-              <input
-                style={styles.input}
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Écrivez votre message..."
-                disabled={isLoading}
-              />
-              <button
-                style={{
-                  ...styles.sendBtn,
-                  ...((!input.trim() || isLoading) && styles.sendBtnDisabled),
-                }}
-                onClick={sendMessage}
-                disabled={!input.trim() || isLoading}
-                onMouseOver={(e) => {
-                  if (input.trim() && !isLoading) {
-                    e.currentTarget.style.transform = "scale(1.05)"
-                  }
-                }}
-                onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
-              >
-                <Send size={20} />
-              </button>
-            </div>
+              <Sparkles size={14} />
+              Qu'est-ce que l'ENSA?
+            </button>
+            <button
+              style={styles.quickBtn}
+              onClick={() => handleQuickQuestion("Quelles sont les filières disponibles à l'ENSA Tanger?")}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = "#6366f1";
+                e.currentTarget.style.color = "white";
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = "rgba(227, 52, 254, 0.06)";
+                e.currentTarget.style.color = "#E334FE";
+              }}
+              disabled={isLoading}
+            >
+              <MessageCircle size={14} />
+              Filières disponibles
+            </button>
+          </div>
+          <div
+            style={styles.inputWrapper}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "#E334FE")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(227, 52, 254, 0.12)")}
+          >
+            <input
+              style={styles.input}
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Écrivez votre message..."
+              disabled={isLoading}
+            />
+            <button
+              style={{
+                ...styles.sendBtn,
+                ...((!input.trim() || isLoading) && styles.sendBtnDisabled),
+              }}
+              onClick={sendMessage}
+              disabled={!input.trim() || isLoading}
+              onMouseOver={(e) => {
+                if (input.trim() && !isLoading) {
+                  e.currentTarget.style.transform = "scale(1.05)";
+                }
+              }}
+              onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
+            >
+              <Send size={20} />
+            </button>
           </div>
         </div>
       </div>
     </div>
-  )
+  </div>
+);
+
 }
 
