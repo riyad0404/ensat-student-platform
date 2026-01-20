@@ -131,7 +131,17 @@ const GroupsPage = () => {
       {/* Header Moderne */}
       <div style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
         <div>
-          <h1 style={{ fontSize: '28px', fontWeight: '800', color: '#111827', marginBottom: '8px', marginTop: 0 }}>Work Groups</h1>
+          <h1 style={{ 
+            fontSize: '28px', 
+            fontWeight: '800', 
+            marginBottom: '8px', 
+            marginTop: 0,
+            background: 'linear-gradient(90deg, #E334FE, #A6048E)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            display: 'inline-block'
+          }}>Work Groups</h1>
           <p style={{ color: '#6b7280', margin: 0 }}>Join groups and collaborate with your peers.</p>
         </div>
         <button 
@@ -196,18 +206,21 @@ const GroupsPage = () => {
           const groupId = getGroupId(group);
           
           // Logique de notification (Non lu)
+          const lastMsg = group.lastMessage;
+          const isOwnMessage = lastMsg?.senderId && String(lastMsg.senderId) === String(currentUserId);
           let hasUnread = false;
 
-          if (group.unreadCount !== undefined) {
-             hasUnread = group.unreadCount > 0;
-          } else {
-             const lastRead = localStorage.getItem(`lastRead_${groupId}`);
-             const lastMsg = group.lastMessage;
-             const lastMsgDate = lastMsg?.sentAt || lastMsg?.createdAt || group.updatedAt;
-             const isLastReadValid = lastRead && !isNaN(new Date(lastRead).getTime());
-             const isOwnMessage = lastMsg?.senderId && String(lastMsg.senderId) === String(currentUserId);
-
-             hasUnread = !isOwnMessage && lastMsgDate && (!isLastReadValid || new Date(lastMsgDate) > new Date(lastRead));
+          // On ne montre JAMAIS de notification si le dernier message vient de nous
+          if (!isOwnMessage) {
+            if (group.unreadCount !== undefined) {
+               hasUnread = group.unreadCount > 0;
+            } else {
+               const lastRead = localStorage.getItem(`lastRead_${groupId}`);
+               const lastMsgDate = lastMsg?.sentAt || lastMsg?.createdAt || group.updatedAt;
+               const isLastReadValid = lastRead && !isNaN(new Date(lastRead).getTime());
+  
+               hasUnread = lastMsgDate && (!isLastReadValid || new Date(lastMsgDate) > new Date(lastRead));
+            }
           }
 
           return (
@@ -303,7 +316,7 @@ const GroupsPage = () => {
           <div style={{
             background: 'white', width: '90%', maxWidth: '500px',
             borderRadius: '16px', padding: '32px',
-            boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
+            boxShadow: '0 10px 25px rgba(227, 52, 254, 0.15)', border: '1px solid rgba(227, 52, 254, 0.1)'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <h3 style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#111827' }}>Create New Group</h3>
@@ -321,10 +334,12 @@ const GroupsPage = () => {
                   value={newGroup.name}
                   onChange={(e) => setNewGroup({...newGroup, name: e.target.value, nom: e.target.value})}
                   style={{ 
-                    width: '100%', padding: '12px 16px', border: '1px solid #d1d5db', 
+                    width: '100%', padding: '12px 16px', border: '1px solid #e5e7eb', 
                     borderRadius: '8px', outline: 'none', fontSize: '15px',
-                    background: '#f9fafb'
+                    background: '#f9fafb', transition: 'border-color 0.2s'
                   }}
+                  onFocus={(e) => e.target.style.borderColor = '#E334FE'}
+                  onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
                   required
                 />
               </div>
@@ -336,10 +351,12 @@ const GroupsPage = () => {
                   value={newGroup.description}
                   onChange={(e) => setNewGroup({...newGroup, description: e.target.value})}
                   style={{ 
-                    width: '100%', padding: '12px 16px', border: '1px solid #d1d5db', 
+                    width: '100%', padding: '12px 16px', border: '1px solid #e5e7eb', 
                     borderRadius: '8px', outline: 'none', fontSize: '15px',
-                    background: '#f9fafb', minHeight: '80px', resize: 'vertical'
+                    background: '#f9fafb', minHeight: '80px', resize: 'vertical', transition: 'border-color 0.2s'
                   }}
+                  onFocus={(e) => e.target.style.borderColor = '#E334FE'}
+                  onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
                 ></textarea>
               </div>
 
@@ -359,7 +376,7 @@ const GroupsPage = () => {
                   type="submit" 
                   disabled={creating}
                   style={{ 
-                    background: '#7c3aed', color: 'white', border: 'none', 
+                    background: 'linear-gradient(90deg, #E334FE, #A6048E)', color: 'white', border: 'none', 
                     padding: '10px 24px', borderRadius: '8px', 
                     fontWeight: '600', cursor: 'pointer',
                     opacity: creating ? 0.7 : 1

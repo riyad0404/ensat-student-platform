@@ -18,6 +18,11 @@ export const SocketProvider = ({ children }) => {
         transports: ['websocket'] // Force websocket pour la performance
       });
 
+      // Signaler que l'utilisateur est connecté dès la connexion Socket
+      newSocket.on('connect', () => {
+        newSocket.emit('user_connected', user.iduser || user.id);
+      });
+
       setSocket(newSocket);
 
       return () => newSocket.close();

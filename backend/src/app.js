@@ -18,7 +18,7 @@ import documentRoutes from "./routes/documentRoutes.js";
 import commentRoutes from "./routes/commentroutes.js";
 import postRoutes from "./routes/postroutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
-
+import notificationRoutes from "./routes/notificationroutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -49,6 +49,7 @@ app.use("/api/documents", documentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/conversations", conversationRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Health check
 app.get("/api/health", (req, res) => {
