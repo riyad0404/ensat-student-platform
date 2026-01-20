@@ -90,12 +90,12 @@ const HomePage = () => {
   )
 }
 
-const ProfilePage = () => (
-  <div style={{ padding: "20px" }}>
-    <h1>👤 Profil</h1>
-    <p>Page protégée - Connecté avec succès!</p>
-  </div>
-)
+// const ProfilePage = () => (
+//   <div style={{ padding: "20px" }}>
+//     <h1>👤 Profil</h1>
+//     <p>Page protégée - Connecté avec succès!</p>
+//   </div>
+// )
 
 function App() {
   const navigate = useNavigate()
