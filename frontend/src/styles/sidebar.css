@@ -1,6 +1,6 @@
 /* sidebar.css - Style épuré et coloré */
 .sidebar-container {
-    width: 270px;
+    width: var(--sidebar-width);
     height: 100vh;
     position: fixed;
     left: 0;
@@ -17,7 +17,7 @@
 
 /* Mode collapsed */
 .sidebar-container.collapsed {
-    width: 70px;
+    width: var(--sidebar-collapsed-width);
 }
 
 /* Logo section - position relative pour le bouton absolu */
@@ -271,14 +271,17 @@
 
 /* Pour que le contenu s'adapte */
 .sidebar-container ~ div {
-    margin-left: 270px;
+    margin-left: var(--sidebar-width);
     transition: margin-left 0.3s ease;
     background: #f5f5f5;
+    /* keep top padding minimal; TopBar is sticky inside content */
+    padding-top: 0;
 }
 
 .sidebar-container.collapsed ~ div {
-    margin-left: 70px !important;
-    width: calc(100vw - 70px) !important;
+    margin-left: var(--sidebar-collapsed-width) !important;
+    width: calc(100vw - var(--sidebar-collapsed-width)) !important;
+    padding-top: 0; /* keep same top spacing when collapsed */
 }
 
 /* Animation pour les tooltips */
