@@ -210,3 +210,35 @@ export const markAsRead = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
+// Fonction pour créer une notification lorsqu'un utilisateur réagit à un commentaire
+export const commentReactionNotification = async (req, res) => {
+  try {
+    const iduser = getUserId(req); // L'utilisateur qui réagit
+    const { typeReaction } = req.body; // Le type de réaction (LIKE ou LOVE)
+    const { idcomment } = req.params; // L'ID du commentaire auquel l'utilisateur réagit
+
+    if (!typeReaction || !["LIKE", "LOVE"].includes(typeReaction)) {
+      return res.status(400).json({ message: "typeReaction doit être LIKE ou LOVE" });
+    }
+
+    // Récupérer le commentaire auquel l'utilisateur réagit
+    const comment = await Comment.findByPk(idcomment);
+    if (!comment) {
+      return res.status(404).json({ message: "Commentaire non trouvé" });
+    }
+
+    // Création de la notification pour le propriétaire du commentaire
+    const notif = await createNotification({
+      toUserId: comment.iduser, // Le destinataire est l'utilisateur qui a posté le commentaire
+      fromUserId: iduser, // L'utilisateur qui réagit
+      type: NOTIF_TYPES.REACTION_PUB, // Type de notification
+      message: `Votre commentaire a reçu une réaction : ${typeReaction}`, // Message de notification
+      metadata: { idcomment, typeReaction }, // Metadata avec l'ID du commentaire et le type de réaction
+    });
+
+    // Réponse avec la notification créée
+    res.json(notif);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};

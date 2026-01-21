@@ -33,5 +33,6 @@ router.post("/group-invite/declined/:idgroup", inviteDeclined);
 // Récupérer et gérer les notifications
 router.get("/", getNotifications);
 router.put("/mark-as-read/:idNotif", markAsRead);
-
+ // Comment
+router.post("/comment/reaction/:idcomment", commentReactionNotification);
 export default router;
