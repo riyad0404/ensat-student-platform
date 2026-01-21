@@ -56,7 +56,7 @@ describe("Reaction Routes", () => {
       .set("Cookie", tokenA)
       .send(commentPayload)
       .expect(201);
-    commentId = commentRes.body.comment.idcomment;
+    commentId = commentRes.body.idcomment;
   });
 
   // Test de l'ajout d'une réaction LIKE sur un post
