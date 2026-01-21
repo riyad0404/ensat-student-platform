@@ -1,18 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useAuth } from "../contexts/AuthContext";
 import {
   getCommentsByPost,
   createComment,
   getReactionCounts,
   getMyReactions,
   toggleReaction,
-  deletePost,
-  updatePost
+ 
 } from "../api/postAPI";
 import "../styles/PostCard.css";
 
-const PostCard = ({ post, onPostDeleted, onPostUpdated }) => {
-  const { user } = useAuth();
+const PostCard = ({ post }) => {
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [commentText, setCommentText] = useState("");
