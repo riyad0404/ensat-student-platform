@@ -1,6 +1,6 @@
 "use client"
 import React from 'react';
-import { Routes, Route, Outlet, Navigate } from 'react-router-dom';
+import { Routes, Route, Outlet, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import LoginPage from './pages/LoginPage';
 import LandingPage from './pages/Landing';
@@ -16,6 +16,7 @@ import ChatbotButton from "./components/ChatbotButton";
 import MessagesPage from './pages/MessagesPage';
 import GroupsPage from './pages/GroupsPage';
 import ConversationPage from './pages/ConversationPage';
+import OtherUserProfile from './pages/OtherUserProfile'; 
 import HomePage from './pages/homepage';
 import MainLayout from './pages/MainLayout';
 import Bookmarks from './pages/BookMarks';
@@ -77,6 +78,9 @@ const RequireAuthLayout = () => {
 
 function App() {
 
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
   return (
     <>
       <Routes>
@@ -86,6 +90,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/profile/edit" element={<EditProfile />} />
+          <Route path="/profile/:id" element={<OtherUserProfile />} />
           <Route path="/chatbot" element={<ChatbotPage />} />
           <Route path="/messages" element={<MessagesPage />} />
           <Route path="/groups" element={<GroupsPage />} />
@@ -105,7 +110,7 @@ function App() {
           <Route path="/reset-password/:token" element={<ResetPasswordToken />} />
         </Route>
       </Routes>
-
+      {user && <ChatbotButton onClick={() => navigate("/chatbot")} />}
       {/* ChatbotButton not present in project; removed to avoid runtime error */}
     </>
   )

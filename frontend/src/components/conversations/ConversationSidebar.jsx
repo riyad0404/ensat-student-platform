@@ -229,6 +229,17 @@ const ConversationSidebar = ({
     }
   };
 
+  const handleMemberClick = (memberId) => {
+    if (String(memberId) === String(currentUserId)) {
+      // If the user clicks on their own name, navigate to their main profile page
+      navigate('/profile');
+    } else {
+      // Otherwise, navigate to the other member's profile
+      navigate(`/profile/${memberId}`);
+    }
+    onClose(); // Close the sidebar after navigation
+  };
+
   if (!show) return null;
 
   return (
@@ -334,12 +345,20 @@ const ConversationSidebar = ({
               }
               return (
                 <div key={member.iduser} style={{ padding: '10px 20px', display: 'flex', alignItems: 'center', borderBottom: '1px solid #f0f2f5' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#dfe3e5', marginRight: '15px', overflow: 'hidden', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                    {memberImage ? <img src={memberImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Users size={20} color="#fff" />}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ color: '#111b21', fontSize: '16px' }}>{member.prenom} {member.nom} {String(member.iduser) === String(currentUserId) && "(You)"}</div>
-                    {member.role === 'OWNER' && <span style={{ fontSize: '12px', color: '#00a884', background: '#e7fce3', padding: '2px 6px', borderRadius: '4px', marginTop: '2px', display: 'inline-block' }}>Group Admin</span>}
+                  <div 
+                    style={{ flex: 1, display: 'flex', alignItems: 'center', cursor: 'pointer', borderRadius: '8px', padding: '4px' }}
+                    title={`View profile of ${member.prenom} ${member.nom}`}
+                    onClick={() => handleMemberClick(member.iduser)}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f0f0'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#dfe3e5', marginRight: '15px', overflow: 'hidden', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                      {memberImage ? <img src={memberImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <Users size={20} color="#fff" />}
+                    </div>
+                    <div>
+                      <div style={{ color: '#111b21', fontSize: '16px' }}>{member.prenom} {member.nom} {String(member.iduser) === String(currentUserId) && "(You)"}</div>
+                      {member.role === 'OWNER' && <span style={{ fontSize: '12px', color: '#00a884', background: '#e7fce3', padding: '2px 6px', borderRadius: '4px', marginTop: '2px', display: 'inline-block' }}>Group Admin</span>}
+                    </div>
                   </div>
                   {String(member.iduser) !== String(currentUserId) && (
                     <button onClick={() => handleMessageUser(member.iduser)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#00a884', padding: '8px' }} title="Message"><MessageCircle size={20} /></button>

@@ -7,24 +7,29 @@
   min-height: 100vh;
 }
 
-/* Header */
+/* Header avec gradient */
 .documents-header {
   padding: 30px 40px;
   background: white;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: none;
 }
 
 .header-info h1 {
-  font-size: 32px;
-  font-weight: 800;
-  color: #1f2937;
-  margin: 16px 0 8px 0;
+  font-size: 48px;
+  font-weight: 900;
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 16px 0 12px 0;
+  letter-spacing: -1px;
 }
 
 .header-info p {
-  font-size: 15px;
+  font-size: 17px;
   color: #6b7280;
   margin: 0;
+  font-weight: 500;
 }
 
 /* Filtres */
@@ -33,7 +38,7 @@
   gap: 12px;
   padding: 20px 40px;
   background: white;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: none;
   overflow-x: auto;
 }
 

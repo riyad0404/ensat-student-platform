@@ -13,12 +13,11 @@
   justify-content: space-between;
   align-items: center;
   padding: 32px 40px;
-  background: linear-gradient(135deg, #7C3AED 0%, #7c0f8b 100%);
+  background: white;
   border-bottom: none;
   position: sticky;
   top: 0;
   z-index: 10;
-  box-shadow: 0 4px 20px rgba(168, 85, 247, 0.15);
 }
 
 .header-content {
@@ -28,14 +27,14 @@
 }
 
 .bookmarks-header h1 {
-  font-size: 32px;
-  font-weight: 800;
-  color: white;
+  font-size: 48px;
+  font-weight: 900;
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  letter-spacing: -0.5px;
+  letter-spacing: -1px;
 }
 
 .bookmarks-header h1::before {
@@ -46,12 +45,11 @@
 .posts-count {
   font-size: 14px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.9);
-  background: rgba(255, 255, 255, 0.2);
+  color: #6b7280;
+  background: #f3f4f6;
   padding: 4px 12px;
   border-radius: 20px;
   width: fit-content;
-  backdrop-filter: blur(10px);
 }
 
 .clear-all-btn {
@@ -59,24 +57,20 @@
   align-items: center;
   gap: 10px;
   padding: 12px 24px;
-  background-color: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: #f3f4f6;
+  color: #6b7280;
+  border: none;
   border-radius: 12px;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .clear-all-btn:hover {
-  background-color: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.5);
+  background: #fee2e2;
+  color: #dc2626;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .clear-all-btn:active {
@@ -84,7 +78,7 @@
 }
 
 .clear-all-btn svg {
-  stroke: white;
+  stroke: currentColor;
 }
 
 /* État vide stylé */
@@ -147,12 +141,7 @@
 /* Compteur de posts */
 .bookmarks-header::after {
   content: "";
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  display: none;
 }
 
 /* Responsive */
