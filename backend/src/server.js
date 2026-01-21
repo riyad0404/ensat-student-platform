@@ -28,7 +28,8 @@ async function start() {
         credentials: true,
       },
     });
-    // Attach io to the Express app for controller access
+
+    // Rendre 'io' accessible partout dans l'application (ex: dans les contrôleurs)
     app.set("io", io);
 
     // --- SOCKET.IO USER PRESENCE & ROOMS ---

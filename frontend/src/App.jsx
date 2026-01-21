@@ -16,6 +16,7 @@ import ChatbotButton from "./components/ChatbotButton";
 import MessagesPage from './pages/MessagesPage';
 import GroupsPage from './pages/GroupsPage';
 import ConversationPage from './pages/ConversationPage';
+import OtherUserProfile from './pages/OtherUserProfile'; 
 import HomePage from './pages/homepage';
 import MainLayout from './pages/MainLayout';
 import Bookmarks from './pages/BookMarks';
@@ -84,6 +85,7 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/profile/edit" element={<EditProfile />} />
+          <Route path="/profile/:id" element={<OtherUserProfile />} />
           <Route path="/chatbot" element={<ChatbotPage />} />
           <Route path="/messages" element={<MessagesPage />} />
           <Route path="/groups" element={<GroupsPage />} />

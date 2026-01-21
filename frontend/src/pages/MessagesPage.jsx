@@ -31,7 +31,7 @@ const MessagesPage = () => {
       const conversationsList = Array.isArray(allConvs) ? allConvs : (allConvs?.data || []);
       
       // Filtrer pour ne garder que les messages privés (DIRECT)
-      setConversations(conversationsList.filter(c => c.type === 'DIRECT'));
+      setConversations(conversationsList.filter(c => c.type === 'DIRECT' && c.lastMessage));
     } catch (error) {
       console.error("Erreur chargement messages", error);
     }
@@ -44,7 +44,7 @@ const MessagesPage = () => {
       try {
         const results = await conversationAPI.searchUsers(query);
         const users = Array.isArray(results) ? results : (results.data || []);
-        setSearchResults(users);
+        setSearchResults(users.filter(u => String(u.iduser) !== String(currentUserId)));
       } catch (error) {
         console.error("Erreur recherche", error);
       }
@@ -78,7 +78,17 @@ const MessagesPage = () => {
     <div className="messages-page" style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto', minHeight: '100vh' }}>
       {/* Header Moderne */}
       <div style={{ marginBottom: '30px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '800', color: '#111827', marginBottom: '8px', marginTop: 0 }}>Messages</h1>
+        <h1 style={{ 
+          fontSize: '28px', 
+          fontWeight: '800', 
+          marginBottom: '8px', 
+          marginTop: 0,
+          background: 'linear-gradient(90deg, #E334FE, #A6048E)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          display: 'inline-block'
+        }}>Messages</h1>
         <p style={{ color: '#6b7280', margin: 0 }}>Your private conversations.</p>
       </div>
 
@@ -147,22 +157,24 @@ const MessagesPage = () => {
           const convId = getConvId(conv);
           
           // Logique de notification (Non lu)
+          const lastMsg = conv.lastMessage;
+          const isOwnMessage = lastMsg?.senderId && String(lastMsg.senderId) === String(currentUserId);
           let hasUnread = false;
 
-          // 1. Si le backend supporte unreadCount (Solution idéale)
-          if (conv.unreadCount !== undefined) {
-            hasUnread = conv.unreadCount > 0;
-          } 
-          // 2. Fallback local
-          else {
-            const lastRead = localStorage.getItem(`lastRead_${convId}`);
-            const lastMsg = conv.lastMessage;
-            const lastMsgDate = lastMsg?.sentAt || lastMsg?.createdAt || conv.updatedAt;
-            const isLastReadValid = lastRead && !isNaN(new Date(lastRead).getTime());
-            const isOwnMessage = lastMsg?.senderId && String(lastMsg.senderId) === String(currentUserId);
-            
-            // On affiche la notif seulement si ce n'est pas notre message ET qu'il est plus récent que la dernière lecture
-            hasUnread = !isOwnMessage && lastMsgDate && (!isLastReadValid || new Date(lastMsgDate) > new Date(lastRead));
+          // On ne montre JAMAIS de notification si le dernier message vient de nous
+          if (!isOwnMessage) {
+            // 1. Si le backend supporte unreadCount
+            if (conv.unreadCount !== undefined) {
+              hasUnread = conv.unreadCount > 0;
+            } 
+            // 2. Fallback local
+            else {
+              const lastRead = localStorage.getItem(`lastRead_${convId}`);
+              const lastMsgDate = lastMsg?.sentAt || lastMsg?.createdAt || conv.updatedAt;
+              const isLastReadValid = lastRead && !isNaN(new Date(lastRead).getTime());
+              
+              hasUnread = lastMsgDate && (!isLastReadValid || new Date(lastMsgDate) > new Date(lastRead));
+            }
           }
 
           // Avatar
