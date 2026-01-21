@@ -32,7 +32,11 @@ export const likePost = async (req, res) => {
       metadata: { postId: post.idpost, typeReaction }, // metadata inclut typeReaction
     });
 
-    res.json(notif);
+   if (notif) {
+  res.json(notif);  // Si la notification est bien créée, renvoie-la.
+} else {
+  res.status(400).json({ message: "La notification n'a pas pu être créée." }); // Si la notification n'est pas créée, retourne une erreur.
+}
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -206,6 +210,45 @@ export const markAsRead = async (req, res) => {
     notif.isRead = true;
     await notif.save();
     res.json(notif);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+// Like ou Love un commentaire
+export const reactToComment = async (req, res) => {
+  try {
+    const iduser = getUserId(req);
+    const { idcomment } = req.params;
+    const { typeReaction } = req.body; // LIKE ou LOVE
+
+    if (!typeReaction || !["LIKE", "LOVE"].includes(typeReaction)) {
+      return res
+        .status(400)
+        .json({ message: "typeReaction doit être LIKE ou LOVE" });
+    }
+
+    const comment = await Comment.findByPk(idcomment);
+    if (!comment)
+      return res.status(404).json({ message: "Commentaire non trouvé" });
+
+    const notif = await createNotification({
+      toUserId: comment.iduser,        // propriétaire du commentaire
+      fromUserId: iduser,              // celui qui réagit
+      type: NOTIF_TYPES.REACTION_COMMENT,
+      message: `Votre commentaire a reçu une réaction : ${typeReaction}`,
+      metadata: {
+        idcomment: comment.idcomment,
+        typeReaction,
+      },
+    });
+
+    if (notif) {
+      res.json(notif);
+    } else {
+      res
+        .status(400)
+        .json({ message: "La notification n'a pas pu être créée" });
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
