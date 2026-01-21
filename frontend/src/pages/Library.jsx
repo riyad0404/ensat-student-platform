@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/Library.css';
 
 const Library = () => {
   const navigate = useNavigate();
-  const [selectedFiliere, setSelectedFiliere] = useState(null);
 
   const filieres = [
     {
@@ -40,7 +39,7 @@ const Library = () => {
     {
       id: 'gsea',
       nom: 'Génie Électrique et Automatique',
-      color: '#35113f',
+      color: '#7c3aed',
       niveaux: ['GSEA1', 'GSEA2', 'GSEA3']
     },
     {
@@ -62,77 +61,49 @@ const Library = () => {
         <p className="library-subtitle">Select your study level to access documents</p>
       </div>
 
-      {selectedFiliere ? (
-        <div className="niveaux-view">
-          <button 
-            className="back-btn"
-            onClick={() => setSelectedFiliere(null)}
+      <div className="filieres-grid">
+        {filieres.map((filiere) => (
+          <div 
+            key={filiere.id}
+            className="filiere-card"
+            style={{ 
+              background: `linear-gradient(135deg, ${filiere.color}08, ${filiere.color}02)`,
+              borderColor: `${filiere.color}20`
+            }}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M19 12H5M12 19l-7-7 7-7"/>
-            </svg>
-            Back to Programs
-          </button>
-
-          <div className="filiere-title-card" style={{ background: `linear-gradient(135deg, ${selectedFiliere.color}, ${selectedFiliere.color}dd)` }}>
-            <h2>{selectedFiliere.nom}</h2>
-          </div>
-
-          <div className="niveaux-grid">
-            {selectedFiliere.niveaux.map((niveau) => (
-              <div 
-                key={niveau}
-                className="niveau-card"
-                onClick={() => handleNiveauClick(niveau)}
-              >
-                <div className="niveau-icon" style={{ backgroundColor: `${selectedFiliere.color}20`, color: selectedFiliere.color }}>
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-                  </svg>
-                </div>
-                <h3>{niveau}</h3>
-                <p className="niveau-desc">Documents & Resources</p>
-                <div className="niveau-arrow" style={{ color: selectedFiliere.color }}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <h3 className="filiere-nom" style={{ color: filiere.color }}>
+              {filiere.nom}
+            </h3>
+            <div className="filiere-niveaux-buttons">
+              {filiere.niveaux.map((niveau) => (
+                <button 
+                  key={niveau} 
+                  className="niveau-button" 
+                  style={{ 
+                    backgroundColor: `${filiere.color}15`, 
+                    color: filiere.color,
+                    borderColor: `${filiere.color}40`
+                  }}
+                  onClick={() => handleNiveauClick(niveau)}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = filiere.color;
+                    e.currentTarget.style.color = 'white';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = `${filiere.color}15`;
+                    e.currentTarget.style.color = filiere.color;
+                  }}
+                >
+                  {niveau}
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M5 12h14M12 5l7 7-7 7"/>
                   </svg>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-        <div className="filieres-grid">
-          {filieres.map((filiere) => (
-            <div 
-              key={filiere.id}
-              className="filiere-card"
-              onClick={() => setSelectedFiliere(filiere)}
-              style={{ 
-                background: `linear-gradient(135deg, ${filiere.color}08, ${filiere.color}02)`,
-                borderColor: `${filiere.color}20`
-              }}
-            >
-              <h3 className="filiere-nom" style={{ color: filiere.color }}>
-                {filiere.nom}
-              </h3>
-              <div className="filiere-niveaux">
-                {filiere.niveaux.map((niveau) => (
-                  <span key={niveau} className="niveau-badge" style={{ backgroundColor: `${filiere.color}15`, color: filiere.color }}>
-                    {niveau}
-                  </span>
-                ))}
-              </div>
-              <div className="filiere-arrow" style={{ color: filiere.color }}>
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-              </div>
+                </button>
+              ))}
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

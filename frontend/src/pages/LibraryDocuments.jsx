@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { getDocumentsByNiveau, incrementDownloadCount } from '../api/DocumentsAPI';
 import '../styles/LibraryDocuments.css';
 
 const LibraryDocuments = () => {
@@ -15,22 +16,33 @@ const LibraryDocuments = () => {
       setLoading(true);
       setError(null);
       
-      // Appel API pour récupérer les documents du niveau spécifié
-      const response = await fetch(`http://localhost:5000/api/library/documents/${niveau}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      console.log('Chargement documents pour niveau:', niveau);
       
-      if (!response.ok) {
-        throw new Error('Erreur lors du chargement des documents');
-      }
+      // ✅ Utiliser le service
+      const data = await getDocumentsByNiveau(niveau);
       
-      const data = await response.json();
-      setDocuments(data);
+      console.log(' Documents reçus:', data);
+      
+      // ✅ Formater les données pour correspondre au format attendu
+      const formattedData = data.map(doc => ({
+        id: doc.iddocument,
+        filename: doc.filename,
+        url: doc.url,
+        type: doc.type,
+        size: formatFileSize(doc.size || 0),
+        uploadedBy: doc.User ? `${doc.User.prenom} ${doc.User.nom}` : 'Inconnu',
+        downloads: doc.downloads || 0,
+        sourceType: doc.idpost ? 'post' : 'comment',
+        uploadDate: doc.createdAt,
+        niveau: doc.niveau
+      }));
+      
+      console.log('✨ Documents formatés:', formattedData);
+      setDocuments(formattedData);
     } catch (error) {
-      console.error('Erreur chargement documents:', error);
-      setError(error.message);
+      console.error(' Erreur chargement documents:', error);
+      console.error('Détails:', error.response?.data);
+      setError(error.response?.data?.message || error.message || 'Erreur lors du chargement des documents');
     } finally {
       setLoading(false);
     }
@@ -40,14 +52,21 @@ const LibraryDocuments = () => {
     loadDocuments();
   }, [loadDocuments]);
 
+  // ✅ Helper function pour formater la taille des fichiers
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  };
+
   const handleDownload = async (doc) => {
     try {
-      // Télécharger depuis votre serveur backend
-      const response = await fetch(`http://localhost:5000/api/documents/download/${doc.id}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      console.log('⬇Téléchargement document:', doc);
+      
+      // ✅ Télécharger directement depuis l'URL stockée
+      const response = await fetch(doc.url);
       
       if (!response.ok) throw new Error('Erreur de téléchargement');
       
@@ -62,14 +81,14 @@ const LibraryDocuments = () => {
       document.body.removeChild(link);
 
       // Incrémenter le compteur de téléchargements
-      await fetch(`http://localhost:5000/api/documents/${doc.id}/increment-download`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      await incrementDownloadCount(doc.id);
+      
+      console.log('Téléchargement réussi');
+      
+      // Rafraîchir les documents pour mettre à jour le compteur
+      loadDocuments();
     } catch (error) {
-      console.error('Erreur téléchargement:', error);
+      console.error(' Erreur téléchargement:', error);
       alert('Erreur lors du téléchargement du fichier');
     }
   };
@@ -170,7 +189,7 @@ const LibraryDocuments = () => {
           <h1>Documents {niveau?.toUpperCase()}</h1>
         </div>
         <div className="error-documents">
-          <p>❌ {error}</p>
+          <p> {error}</p>
           <button onClick={loadDocuments}>Réessayer</button>
         </div>
       </div>
@@ -203,19 +222,19 @@ const LibraryDocuments = () => {
           className={`filter-btn ${filter === 'pdf' ? 'active' : ''}`}
           onClick={() => setFilter('pdf')}
         >
-          📄 PDF
+         PDF
         </button>
         <button 
           className={`filter-btn ${filter === 'image' ? 'active' : ''}`}
           onClick={() => setFilter('image')}
         >
-          🖼️ Images
+          Images
         </button>
         <button 
           className={`filter-btn ${filter === 'other' ? 'active' : ''}`}
           onClick={() => setFilter('other')}
         >
-          📁 Autres
+          Autres
         </button>
       </div>
 
@@ -246,7 +265,7 @@ const LibraryDocuments = () => {
                   <span>{doc.downloads || 0} téléchargement{doc.downloads > 1 ? 's' : ''}</span>
                 </div>
                 <div className="document-source">
-                  <span>📍 {doc.sourceType === 'post' ? 'Publication' : 'Commentaire'}</span>
+                  <span>{doc.sourceType === 'post' ? 'Publication' : 'Commentaire'}</span>
                   <span>{new Date(doc.uploadDate).toLocaleDateString('fr-FR')}</span>
                 </div>
               </div>

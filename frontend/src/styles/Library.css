@@ -1,343 +1,137 @@
-/* Library Page - Style moderne et épuré */
 .library-page {
-  width: 100%;
-  max-width: 100%;
-  padding: 0;
-  background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
-  min-height: 100vh;
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
-/* Header */
 .library-header {
-  padding: 50px 40px 40px 40px;
-  background: white;
-  border-bottom: 1px solid #e5e7eb;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  text-align: left;
+  margin-bottom: 3rem;
 }
 
 .library-header h1 {
-  font-size: 42px;
-  font-weight: 900;
-  background: linear-gradient(135deg, #a855f7, #ec4899);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin: 0 0 12px 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 .library-subtitle {
-  font-size: 17px;
+  font-size: 1.1rem;
   color: #6b7280;
-  margin: 0;
-  font-weight: 500;
+  margin-left: 3rem;
 }
 
-/* Grid des filières */
+/* Grid pour les filières - côte à côte */
 .filieres-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 28px;
-  padding: 40px 40px;
-  max-width: 1600px;
-  margin: 0 auto;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
 }
 
-/* Carte de filière - Design épuré */
 .filiere-card {
   background: white;
-  border-radius: 20px;
-  padding: 36px 32px;
   border: 2px solid #e5e7eb;
-  cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 16px;
+  padding: 2rem;
+  transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.filiere-card::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 200%;
-  height: 200%;
-  background: inherit;
-  opacity: 0;
-  transition: opacity 0.4s ease;
 }
 
 .filiere-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
-  border-color: transparent;
-}
-
-.filiere-card:hover::before {
-  opacity: 0.1;
-}
-
-/* Supprimer l'icône */
-.filiere-icon {
-  display: none;
-}
-
-.filiere-emoji {
-  display: none;
-}
-
-/* Nom de la filière - Plus gras et plus grand */
-.filiere-nom {
-  font-size: 26px;
-  font-weight: 900;
-  color: #111827;
-  margin: 0 0 20px 0;
-  line-height: 1.2;
-  letter-spacing: -0.5px;
-}
-
-.filiere-niveaux {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
-.niveau-badge {
-  padding: 8px 16px;
-  border-radius: 24px;
-  font-size: 14px;
-  font-weight: 700;
-  transition: all 0.3s ease;
-}
-
-.filiere-card:hover .niveau-badge {
-  transform: translateY(-2px);
-}
-
-.filiere-arrow {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  margin-top: 20px;
-  opacity: 0.5;
-  transition: all 0.4s ease;
-}
-
-.filiere-card:hover .filiere-arrow {
-  opacity: 1;
-  transform: translateX(8px);
-}
-
-/* Vue des niveaux */
-.niveaux-view {
-  padding: 40px 40px;
-  max-width: 1600px;
-  margin: 0 auto;
-}
-
-.back-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 24px;
-  background: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
-  color: #6b7280;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  margin-bottom: 32px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.back-btn:hover {
-  background: #f9fafb;
-  border-color: #a855f7;
-  color: #a855f7;
-  transform: translateX(-6px);
-  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.15);
-}
-
-.filiere-title-card {
-  background: linear-gradient(135deg, #a855f7, #ec4899);
-  border-radius: 24px;
-  padding: 48px 40px;
-  color: white;
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  margin-bottom: 40px;
-  box-shadow: 0 12px 32px rgba(168, 85, 247, 0.3);
-  position: relative;
-  overflow: hidden;
-}
-
-.filiere-title-card::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -10%;
-  width: 300px;
-  height: 300px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-}
-
-/* Supprimer l'emoji large */
-.filiere-emoji-large {
-  display: none;
-}
-
-.filiere-title-card h2 {
-  font-size: 36px;
-  font-weight: 900;
-  margin: 0;
-  letter-spacing: -0.5px;
-  position: relative;
-  z-index: 1;
-}
-
-/* Grid des niveaux */
-.niveaux-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 24px;
-}
-
-/* Carte de niveau - Design épuré */
-.niveau-card {
-  background: white;
-  border-radius: 20px;
-  padding: 40px 28px;
-  border: 2px solid #e5e7eb;
-  cursor: pointer;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  text-align: center;
-  position: relative;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.niveau-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
   border-color: currentColor;
 }
 
-.niveau-icon {
-  width: 90px;
-  height: 90px;
-  border-radius: 50%;
+.filiere-nom {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid currentColor;
+}
+
+/* Boutons de niveau cliquables */
+.filiere-niveaux-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.niveau-button {
   display: flex;
   align-items: center;
-  justify-content: center;
-  margin: 0 auto 24px auto;
-  transition: all 0.4s ease;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border: 2px solid;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: transparent;
 }
 
-.niveau-card:hover .niveau-icon {
-  transform: scale(1.15) rotate(5deg);
+.niveau-button:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-.niveau-card h3 {
-  font-size: 32px;
-  font-weight: 900;
-  color: #111827;
-  margin: 0 0 10px 0;
-  letter-spacing: -0.5px;
-}
-
-.niveau-desc {
-  font-size: 15px;
-  color: #6b7280;
-  margin: 0 0 20px 0;
-  font-weight: 500;
-}
-
-.niveau-arrow {
-  display: flex;
-  justify-content: center;
+.niveau-button svg {
   opacity: 0;
-  transition: all 0.4s ease;
-  transform: translateY(-4px);
+  transition: all 0.3s ease;
+  transform: translateX(-5px);
 }
 
-.niveau-card:hover .niveau-arrow {
+.niveau-button:hover svg {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateX(0);
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .library-header {
-    padding: 40px 24px 32px 24px;
+  .library-page {
+    padding: 1rem;
   }
 
   .library-header h1 {
-    font-size: 32px;
+    font-size: 2rem;
   }
 
   .library-subtitle {
-    font-size: 15px;
-  }
-
-  .filieres-grid,
-  .niveaux-view {
-    padding: 24px 20px;
-    grid-template-columns: 1fr;
-  }
-
-  .niveaux-grid {
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  }
-
-  .filiere-card {
-    padding: 28px 24px;
-  }
-
-  .filiere-nom {
-    font-size: 22px;
-  }
-
-  .filiere-title-card {
-    flex-direction: column;
-    text-align: center;
-    padding: 36px 28px;
-  }
-
-  .filiere-title-card h2 {
-    font-size: 28px;
-  }
-
-  .niveau-card {
-    padding: 32px 24px;
-  }
-
-  .niveau-card h3 {
-    font-size: 28px;
-  }
-}
-
-@media (max-width: 480px) {
-  .library-header h1 {
-    font-size: 28px;
+    margin-left: 2.5rem;
+    font-size: 1rem;
   }
 
   .filieres-grid {
-    gap: 20px;
-  }
-
-  .niveaux-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
 
   .filiere-nom {
-    font-size: 20px;
+    font-size: 1.1rem;
   }
 
-  .filiere-title-card h2 {
-    font-size: 24px;
+  .niveau-button {
+    padding: 0.875rem 1rem;
+    font-size: 0.95rem;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .filieres-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1025px) {
+  .filieres-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
