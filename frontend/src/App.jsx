@@ -1,6 +1,6 @@
 "use client"
 import React from 'react';
-import { Routes, Route, Outlet, Navigate } from 'react-router-dom';
+import { Routes, Route, Outlet, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import LoginPage from './pages/LoginPage';
 import LandingPage from './pages/Landing';
@@ -76,6 +76,9 @@ const RequireAuthLayout = () => {
 
 function App() {
 
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
   return (
     <>
       <Routes>
@@ -103,7 +106,7 @@ function App() {
           <Route path="/reset-password/:token" element={<ResetPasswordToken />} />
         </Route>
       </Routes>
-
+      {user && <ChatbotButton onClick={() => navigate("/chatbot")} />}
       {/* ChatbotButton not present in project; removed to avoid runtime error */}
     </>
   )
