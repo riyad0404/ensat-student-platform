@@ -1,7 +1,7 @@
 
 
 .chatbot-style.conversation-page-container {
-  min-height: 100vh;
+  height: 100vh;
   background: #f9f8fa;
   position: relative;
   overflow: hidden;
@@ -23,7 +23,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   position: relative;
 }
 
@@ -389,48 +389,52 @@
 .delete-modal-content {
   background: white;
   width: 90%;
-  max-width: 500px;
-  border-radius: 16px;
-  padding: 32px;
-  box-shadow: 0 10px 25px rgba(227, 52, 254, 0.15);
-  border: 1px solid rgba(227, 52, 254, 0.1);
-  text-align: left;
+  max-width: 350px;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  text-align: center;
 }
 .delete-modal-content h3 {
-  margin: 0;
-  font-size: 22px;
+  margin: 0 0 10px 0;
+  font-size: 1.125rem;
   font-weight: 700;
   color: #111827;
 }
 .delete-modal-content p {
-  color: #4b5563;
-  margin-bottom: 32px;
-  font-size: 15px;
+  color: #667781;
+  margin-bottom: 20px;
+  font-size: 14px;
 }
 .delete-modal-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   justify-content: flex-end;
 }
 .delete-modal-actions .cancel-btn {
-  background: white;
-  color: #374151;
-  border: 1px solid #d1d5db;
-  padding: 10px 24px;
-  border-radius: 8px;
-  font-weight: 600;
+  background: none;
+  color: #111b21;
+  border: 1px solid #ddd;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 500;
   cursor: pointer;
-  font-size: 1rem;
+}
+.delete-modal-actions .cancel-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #111b21;
+  box-shadow: none;
+  transform: none;
 }
 .delete-modal-actions .confirm-btn {
-  background: linear-gradient(90deg, #E334FE, #A6048E);
+  background: #ea0038;
   color: white;
   border: none;
-  padding: 10px 24px;
-  border-radius: 8px;
-  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 500;
   cursor: pointer;
-  font-size: 1rem;
   box-shadow: none;
 }
 
@@ -479,4 +483,144 @@
     width: 100%;
     right: -100%;
   }
+}
+
+/* Styles for Join Group Page */
+.join-group-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  /* The parent MainLayout content div provides the background and padding */
+  /* width: 100%; is default for block/flex */
+}
+
+.join-group-card {
+  background: white;
+  padding: 40px 30px;
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07);
+  text-align: center;
+  max-width: 450px;
+  width: 100%;
+  border: 1px solid #f0f0f0;
+}
+
+.join-group-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #a855f7, #7c3aed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px auto;
+  box-shadow: 0 8px 16px rgba(124, 58, 237, 0.2);
+}
+
+.join-group-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.join-group-subtitle {
+  font-size: 15px;
+  color: #6b7280;
+  margin-bottom: 24px;
+  line-height: 1.6;
+}
+
+.join-group-error {
+  background: #fef2f2;
+  color: #ef4444;
+  border: 1px solid #fecaca;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  text-align: left;
+}
+
+.join-group-error strong {
+  font-weight: 600;
+}
+
+.btn-primary.join-btn, .btn-secondary.back-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary.join-btn {
+  background: linear-gradient(90deg, #E334FE, #A6048E);
+  color: white;
+  margin-bottom: 12px;
+}
+
+.btn-primary.join-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary.back-btn {
+  border: 1px solid #d1d5db;
+  background: white;
+  color: #4b5563;
+}
+
+.btn-secondary.back-btn:hover {
+  background-color: #f9fafb;
+}
+
+/* Group Modal Buttons (matching Edit Profile style) */
+.group-modal-btn {
+  height: 44px;
+  border-radius: 25px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 0.5px;
+  padding: 0 30px;
+  min-width: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.group-modal-btn.cancel {
+  background: transparent;
+  border: 2px solid #E334FE;
+  color: #E334FE;
+}
+
+.group-modal-btn.cancel:hover {
+  background: linear-gradient(90deg, #E334FE, #A6048E);
+  color: white;
+  border-color: transparent;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(227, 52, 254, 0.25);
+}
+
+.group-modal-btn.create {
+  background: linear-gradient(90deg, #E334FE, #A6048E);
+  color: white;
+  border: none;
+}
+
+.group-modal-btn.create:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(227, 52, 254, 0.25);
+}
+
+.group-modal-btn.create:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }

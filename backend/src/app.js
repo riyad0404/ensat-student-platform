@@ -12,6 +12,7 @@ import morgan from "morgan";
 
 import authRoutes from "./routes/authroutes.js";
 import conversationRoutes from "./routes/conversationRoutes.js";
+
 import reactionRoutes from "./routes/reactionroutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import documentRoutes from "./routes/documentRoutes.js";
@@ -46,6 +47,7 @@ app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/reactions", reactionRoutes);
 app.use("/api/documents", documentRoutes);
+
 app.use("/api/users", userRoutes);
 app.use("/api/conversations", conversationRoutes);
 app.use("/api/chat", chatRoutes);

@@ -40,6 +40,12 @@ const ConversationPage = () => {
   const { socket } = useSocket();
 
   useEffect(() => {
+    // Réinitialiser les états lors du changement de conversation pour éviter les conflits (ex: bouton Cancel)
+    setError(null);
+    setJoinError(null);
+    setLoading(true);
+    setConversation(null);
+    setMessages([]);
     fetchData();
   }, [id]);
 
@@ -73,11 +79,6 @@ const ConversationPage = () => {
           if (exists) return prevMessages;
           return [...prevMessages, newMsg];
         });
-
-        // ✅ CORRECTION NOTIFICATION : Marquer comme lu immédiatement si on est sur la page
-        if (document.hasFocus()) {
-             axios.post(`http://localhost:5000/api/conversations/${id}/read`, {}, { withCredentials: true }).catch(() => {});
-        }
       };
 
       // Gestion "En train d'écrire"
@@ -138,7 +139,7 @@ const ConversationPage = () => {
       const hasNewMessages = messages.length > prevMessagesLength.current;
 
       if (isFirstLoad && messages.length > 0) {
-        // messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+        container.scrollTop = container.scrollHeight;
         setIsFirstLoad(false);
       } else if (hasNewMessages) {
         const { scrollHeight, scrollTop, clientHeight } = container;
@@ -146,13 +147,34 @@ const ConversationPage = () => {
         const lastMessage = messages[messages.length - 1];
         const isOwnMessage = lastMessage && String(lastMessage.senderId) === String(currentUserId);
 
-        // if (isOwnMessage || isNearBottom) {
-        //   messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-        // }
+        if (isOwnMessage || isNearBottom) {
+          container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+        }
       }
       prevMessagesLength.current = messages.length;
     }
   }, [messages, isFirstLoad]);
+
+  // ✅ CORRECTION NOTIFICATION : Marquer comme lu de manière robuste (Backend + LocalStorage)
+  useEffect(() => {
+    const markAsRead = () => {
+      if (id) {
+        axios.post(`http://localhost:5000/api/conversations/${id}/read`, {}, { withCredentials: true }).catch(() => {});
+        localStorage.setItem(`lastRead_${id}`, new Date().toISOString());
+      }
+    };
+
+    if (messages.length > 0 && (document.hasFocus() || isFirstLoad)) {
+      markAsRead();
+    }
+
+    const handleFocus = () => {
+      if (messages.length > 0) markAsRead();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [id, messages, isFirstLoad]);
 
   const fetchData = async () => {
     try {
@@ -161,8 +183,6 @@ const ConversationPage = () => {
       const msgs = await conversationAPI.getMessages(id);
       setMessages(msgs);
       setLoading(false);
-
-      // Le backend marque automatiquement comme lu lors du fetch des messages
     } catch (error) {
       console.error("Erreur chargement", error);
       setError("Impossible de charger la conversation.");
@@ -326,6 +346,7 @@ const ConversationPage = () => {
         )}
 
         <button 
+          type="button"
           onClick={handleJoinGroup}
           disabled={joinLoading}
           className="btn-primary join-btn"
@@ -333,10 +354,15 @@ const ConversationPage = () => {
           {joinLoading ? 'Attempting...' : 'Join group'}
         </button>
         <button 
-          onClick={() => navigate('/groups')}
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            navigate(-1);
+          }}
           className="btn-secondary back-btn"
         >
-          Back to groups
+          Cancel
         </button>
         </div>
       </div>
@@ -385,6 +411,19 @@ const ConversationPage = () => {
       <div className="message-text">
         {parts.map((part, index) => {
           if (urlRegex.test(part)) {
+             // Vérifie si le lien est interne (appartient à l'application)
+             const isInternal = part.startsWith(window.location.origin);
+             if (isInternal) {
+               return (
+                 <a 
+                    key={index} 
+                    href={part} 
+                    onClick={(e) => { e.preventDefault(); navigate(part.replace(window.location.origin, '')); }}
+                 >
+                    {part}
+                 </a>
+               );
+             }
              return (
                 <a 
                     key={index} 
@@ -497,8 +536,10 @@ const ConversationPage = () => {
                           <div 
                             className="message-sender-name"
                             onClick={(e) => {
-                                e.stopPropagation();
-                                if(msg.senderId) navigate(`/profile/${msg.senderId}`);
+                              e.stopPropagation();
+                              if(msg.senderId) {
+                                navigate(`/profile/${msg.senderId}`);
+                              }
                             }}
                             style={{cursor: 'pointer'}}
                           >
@@ -586,12 +627,7 @@ const ConversationPage = () => {
       {showDeleteModal && (
         <div className="delete-modal-overlay">
           <div className="delete-modal-content">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h3>Delete Message</h3>
-              <button onClick={() => setShowDeleteModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-                <X size={24} color="#6b7280" />
-              </button>
-            </div>
+            <h3>Delete Message?</h3>
             <p>Are you sure you want to delete this message? This action cannot be undone.</p>
             <div className="delete-modal-actions">
               <button className="cancel-btn" onClick={() => setShowDeleteModal(false)}>Cancel</button>

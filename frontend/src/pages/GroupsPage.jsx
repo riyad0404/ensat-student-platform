@@ -364,23 +364,14 @@ const GroupsPage = () => {
                 <button 
                   type="button" 
                   onClick={() => setShowModal(false)}
-                  style={{ 
-                    background: 'white', color: '#374151', border: '1px solid #d1d5db', 
-                    padding: '10px 24px', borderRadius: '8px', 
-                    fontWeight: '600', cursor: 'pointer'
-                  }}
+                  className="group-modal-btn cancel"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
                   disabled={creating}
-                  style={{ 
-                    background: 'linear-gradient(90deg, #E334FE, #A6048E)', color: 'white', border: 'none', 
-                    padding: '10px 24px', borderRadius: '8px', 
-                    fontWeight: '600', cursor: 'pointer',
-                    opacity: creating ? 0.7 : 1
-                  }}
+                  className="group-modal-btn create"
                 >
                   {creating ? 'Creating...' : 'Create'}
                 </button>

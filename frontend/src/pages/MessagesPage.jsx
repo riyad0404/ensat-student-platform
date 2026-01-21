@@ -31,7 +31,7 @@ const MessagesPage = () => {
       const conversationsList = Array.isArray(allConvs) ? allConvs : (allConvs?.data || []);
       
       // Filtrer pour ne garder que les messages privés (DIRECT)
-      setConversations(conversationsList.filter(c => c.type === 'DIRECT'));
+      setConversations(conversationsList.filter(c => c.type === 'DIRECT' && c.lastMessage));
     } catch (error) {
       console.error("Erreur chargement messages", error);
     }
@@ -44,7 +44,7 @@ const MessagesPage = () => {
       try {
         const results = await conversationAPI.searchUsers(query);
         const users = Array.isArray(results) ? results : (results.data || []);
-        setSearchResults(users);
+        setSearchResults(users.filter(u => String(u.iduser) !== String(currentUserId)));
       } catch (error) {
         console.error("Erreur recherche", error);
       }
