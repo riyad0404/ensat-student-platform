@@ -9,8 +9,8 @@ const Bookmarks = () => {
   useEffect(() => {
     loadBookmarks();
     
-    // Écouter les changements de bookmarks
     const handleBookmarksUpdate = () => {
+      console.log('Bookmarks updated event received');
       loadBookmarks();
     };
     
@@ -24,6 +24,7 @@ const Bookmarks = () => {
   const loadBookmarks = () => {
     try {
       const saved = JSON.parse(localStorage.getItem('bookmarks') || '[]');
+      console.log('Loaded bookmarks:', saved);
       setBookmarks(saved);
     } catch (error) {
       console.error('Erreur chargement bookmarks:', error);
@@ -33,8 +34,15 @@ const Bookmarks = () => {
     }
   };
 
+  const removeFromBookmarks = (idpost) => {
+    const newBookmarks = bookmarks.filter(b => b.idpost !== idpost);
+    localStorage.setItem('bookmarks', JSON.stringify(newBookmarks));
+    setBookmarks(newBookmarks);
+    window.dispatchEvent(new Event('bookmarksUpdated'));
+  };
+
   const clearAllBookmarks = () => {
-    if (window.confirm('Voulez-vous vraiment supprimer tous vos favoris ?')) {
+    if (window.confirm('Are you sure you want to clear all saved posts?')) {
       localStorage.setItem('bookmarks', JSON.stringify([]));
       setBookmarks([]);
       window.dispatchEvent(new Event('bookmarksUpdated'));
@@ -51,14 +59,7 @@ const Bookmarks = () => {
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2">
             <circle cx="12" cy="12" r="10" opacity="0.3"/>
             <path d="M12 2 A10 10 0 0 1 22 12" strokeLinecap="round">
-              <animateTransform
-                attributeName="transform"
-                type="rotate"
-                from="0 12 12"
-                to="360 12 12"
-                dur="1s"
-                repeatCount="indefinite"
-              />
+              <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite" />
             </path>
           </svg>
         </div>
@@ -102,7 +103,8 @@ const Bookmarks = () => {
             <PostCard 
               key={post.idpost} 
               post={post}
-              onPostDeleted={loadBookmarks}
+              isBookmark={true}
+              onPostDeleted={() => removeFromBookmarks(post.idpost)}
               onPostUpdated={loadBookmarks}
             />
           ))}

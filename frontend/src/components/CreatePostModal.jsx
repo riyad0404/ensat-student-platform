@@ -40,7 +40,7 @@ const handleSubmit = async (e) => {
   e.preventDefault();
 
   if (!content.trim() && !file) {
-    setError('Ajoutez du contenu ou un fichier');
+    setError('Add content or a file');
     return;
   }
 
@@ -61,16 +61,7 @@ const handleSubmit = async (e) => {
     const response = await createPost(formData);
     
     console.log('🔍 Réponse complète du backend:', response);
-    console.log('📎 Documents dans la réponse:', response.documents);
-    console.log('📊 Type de documents:', typeof response.documents);
-    console.log('📊 Est un array?', Array.isArray(response.documents));
     
-    if (response.documents && response.documents.length > 0) {
-      console.log('✅ Document trouvé:', response.documents[0]);
-    } else {
-      console.log('❌ Aucun document dans la réponse!');
-    }
-
     if (onPostCreated) {
       console.log('📤 Envoi du post à HomePage...');
       onPostCreated(response);
@@ -92,7 +83,7 @@ const handleSubmit = async (e) => {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Créer un post</h2>
+          <h2>Create a post</h2>
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
         
@@ -102,7 +93,7 @@ const handleSubmit = async (e) => {
             
             <textarea 
               className="post-textarea" 
-              placeholder="Qu'avez-vous en tête ?" 
+              placeholder="What's on your mind?" 
               value={content} 
               onChange={(e) => setContent(e.target.value)} 
               rows={5} 
@@ -114,11 +105,7 @@ const handleSubmit = async (e) => {
                   <img src={filePreview} alt="Aperçu" />
                 ) : (
                   <div className="document-preview">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-                      <polyline points="13 2 13 9 20 9"></polyline>
-                    </svg>
-                    <p>{filePreview}</p>
+                    <p>📄 {filePreview}</p>
                   </div>
                 )}
                 <button
@@ -136,12 +123,10 @@ const handleSubmit = async (e) => {
 
             <div className="upload-section">
               <label className="upload-btn">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{marginRight: '6px'}}>
-                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                  <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                  <polyline points="21 15 16 10 5 21"></polyline>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
                 </svg>
-                <span>Ajouter un fichier</span>
+                <span>Add file</span>
                 <input
                   type="file"
                   accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt"
@@ -195,13 +180,13 @@ const handleSubmit = async (e) => {
             </div>
 
             <div className="publication-mode-container">
-              <span className="mode-label">Mode de publication</span>
+              <span className="mode-label">Publication mode</span>
               <div 
                 className={`mode-switch ${isAnonymous ? 'is-anonymous' : 'is-public'}`} 
                 onClick={() => setIsAnonymous(!isAnonymous)}
               >
                 <div className="mode-option public">Public</div>
-                <div className="mode-option anonymous">Anonyme</div>
+                <div className="mode-option anonymous">Anonymous</div>
                 <div className="mode-slider"></div>
               </div>
             </div>
@@ -209,14 +194,14 @@ const handleSubmit = async (e) => {
           
           <div className="modal-footer">
             <button type="button" className="cancel-btn" onClick={onClose}>
-              Annuler
+              Cancel
             </button>
             <button
               type="submit"
               className="submit-btn"
               disabled={loading || (!content.trim() && !file)}
             >
-              {loading ? '⏳ Publication...' : '📤 Publier'}
+              {loading ? 'Publishing...' : 'Publish'}
             </button>
           </div>
         </form>
