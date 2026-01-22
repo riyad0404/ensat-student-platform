@@ -1,3 +1,42 @@
+import { Conversation, ConversationMember, User, Message } from '../models/associations.js';
+/**
+ * GET /api/conversations/groups/available
+ * List all GROUP conversations the user is NOT a member of
+ */
+export const getAvailableGroups = async (req, res) => {
+  try {
+    const myUserId = req.user.iduser;
+    // Get all group conversations
+    // First, get all conversation IDs where user is a member
+    const myMemberships = await ConversationMember.findAll({
+      where: { iduser: myUserId },
+      attributes: ['idconversation'],
+    });
+    const myConvIds = myMemberships.map(m => m.idconversation);
+
+    // Find all GROUP conversations not in myConvIds
+    const groups = await Conversation.findAll({
+      where: {
+        type: 'GROUP',
+        idconversation: myConvIds.length > 0 ? { [Op.notIn]: myConvIds } : { [Op.ne]: null },
+      },
+      order: [['updatedAt', 'DESC']],
+      attributes: ['idconversation', 'name', 'description', 'createdBy', 'createdAt', 'updatedAt'],
+      include: [
+        {
+          model: User,
+          as: 'creator',
+          attributes: ['iduser', 'nom', 'prenom', 'photo', 'niveau'],
+        },
+      ],
+    });
+
+    return res.status(200).json(groups);
+  } catch (error) {
+    console.error('getAvailableGroups error:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
 /**
  * 9) DELETE /api/conversations/:id
  * OWNER can delete the conversation (hard delete)
@@ -54,7 +93,6 @@ export const transferOwnership = async (req, res) => {
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
-import { Conversation, ConversationMember, Message, User } from '../models/associations.js';
 import { Op } from 'sequelize';
 import sequelize from '../database.js';
 import { io } from '../server.js';

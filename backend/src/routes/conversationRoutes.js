@@ -1,3 +1,4 @@
+
 import express from 'express';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 import {
@@ -18,6 +19,7 @@ import {
   unhideConversation,
   joinConversation,
   markConversationAsRead,
+   getAvailableGroups
 } from '../controllers/conversationController.js';
 
 
@@ -62,5 +64,7 @@ router.delete('/:id/members/:userId', authMiddleware, removeMember);
 
 // Get a single conversation by ID
 router.get('/:id', authMiddleware, getSingleConversation);
+// List available group chats (not DMs, not joined)
+router.get('/groups/available', authMiddleware, getAvailableGroups);
 
 export default router;
