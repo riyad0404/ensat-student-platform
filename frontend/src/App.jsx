@@ -18,7 +18,6 @@ import GroupsPage from './pages/GroupsPage';
 import ConversationPage from './pages/ConversationPage';
 import OtherUserProfile from './pages/OtherUserProfile'; 
 import HomePage from './pages/homepage';
-import MainLayout from './pages/MainLayout';
 import Bookmarks from './pages/BookMarks';
 import Library from './pages/Library';
 import LibraryDocuments from './pages/LibraryDocuments';
@@ -76,6 +75,34 @@ const RequireAuthLayout = () => {
   );
 };
 
+
+// Dans App.js - MainLayout
+const MainLayout = () => {
+  // On n'a plus besoin d'état ici puisque Sidebar gère son propre état
+  
+  return (
+    <div style={{ 
+      display: 'flex', 
+      minHeight: '100vh',
+      width: '100vw',
+      overflowX: 'hidden'
+    }}>
+      <Sidebar />
+      <div style={{ 
+        flex: 1, 
+        marginLeft: '270px', // Largeur initiale
+        backgroundColor: '#f5f5f5',
+        width: 'calc(100vw - 270px)',
+        height: '100vh',
+        overflowY: 'auto',
+        transition: 'margin-left 0.3s ease, width 0.3s ease'
+      }}>
+        <Outlet />
+      </div>
+    </div>
+  );
+};
+
 function App() {
 
   const { user } = useAuth();
@@ -100,6 +127,7 @@ function App() {
           <Route path="/library" element={<Library />} />
           <Route path="/library/:niveau" element={<LibraryDocuments />} />
         </Route>
+        
 
         {/* Routes publiques (si déjà authentifié, redirige) */}
         <Route element={<AlreadyAuthLayout />}>
@@ -116,4 +144,4 @@ function App() {
   )
 }
 
-export default App;
+export default App

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getDocumentsByNiveau, incrementDownloadCount } from '../api/DocumentsAPI';
-import '../styles/LibraryDocuments.css';
+import { ArrowLeft, Download, FileText, Image as ImageIcon, File } from 'lucide-react';
+import { getDocumentsByNiveau } from '../api/DocumentsAPI';
 
 const LibraryDocuments = () => {
   const { niveau } = useParams();
@@ -18,29 +18,30 @@ const LibraryDocuments = () => {
       
       console.log('Chargement documents pour niveau:', niveau);
       
-      // ✅ Utiliser le service
       const data = await getDocumentsByNiveau(niveau);
       
-      console.log(' Documents reçus:', data);
+      console.log('Documents reçus:', data);
       
-      // ✅ Formater les données pour correspondre au format attendu
-      const formattedData = data.map(doc => ({
-        id: doc.iddocument,
-        filename: doc.filename,
-        url: doc.url,
-        type: doc.type,
-        size: formatFileSize(doc.size || 0),
-        uploadedBy: doc.User ? `${doc.User.prenom} ${doc.User.nom}` : 'Inconnu',
-        downloads: doc.downloads || 0,
-        sourceType: doc.idpost ? 'post' : 'comment',
-        uploadDate: doc.createdAt,
-        niveau: doc.niveau
-      }));
+      const formattedData = data.map(doc => {
+        const docId = doc.iddocument || doc.id;
+        
+        return {
+          id: docId,
+          filename: doc.filename,
+          url: doc.url,
+          type: doc.type,
+          size: formatFileSize(doc.size || 0),
+          uploadedBy: doc.User ? `${doc.User.prenom} ${doc.User.nom}` : 'Inconnu',
+          sourceType: doc.idpost ? 'post' : 'comment',
+          uploadDate: doc.createdAt,
+          niveau: doc.niveau
+        };
+      });
       
-      console.log('✨ Documents formatés:', formattedData);
+      console.log('Documents formatés:', formattedData);
       setDocuments(formattedData);
     } catch (error) {
-      console.error(' Erreur chargement documents:', error);
+      console.error('Erreur chargement documents:', error);
       console.error('Détails:', error.response?.data);
       setError(error.response?.data?.message || error.message || 'Erreur lors du chargement des documents');
     } finally {
@@ -52,7 +53,6 @@ const LibraryDocuments = () => {
     loadDocuments();
   }, [loadDocuments]);
 
-  // ✅ Helper function pour formater la taille des fichiers
   const formatFileSize = (bytes) => {
     if (bytes === 0) return '0 B';
     const k = 1024;
@@ -63,10 +63,10 @@ const LibraryDocuments = () => {
 
   const handleDownload = async (doc) => {
     try {
-      console.log('⬇Téléchargement document:', doc);
+      // Nettoyer l'URL - si elle commence déjà par http, l'utiliser directement
+      const downloadUrl = doc.url.startsWith('http') ? doc.url : `http://localhost:3001${doc.url}`;
       
-      // ✅ Télécharger directement depuis l'URL stockée
-      const response = await fetch(doc.url);
+      const response = await fetch(downloadUrl);
       
       if (!response.ok) throw new Error('Erreur de téléchargement');
       
@@ -79,17 +79,8 @@ const LibraryDocuments = () => {
       link.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(link);
-
-      // Incrémenter le compteur de téléchargements
-      await incrementDownloadCount(doc.id);
-      
-      console.log('Téléchargement réussi');
-      
-      // Rafraîchir les documents pour mettre à jour le compteur
-      loadDocuments();
     } catch (error) {
-      console.error(' Erreur téléchargement:', error);
-      alert('Erreur lors du téléchargement du fichier');
+      console.error('Erreur téléchargement:', error);
     }
   };
 
@@ -97,38 +88,12 @@ const LibraryDocuments = () => {
     const extension = filename.split('.').pop().toLowerCase();
     
     if (['pdf'].includes(extension)) {
-      return (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-          <polyline points="14 2 14 8 20 8"></polyline>
-          <path d="M9 15h6"></path>
-        </svg>
-      );
+      return <FileText size={24} />;
     } else if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(extension)) {
-      return (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-          <circle cx="8.5" cy="8.5" r="1.5"></circle>
-          <polyline points="21 15 16 10 5 21"></polyline>
-        </svg>
-      );
-    } else if (['doc', 'docx'].includes(extension)) {
-      return (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-          <polyline points="14 2 14 8 20 8"></polyline>
-          <line x1="16" y1="13" x2="8" y2="13"></line>
-          <line x1="16" y1="17" x2="8" y2="17"></line>
-        </svg>
-      );
+      return <ImageIcon size={24} />;
     }
     
-    return (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-        <polyline points="13 2 13 9 20 9"></polyline>
-      </svg>
-    );
+    return <File size={24} />;
   };
 
   const getFileType = (filename) => {
@@ -146,31 +111,50 @@ const LibraryDocuments = () => {
 
   if (loading) {
     return (
-      <div className="library-documents-page">
-        <div className="documents-header">
-          <button className="back-btn" onClick={() => navigate('/library')}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M19 12H5M12 19l-7-7 7-7"/>
-            </svg>
-            Retour à la bibliothèque
-          </button>
-          <h1>Documents {niveau?.toUpperCase()}</h1>
-        </div>
-        <div className="loading-documents">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2">
-            <circle cx="12" cy="12" r="10" opacity="0.3"/>
-            <path d="M12 2 A10 10 0 0 1 22 12" strokeLinecap="round">
-              <animateTransform
-                attributeName="transform"
-                type="rotate"
-                from="0 12 12"
-                to="360 12 12"
-                dur="1s"
-                repeatCount="indefinite"
-              />
-            </path>
-          </svg>
-          <p>Chargement des documents...</p>
+      <div style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto', minHeight: '100vh' }}>
+        <button 
+          onClick={() => navigate('/library')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 18px',
+            background: 'white',
+            border: '1px solid #e5e7eb',
+            borderRadius: '10px',
+            color: '#6b7280',
+            fontSize: '14px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            marginBottom: '20px',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = '#f9fafb';
+            e.currentTarget.style.borderColor = '#7c3aed';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'white';
+            e.currentTarget.style.borderColor = '#e5e7eb';
+          }}
+        >
+          <ArrowLeft size={18} />
+          Back to Library
+        </button>
+        
+        <h1 style={{ 
+          fontSize: '28px', 
+          fontWeight: '800', 
+          marginBottom: '8px',
+          background: 'linear-gradient(90deg, #E334FE, #A6048E)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          display: 'inline-block'
+        }}>Documents {niveau?.toUpperCase()}</h1>
+        
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '100px 0' }}>
+          <div style={{ fontSize: '18px', color: '#666' }}>Loading documents...</div>
         </div>
       </div>
     );
@@ -178,107 +162,288 @@ const LibraryDocuments = () => {
 
   if (error) {
     return (
-      <div className="library-documents-page">
-        <div className="documents-header">
-          <button className="back-btn" onClick={() => navigate('/library')}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M19 12H5M12 19l-7-7 7-7"/>
-            </svg>
-            Retour à la bibliothèque
+      <div style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto', minHeight: '100vh' }}>
+        <button 
+          onClick={() => navigate('/library')}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '10px 18px',
+            background: 'white',
+            border: '1px solid #e5e7eb',
+            borderRadius: '10px',
+            color: '#6b7280',
+            fontSize: '14px',
+            fontWeight: '600',
+            cursor: 'pointer',
+            marginBottom: '20px'
+          }}
+        >
+          <ArrowLeft size={18} />
+          Back to Library
+        </button>
+        
+        <h1 style={{ 
+          fontSize: '28px', 
+          fontWeight: '800', 
+          marginBottom: '8px',
+          background: 'linear-gradient(90deg, #E334FE, #A6048E)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          display: 'inline-block'
+        }}>Documents {niveau?.toUpperCase()}</h1>
+        
+        <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+          <p style={{ color: '#ef4444', fontSize: '16px' }}>{error}</p>
+          <button 
+            onClick={loadDocuments}
+            style={{
+              padding: '10px 20px',
+              background: '#7c3aed',
+              color: 'white',
+              border: 'none',
+              borderRadius: '10px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              marginTop: '20px'
+            }}
+          >
+            Retry
           </button>
-          <h1>Documents {niveau?.toUpperCase()}</h1>
-        </div>
-        <div className="error-documents">
-          <p> {error}</p>
-          <button onClick={loadDocuments}>Réessayer</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="library-documents-page">
-      <div className="documents-header">
-        <button className="back-btn" onClick={() => navigate('/library')}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
-          </svg>
-          Retour à la bibliothèque
-        </button>
-        <div className="header-info">
-          <h1>Documents {niveau?.toUpperCase()}</h1>
-          <p>{documents.length} document{documents.length > 1 ? 's' : ''} disponible{documents.length > 1 ? 's' : ''}</p>
-        </div>
+    <div style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto', minHeight: '100vh' }}>
+      {/* Back Button */}
+      <button 
+        onClick={() => navigate('/library')}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '10px 18px',
+          background: 'white',
+          border: '1px solid #e5e7eb',
+          borderRadius: '10px',
+          color: '#6b7280',
+          fontSize: '14px',
+          fontWeight: '600',
+          cursor: 'pointer',
+          marginBottom: '20px',
+          transition: 'all 0.2s'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = '#f9fafb';
+          e.currentTarget.style.borderColor = '#7c3aed';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'white';
+          e.currentTarget.style.borderColor = '#e5e7eb';
+        }}
+      >
+        <ArrowLeft size={18} />
+        Back to Library
+      </button>
+
+      {/* Header */}
+      <div style={{ marginBottom: '30px' }}>
+        <h1 style={{ 
+          fontSize: '28px', 
+          fontWeight: '800', 
+          marginBottom: '8px',
+          marginTop: 0,
+          background: 'linear-gradient(90deg, #E334FE, #A6048E)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          display: 'inline-block'
+        }}>Documents {niveau?.toUpperCase()}</h1>
+        <p style={{ color: '#6b7280', margin: 0 }}>
+          {documents.length} document{documents.length > 1 ? 's' : ''} available
+        </p>
       </div>
 
-      <div className="documents-filters">
-        <button 
-          className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
-          onClick={() => setFilter('all')}
-        >
-          Tous
-        </button>
-        <button 
-          className={`filter-btn ${filter === 'pdf' ? 'active' : ''}`}
-          onClick={() => setFilter('pdf')}
-        >
-         PDF
-        </button>
-        <button 
-          className={`filter-btn ${filter === 'image' ? 'active' : ''}`}
-          onClick={() => setFilter('image')}
-        >
-          Images
-        </button>
-        <button 
-          className={`filter-btn ${filter === 'other' ? 'active' : ''}`}
-          onClick={() => setFilter('other')}
-        >
-          Autres
-        </button>
+      {/* Filters */}
+      <div style={{ 
+        display: 'flex', 
+        gap: '10px', 
+        marginBottom: '30px',
+        flexWrap: 'wrap'
+      }}>
+        {[
+          { key: 'all', label: 'All' },
+          { key: 'pdf', label: 'PDF' },
+          { key: 'image', label: 'Images' },
+          { key: 'other', label: 'Others' }
+        ].map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setFilter(key)}
+            style={{
+              padding: '10px 20px',
+              background: filter === key ? '#faf5ff' : 'white',
+              color: filter === key ? '#7c3aed' : '#6b7280',
+              border: `2px solid ${filter === key ? '#e9d5ff' : '#e5e7eb'}`,
+              borderRadius: '10px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              if (filter !== key) {
+                e.currentTarget.style.borderColor = '#e9d5ff';
+                e.currentTarget.style.color = '#7c3aed';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (filter !== key) {
+                e.currentTarget.style.borderColor = '#e5e7eb';
+                e.currentTarget.style.color = '#6b7280';
+              }
+            }}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
+      {/* Documents Grid */}
       {filteredDocuments.length === 0 ? (
-        <div className="empty-documents">
-          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5">
-            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-          </svg>
-          <h2>Aucun document trouvé</h2>
-          <p>Aucun document disponible pour ce niveau</p>
+        <div style={{ 
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '80px 20px',
+          textAlign: 'center'
+        }}>
+          <FileText size={64} color="#d1d5db" strokeWidth={1.5} style={{ marginBottom: '20px' }} />
+          <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#1f2937', margin: '0 0 8px 0' }}>
+            No documents found
+          </h2>
+          <p style={{ color: '#6b7280', margin: 0 }}>
+            No documents available for this level
+          </p>
         </div>
       ) : (
-        <div className="documents-grid">
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+          gap: '20px'
+        }}>
           {filteredDocuments.map((doc) => (
-            <div key={doc.id} className="document-card">
-              <div className="document-icon">
+            <div 
+              key={doc.id}
+              style={{
+                background: 'white',
+                borderRadius: '16px',
+                padding: '20px',
+                border: '1px solid #f3f4f6',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '16px',
+                transition: 'all 0.2s ease',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.08)';
+                e.currentTarget.style.borderColor = '#e9d5ff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.04)';
+                e.currentTarget.style.borderColor = '#f3f4f6';
+              }}
+            >
+              {/* Icon */}
+              <div style={{
+                width: '48px',
+                height: '48px',
+                borderRadius: '12px',
+                background: '#f5f3ff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#7c3aed',
+                flexShrink: 0
+              }}>
                 {getFileIcon(doc.filename)}
               </div>
-              <div className="document-info">
-                <h3 className="document-name">{doc.filename}</h3>
-                <div className="document-meta">
-                  <span className="doc-type">{doc.filename.split('.').pop().toUpperCase()}</span>
-                  <span className="doc-size">{doc.size}</span>
+
+              {/* Info */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <h3 style={{
+                  fontSize: '15px',
+                  fontWeight: '700',
+                  color: '#1f2937',
+                  margin: '0 0 8px 0',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}>
+                  {doc.filename}
+                </h3>
+                
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                  <span style={{
+                    fontSize: '11px',
+                    fontWeight: '600',
+                    padding: '3px 8px',
+                    borderRadius: '6px',
+                    background: '#f3f4f6',
+                    color: '#6b7280'
+                  }}>
+                    {doc.filename.split('.').pop().toUpperCase()}
+                  </span>
                 </div>
-                <div className="document-details">
-                  <span>Par {doc.uploadedBy}</span>
-                  <span>{doc.downloads || 0} téléchargement{doc.downloads > 1 ? 's' : ''}</span>
-                </div>
-                <div className="document-source">
-                  <span>{doc.sourceType === 'post' ? 'Publication' : 'Commentaire'}</span>
-                  <span>{new Date(doc.uploadDate).toLocaleDateString('fr-FR')}</span>
+
+                <div style={{ fontSize: '12px', color: '#9ca3af' }}>
+                  {new Date(doc.uploadDate).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric',
+                    year: 'numeric'
+                  })}
                 </div>
               </div>
-              <button 
-                className="download-document-btn"
-                onClick={() => handleDownload(doc)}
-                title="Télécharger"
+
+              {/* Download Button */}
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDownload(doc);
+                }}
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '10px',
+                  background: '#7c3aed',
+                  border: 'none',
+                  color: 'white',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s',
+                  flexShrink: 0
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#6d28d9';
+                  e.currentTarget.style.transform = 'scale(1.1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#7c3aed';
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="7 10 12 15 17 10"></polyline>
-                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
+                <Download size={18} />
               </button>
             </div>
           ))}
