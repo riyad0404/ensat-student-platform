@@ -14,18 +14,17 @@
   text-align: left;
 }
 
+
+
 .library-header h1 {
-  font-size: 48px;
-  font-weight: 900;
-  background: linear-gradient(135deg, #a855f7, #ec4899);
+  font-size: 36px;
+  font-weight: 800;
+  background: linear-gradient(90deg, #E334FE, #A6048E);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin: 0 0 12px 0;
-  letter-spacing: -1px;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  margin: 0 0 8px 0;
+  display: inline-block;
 }
 
 .library-subtitle {
@@ -56,16 +55,16 @@
 .filiere-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 8px 24px rgba(168, 85, 247, 0.12);
-  border-color: #a855f7;
+  border-color: #A6048E;
 }
 
 .filiere-nom {
   font-size: 1.15rem;
   font-weight: 700;
-  color: #a855f7;
+  color: #E334FE;
   margin: 0 0 1.25rem 0;
   padding-bottom: 0.75rem;
-  border-bottom: 2px solid #a855f7;
+  border-bottom: 2px solid #E334FE;
 }
 
 /* Boutons de niveau en ligne */
@@ -88,15 +87,15 @@
   cursor: pointer;
   transition: all 0.3s ease;
   background: #faf5ff;
-  color: #a855f7;
+  color: #E334FE;
   flex: 1;
   min-width: 0;
 }
 
 .niveau-button:hover {
-  background: #a855f7;
+  background: #A6048E;
   color: white;
-  border-color: #a855f7;
+  border-color: #bf19dc;
   transform: translateX(3px);
 }
 

@@ -9,43 +9,43 @@ const Library = () => {
     {
       id: 'prepa',
       nom: 'Classes Préparatoires',
-      color: '#a855f7',
+      color: '#E334FE',
       niveaux: ['AP1', 'AP2']
     },
     {
       id: 'ginf',
       nom: 'Génie Informatique',
-      color: '#a855f7',
+      color: '#E334FE',
       niveaux: ['GINF1', 'GINF2', 'GINF3']
     },
     {
       id: 'gil',
-      nom: 'Génie Logistique et Industrielle',
-      color: '#a855f7',
+      nom: 'Génie Industriel et Logistique',
+      color: '#E334FE',
       niveaux: ['GIL1', 'GIL2', 'GIL3']
     },
     {
       id: 'gsr',
-      nom: 'Génie des Systèmes et Réseaux',
-      color: '#a855f7',
+      nom: 'Génie des Systèmes de Réseaux',
+      color: '#E334FE',
       niveaux: ['GSR1', 'GSR2', 'GSR3']
     },
     {
       id: 'g2ei',
-      nom: 'Génie Environnement',
-      color: '#a855f7',
+      nom: ' Génie energétique et Environnement Industriel ',
+      color: '#E334FE',
       niveaux: ['G2EI1', 'G2EI2', 'G2EI3']
     },
     {
       id: 'gsea',
-      nom: 'Génie Électrique et Automatique',
-      color: '#a855f7',
+      nom: 'Génie des Systèmes Electroniques et Automatique',
+      color: '#E334FE',
       niveaux: ['GSEA1', 'GSEA2', 'GSEA3']
     },
     {
       id: 'gsyc',
-      nom: 'Génie Cyber et Sécurité',
-      color: '#a855f7',
+      nom: 'Génie des Systèmes et Cybersécurité',
+      color: '#E334FE',
       niveaux: ['GSYC1', 'GSYC2', 'GSYC3']
     }
   ];
