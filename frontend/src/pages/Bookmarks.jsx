@@ -169,7 +169,6 @@ const Bookmarks = () => {
             }}>
               <PostCard 
                 post={post}
-                isBookmark={true}
                 onPostDeleted={() => removeFromBookmarks(post.idpost)}
                 onPostUpdated={loadBookmarks}
               />
