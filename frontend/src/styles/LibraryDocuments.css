@@ -15,14 +15,14 @@
 }
 
 .header-info h1 {
-  font-size: 48px;
-  font-weight: 900;
-  background: linear-gradient(135deg, #a855f7, #ec4899);
+  font-size: 36px;
+  font-weight: 800;
+  background: linear-gradient(90deg, #E334FE, #A6048E);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin: 16px 0 12px 0;
-  letter-spacing: -1px;
+  margin: 16px 0 8px 0;
+  display: inline-block;
 }
 
 .header-info p {
