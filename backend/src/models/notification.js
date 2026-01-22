@@ -29,7 +29,8 @@ const Notification = sequelize.define(
         "MESSAGE",
         "GROUP_INVITE",
         "GROUP_INVITE_ACCEPTED",
-        "GROUP_INVITE_DECLINED"
+        "GROUP_INVITE_DECLINED",
+         "REACTION_COMMENT"
       ),
       allowNull: false,
     },
