@@ -139,7 +139,7 @@ const LibraryDocuments = () => {
           }}
         >
           <ArrowLeft size={18} />
-          Back to Library
+          Back to Levels
         </button>
         
         <h1 style={{ 
@@ -247,7 +247,7 @@ const LibraryDocuments = () => {
         }}
       >
         <ArrowLeft size={18} />
-        Back to Library
+        Back to Levels
       </button>
 
       {/* Header */}
