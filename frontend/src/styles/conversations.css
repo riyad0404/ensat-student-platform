@@ -610,7 +610,7 @@
 }
 
 .group-modal-btn.create {
-  background: linear-gradient(90deg, #E334FE, #A6048E);
+  background: linear-gradient(135deg, #7C3AED 0%, #ec4899 100%);
   color: white;
   border: none;
 }

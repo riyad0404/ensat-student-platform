@@ -11,7 +11,7 @@
 /* Bannière avec icône caméra */
 .profile-banner {
     width: calc(100% + 17px);
-    height: 350px;
+    height: 180px;
     background: linear-gradient(90deg, #fdfcfd 0%, #7b787a 100%);
     background-size: cover;
     background-position: center;
@@ -98,7 +98,7 @@
 
 /* Conteneur principal - AJUSTÉ pour sidebar */
 .profile-content {
-    max-width: 1000px;
+    max-width: 1300px;
     margin: 0 auto;
     padding: 0 20px;
     position: relative;
@@ -108,7 +108,7 @@
 
 /* Quand sidebar est collapsed, élargir le contenu */
 .sidebar-container.collapsed ~ div .profile-content {
-    max-width: 1200px;
+    max-width: 2000px;
     padding: 0 30px;
 }
 
@@ -120,8 +120,8 @@
     margin-top: 18px;
     margin-bottom: 5px;
     border: 1px solid #e0e0e0;
-    width: calc(100% + 82px)!important; 
-    margin-left: -42px !important;
+    width: 100% !important;
+    margin-left: 0 !important;
 }
 
 /* Quand sidebar est collapsed, ajuster la largeur */
@@ -134,10 +134,10 @@
 /* Avatar avec icône caméra */
 .profile-avatar-container {
     position: absolute;
-    top: -90px;
+    top: -70px;
     left: 20px;
-    width: 140px;
-    height: 140px;
+    width: 130px;
+    height: 130px;
     z-index: 20;
 }
 
@@ -223,7 +223,7 @@
 /* ICON EDIT SEULEMENT - repositionnée */
 .edit-profile-icon {
     position: absolute;
-    top: -70px;
+    top: -50px;
     right: -10px;
     background: white;
     border: 2px solid #E334FE;
@@ -256,8 +256,8 @@
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     margin-top: 10px;
     border: 1px solid #e0e0e0;
-    width: calc(100% + 82px)!important; 
-     margin-left: -42px !important;
+    width: 100% !important;
+    margin-left: 0 !important;
 }
 
 /* Quand sidebar est collapsed, ajuster les posts */

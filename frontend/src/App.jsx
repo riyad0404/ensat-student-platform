@@ -16,6 +16,8 @@ import MessagesPage from './pages/MessagesPage';
 import GroupsPage from './pages/GroupsPage';
 import ConversationPage from './pages/ConversationPage';
 import OtherUserProfile from './pages/OtherUserProfile'; 
+import HomePage from './pages/homepage';
+import Bookmarks from './pages/Bookmarks';
 
 // HOC pour protéger les routes
 const RequireAuth = ({ children }) => {
@@ -82,9 +84,8 @@ const MainLayout = () => {
         flex: 1, 
         marginLeft: '270px', // Largeur initiale
         backgroundColor: '#f5f5f5',
-        minHeight: '100vh',
-        padding: '20px',
         width: 'calc(100vw - 270px)',
+        height: '100vh',
         overflowY: 'auto',
         transition: 'margin-left 0.3s ease, width 0.3s ease'
       }}>
@@ -93,38 +94,6 @@ const MainLayout = () => {
     </div>
   );
 };
-
-// Page d'accueil
-const HomePage = () => {
-  const { user, logout } = useAuth();
-  
-  return (
-    <div style={{ padding: '20px' }}>
-      <h1>ENSAT Student Platform</h1>
-      <p>Bienvenue sur la plateforme étudiante</p>
-      
-      {user && (
-        <div>
-          <p>Connecté en tant que: <strong>{user.email}</strong></p>
-          <button 
-            onClick={logout}
-            style={{
-              padding: '10px 15px',
-              background: '#dc3545',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer'
-            }}
-          >
-            Déconnexion
-          </button>
-        </div>
-      )}
-    </div>
-  );
-};
-
 
 function App() {
   const navigate = useNavigate()
@@ -146,6 +115,7 @@ function App() {
           <Route path="/groups" element={<GroupsPage />} />
           <Route path="/groupes" element={<Navigate to="/groups" replace />} />
           <Route path="/conversations/:id" element={<ConversationPage />} />
+          <Route path="/bookmarks" element={<Bookmarks />} />
         </Route>
         </Route>
 
