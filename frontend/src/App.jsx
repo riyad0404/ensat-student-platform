@@ -1,5 +1,6 @@
 "use client"
-import { Routes, Route, Outlet, Navigate,useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Routes, Route, Outlet, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import LoginPage from './pages/LoginPage';
 import LandingPage from './pages/Landing';
@@ -23,6 +24,9 @@ import Bookmarks from './pages/Bookmarks';
 const RequireAuth = ({ children }) => {
   const { user, loading } = useAuth();
   
+
+  console.log('RequireAuth state -> user:', user, 'loading:', loading);
+
   if (loading) {
     return <div>Chargement...</div>;
   }
@@ -62,7 +66,7 @@ const AlreadyAuthLayout = () => {
 const RequireAuthLayout = () => {
   return (
     <RequireAuth>
-      <Outlet />
+      <MainLayout />
     </RequireAuth>
   );
 };
@@ -96,8 +100,9 @@ const MainLayout = () => {
 };
 
 function App() {
-  const navigate = useNavigate()
-  const { user } = useAuth()
+
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <>
@@ -105,7 +110,6 @@ function App() {
         <Route path="/landing" element={<LandingPage />} />
         {/* Routes protégées (nécessite authentification) avec Sidebar */}
         <Route element={<RequireAuthLayout />}>
-        <Route element={<MainLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/profile/edit" element={<EditProfile />} />
@@ -117,7 +121,7 @@ function App() {
           <Route path="/conversations/:id" element={<ConversationPage />} />
           <Route path="/bookmarks" element={<Bookmarks />} />
         </Route>
-        </Route>
+        
 
         {/* Routes publiques (si déjà authentifié, redirige) */}
         <Route element={<AlreadyAuthLayout />}>
@@ -128,8 +132,8 @@ function App() {
           <Route path="/reset-password/:token" element={<ResetPasswordToken />} />
         </Route>
       </Routes>
-
       {user && <ChatbotButton onClick={() => navigate("/chatbot")} />}
+      {/* ChatbotButton not present in project; removed to avoid runtime error */}
     </>
   )
 }

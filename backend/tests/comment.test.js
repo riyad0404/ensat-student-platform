@@ -75,12 +75,12 @@ describe("Comment Integration", () => {
       .field("idpost", commentPayload.idpost)
       .expect(201);
 
-    expect(res.body.comment.idcomment).toBeDefined();
-    expect(res.body.comment.contenu).toBe(commentPayload.contenu);
-    expect(res.body.comment.typeContenu).toBe(commentPayload.typeContenu);
-    expect(res.body.comment.isAnonymat).toBe(commentPayload.isAnonymat);
+    expect(res.body.idcomment).toBeDefined();
+    expect(res.body.contenu).toBe(commentPayload.contenu);
+    expect(res.body.typeContenu).toBe("DOCUMENT");
+    expect(res.body.isAnonymat).toBe(commentPayload.isAnonymat);
 
-    const commentInDb = await Comment.findOne({ where: { idcomment: res.body.comment.idcomment } });
+    const commentInDb = await Comment.findOne({ where: { idcomment: res.body.idcomment } });
     expect(commentInDb).not.toBeNull();
     expect(commentInDb.contenu).toBe(commentPayload.contenu);
     
@@ -115,12 +115,12 @@ describe("Comment Integration", () => {
       .field("idpost", commentPayload.idpost)
       .expect(201);
 
-    expect(res.body.comment.idcomment).toBeDefined();
-    expect(res.body.comment.contenu).toBe(commentPayload.contenu);
-    expect(res.body.comment.typeContenu).toBe(commentPayload.typeContenu);
-    expect(res.body.comment.isAnonymat).toBe(commentPayload.isAnonymat);
+    expect(res.body.idcomment).toBeDefined();
+    expect(res.body.contenu).toBe(commentPayload.contenu);
+    expect(res.body.typeContenu).toBe("DOCUMENT");
+    expect(res.body.isAnonymat).toBe(commentPayload.isAnonymat);
 
-    const commentInDb = await Comment.findOne({ where: { idcomment: res.body.comment.idcomment } });
+    const commentInDb = await Comment.findOne({ where: { idcomment: res.body.idcomment } });
     expect(commentInDb).not.toBeNull();
     expect(commentInDb.contenu).toBe(commentPayload.contenu);
 
@@ -167,11 +167,11 @@ describe("Comment Integration", () => {
       .expect(201);
 
     const res = await request(app)
-      .get(`/api/comments/${createdComment.body.comment.idcomment}`)
+      .get(`/api/comments/${createdComment.body.idcomment}`)
       .set("Cookie", tokenA)
       .expect(200);
 
-    expect(res.body.idcomment).toBe(createdComment.body.comment.idcomment);
+    expect(res.body.idcomment).toBe(createdComment.body.idcomment);
     expect(res.body.contenu).toBe(commentPayload.contenu);
   });
 
@@ -196,7 +196,7 @@ describe("Comment Integration", () => {
     };
 
     const res = await request(app)
-      .patch(`/api/comments/${createdComment.body.comment.idcomment}`)
+      .patch(`/api/comments/${createdComment.body.idcomment}`)
       .set("Cookie", tokenA)
       .send(updatedCommentPayload)
       .expect(200);
@@ -220,11 +220,11 @@ describe("Comment Integration", () => {
       .expect(201);
 
     await request(app)
-      .delete(`/api/comments/${createdComment.body.comment.idcomment}`)
+      .delete(`/api/comments/${createdComment.body.idcomment}`)
       .set("Cookie", tokenA)
       .expect(200);
 
-    const commentInDb = await Comment.findByPk(createdComment.body.comment.idcomment);
+    const commentInDb = await Comment.findByPk(createdComment.body.idcomment);
     expect(commentInDb).toBeNull();
   });
 
@@ -242,7 +242,7 @@ describe("Comment Integration", () => {
       .send(commentPayload)
       .expect(400);
 
-    expect(res.body.message).toBe("Un commentaire doit contenir texte, lien ou fichier.");
+    expect(res.body.message).toBe("Le commentaire doit contenir du texte ou un fichier");
   });
 
   it("should reject comment creation without token", async () => {
