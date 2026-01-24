@@ -6,6 +6,7 @@ import conversationAPI from '../api/conversationAPI';
 import '../styles/profile.css'; // On réutilise le même style
 import { getAllPosts } from '../api/postAPI';
 import PostCard from '../components/Postcard';
+import defaultBanner from '../assets/Blue Monotone Gradient Professional Company LinkedIn Banner.png';
 
 const OtherUserProfile = () => {
     const { user: authUser, loading: authLoading } = useAuth();
@@ -96,7 +97,7 @@ const OtherUserProfile = () => {
         profileImageUrl = user.photo;
     }
  const bannerStyle = {
-        backgroundImage: "url('https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2029&auto=format&fit=crop')",
+        backgroundImage: `url(${defaultBanner})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',

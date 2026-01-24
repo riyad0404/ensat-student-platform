@@ -7,6 +7,7 @@ import { FiEye, FiEyeOff } from 'react-icons/fi'; // ⚠️ IMPORTEZ LES ICÔNES
 const EditProfile = () => {
     const { user, updateProfile } = useAuth();
     const navigate = useNavigate();
+    const pageRef = useRef(null);
     
     const [formData, setFormData] = useState({
         firstName: user.prenom || '',
@@ -63,6 +64,19 @@ const EditProfile = () => {
 const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Scroll to top
+    // 1. Essayer window
+    window.scrollTo(0, 0);
+
+    // 2. Essayer de trouver n'importe quel parent qui a scrollé et le remettre à 0
+    let el = pageRef.current;
+    while (el) {
+        if (el.scrollTop > 0) {
+            el.scrollTop = 0;
+        }
+        el = el.parentElement;
+    }
+
     // Réinitialiser les messages
     setPasswordError('');
     setMessage('');
@@ -178,7 +192,7 @@ const handleSubmit = async (e) => {
     };
     
     return (
-        <div className="edit-profile-page">
+        <div className="edit-profile-page" ref={pageRef}>
             <div className="edit-profile-container">
                 <div className="edit-profile-card">
                     <h1 className="edit-profile-title">Edit Profile</h1>

@@ -2,8 +2,7 @@
 
 .chatbot-style.conversation-page-container {
   height: 100vh;
-  background: #f9f8fa;
-  background: #ffffff; /* Fond blanc style LinkedIn */
+  background: #f9f8fa; /* Remis comme chatbot */
   position: relative;
   overflow: hidden;
   display: flex;
@@ -139,14 +138,13 @@
   align-items: center;
   justify-content: center;
   color: #0040D0;
-  color: #E7A33E;
+  color: #E7A33E; /* Orange */
 }
 .conversation-header-actions button:hover {
     background-color: rgba(0, 64, 208, 0.08);
     background-color: #f3f4f6;
-    color: #FF6B00; /* Orange au survol */
+    color: #0040D0; /* Bleu au survol */
     background-color: #f3f4f6;
-    color: #FF6B00;
 }
 
 /* Messages Area */
@@ -155,8 +153,7 @@
   padding: 1rem; /* Padding vertical réduit */
   overflow-y: auto;
   width: 100%;
-  background: #f9f8fa;
-  background: #ffffff;
+  background: #f9f8fa; /* Fond gris clair comme chatbot */
 }
 
 .message-date-separator {
@@ -170,9 +167,7 @@
   background: #F0F5FF;
   background: #ffffff;
   color: #0040D0;
-  background: #ffffff;
-  color: #E7A33E;
-  border: 1px solid #e5e7eb;
+  border: 1px solid rgba(0, 64, 208, 0.12);
   padding: 8px 16px;
   border-radius: 20px;
   font-size: 12.5px;
@@ -216,19 +211,15 @@
   background: #E6F0FF;
   color: #1f2937;
   border: 1px solid rgba(0, 64, 208, 0.15);
-  background: #E7A33E; /* Orange solide */
-  background: #0040D0; /* Bleu solide */
+  background: linear-gradient(90deg, #4a82fc, #0040D0);
   color: white;
-  border-radius: 12px 12px 0 12px;
 }
 
 .message-bubble.other {
   background-color: rgba(255, 255, 255, 0.99);
-  color: #2d3748;
-  border-color: rgba(0, 64, 208, 0.08);
-  background-color: #f3f4f6; /* Gris clair */
   color: #1f2937;
-  border-radius: 12px 12px 12px 0;
+  border-color: rgba(0, 64, 208, 0.08);
+  background-color: #ffffff; /* Blanc pur pour les messages reçus */
 }
 
 .message-sender-name {
@@ -253,13 +244,11 @@
 }
 .message-text a {
     color: #0040D0;
-    color: #E7A33E; /* Orange sur fond gris */
-    color: #0040D0; /* Bleu sur fond gris */
     text-decoration: underline;
     font-weight: 500;
 }
 .message-bubble.user .message-text a {
-    color: white; /* Blanc sur fond bleu */
+    color: white;
     text-decoration: underline;
     font-weight: 500;
 }
@@ -325,7 +314,6 @@
     width: 1rem;
     height: 1rem;
     color: #0040D0;
-    color: #E7A33E;
 }
 .message-action-btn.delete svg {
     color: #dc2626;
@@ -375,10 +363,8 @@
 
 .input-wrapper:focus-within {
   background-color: #ffffff;
-  border-color: #E7A33E;
-  box-shadow: 0 0 0 2px rgba(231, 163, 62, 0.1);
   border-color: #0040D0;
-  box-shadow: 0 0 0 2px rgba(0, 64, 208, 0.1);
+  box-shadow: 0 0 0 2px rgba(0, 64, 208, 0.12);
 }
 
 .input-wrapper .cancel-edit-btn {
@@ -404,9 +390,8 @@
 }
 
 .send-btn {
-  background: #0040D0;
-  background: #E7A33E;
-  color: white;
+  background: transparent;
+  color: #0040D0;
   border-radius: 0.875rem;
   padding: 0.875rem;
   border: none;
@@ -415,8 +400,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 64, 208, 0.15);
-  box-shadow: 0 4px 12px rgba(231, 163, 62, 0.15);
+  box-shadow: none;
 }
 .send-btn:disabled {
   opacity: 0.5;
@@ -431,8 +415,7 @@
   position: fixed;
   top: 6rem;
   right: 1.5rem;
-  background: linear-gradient(90deg, #0040D0, #0055FF);
-  background: linear-gradient(90deg, #E7A33E, #FF6B00);
+  background: linear-gradient(90deg, #4a82fc, #0040D0);
   color: white;
   padding: 1rem 1.5rem;
   border-radius: 0.875rem;
@@ -440,7 +423,6 @@
   align-items: center;
   gap: 0.75rem;
   box-shadow: 0 8px 24px rgba(0, 64, 208, 0.2);
-  box-shadow: 0 8px 24px rgba(231, 163, 62, 0.2);
   z-index: 1000;
   animation: slideInRight 0.3s ease-out;
   font-weight: 500;

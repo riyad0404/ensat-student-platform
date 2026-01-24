@@ -4,7 +4,9 @@ import '../styles/profile.css';
 import { useNavigate } from 'react-router-dom';
 import PostCard from '../components/Postcard';
 import { getAllPosts } from '../api/postAPI';
+import CreatePostModal from '../components/CreatePostModal';
 import { Pencil, Trash2, Camera, Upload } from 'lucide-react';
+import defaultBanner from '../assets/Blue Monotone Gradient Professional Company LinkedIn Banner.png';
 
 const Profile = () => {
     const { user, updateProfile } = useAuth();
@@ -21,39 +23,39 @@ const Profile = () => {
     const [imagePreview, setImagePreview] = useState(null);
     const [showImageModal, setShowImageModal] = useState(false);
     const [showNotification, setShowNotification] = useState({ show: false, message: '', type: '' });
+    const [showDeleteAvatarModal, setShowDeleteAvatarModal] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); // État pour sidebar
     
     const bannerFileInputRef = useRef(null);
     const avatarFileInputRef = useRef(null);
     
+    const fetchUserPosts = async () => {
+        if (!user?.iduser && !user?.id) return;
+        try {
+            const data = await getAllPosts();
+            const allPosts = Array.isArray(data) ? data : (data?.posts || []);
+            const currentUserId = user.iduser || user.id;
+
+            // Filtrer les posts de l'utilisateur connecté
+            const myPosts = allPosts.filter(p => {
+                const authorId = p.iduser || p.auteur?.iduser || p.auteur?.id;
+                return String(authorId) === String(currentUserId);
+            });
+
+            myPosts.sort((a, b) => new Date(b.createdAt || b.dateCreation) - new Date(a.createdAt || a.dateCreation));
+            setUserPosts(myPosts);
+        } catch (error) {
+            console.error("Error fetching user posts:", error);
+            setUserPosts([]);
+        }
+    };
+
     useEffect(() => {
         if (user?.iduser) {
             const savedImage = localStorage.getItem(`profile_image_${user.iduser}`);
             if (savedImage) {
                 setLocalProfileImage(savedImage);
             }
-
-            // Fetch user's posts (Correction: Utilisation de getAllPosts + filtre)
-            const fetchUserPosts = async () => {
-                try {
-                    const data = await getAllPosts();
-                    const allPosts = Array.isArray(data) ? data : (data?.posts || []);
-                    const currentUserId = user.iduser || user.id;
-
-                    // Filtrer les posts de l'utilisateur connecté
-                    const myPosts = allPosts.filter(p => {
-                        const authorId = p.iduser || p.auteur?.iduser || p.auteur?.id;
-                        return String(authorId) === String(currentUserId);
-                    });
-
-                    myPosts.sort((a, b) => new Date(b.createdAt || b.dateCreation) - new Date(a.createdAt || a.dateCreation));
-                    setUserPosts(myPosts);
-                } catch (error) {
-                    console.error("Error fetching user posts:", error);
-                    setUserPosts([]);
-                }
-            };
-
             fetchUserPosts();
         }
     }, [user]);
@@ -181,11 +183,11 @@ const Profile = () => {
         }
     };
 
+    const confirmRemoveAvatar = () => {
+        setShowDeleteAvatarModal(true);
+    };
+
     const handleRemoveAvatar = async () => {
-        // Custom confirmation dialog
-        const confirmDelete = window.confirm('Are you sure you want to delete your profile picture?');
-        if (!confirmDelete) return;
-        
         setLoading(true);
         
         try {
@@ -211,6 +213,7 @@ const Profile = () => {
         } finally {
             setLoading(false);
             setShowAvatarMenu(false);
+            setShowDeleteAvatarModal(false);
         }
     };
 
@@ -257,7 +260,7 @@ const Profile = () => {
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
     } : {
-        backgroundImage: "url('https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2029&auto=format&fit=crop')",
+        backgroundImage: `url(${defaultBanner})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
@@ -284,6 +287,21 @@ const Profile = () => {
         setIsModalOpen(true);
     };
 
+    const handlePostSaved = (savedPost) => {
+        // Mise à jour immédiate de l'interface (Optimistic UI)
+        if (savedPost && savedPost.idpost) {
+            setUserPosts(prev => {
+                const exists = prev.find(p => p.idpost === savedPost.idpost);
+                if (exists) {
+                    return prev.map(p => p.idpost === savedPost.idpost ? { ...p, ...savedPost } : p);
+                }
+                return [savedPost, ...prev];
+            });
+        }
+        // Rafraîchissement des données serveur pour être sûr
+        fetchUserPosts();
+    };
+
     const profileImageUrl = getProfileImage();
 
     return (
@@ -308,37 +326,9 @@ const Profile = () => {
                             gap: '10px',
                             maxWidth: '400px'
                         }}>
-                            {showNotification.type === 'success' ? '✅' : 
-                             showNotification.type === 'error' ? '❌' : 'ℹ️'}
+                            {showNotification.type === 'success' ? '' : 
+                             showNotification.type === 'error' ? '' : 'ℹ️'}
                             {showNotification.message}
-                        </div>
-                    )}
-
-                    {/* Loading indicator */}
-                    {loading && (
-                        <div style={{
-                            position: 'fixed',
-                            top: '20px',
-                            right: '20px',
-                            background: '#E334FE',
-                            color: 'white',
-                            padding: '10px 20px',
-                            borderRadius: '8px',
-                            zIndex: 2000,
-                            boxShadow: '0 4px 12px rgba(227, 52, 254, 0.3)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px'
-                        }}>
-                            <div style={{
-                                width: '16px',
-                                height: '16px',
-                                border: '2px solid rgba(255,255,255,0.3)',
-                                borderTop: '2px solid white',
-                                borderRadius: '50%',
-                                animation: 'spin 1s linear infinite'
-                            }}></div>
-                            Saving...
                         </div>
                     )}
 
@@ -537,7 +527,7 @@ const Profile = () => {
                                         </div>
                                     )}
                                     {profileImageUrl && (
-                                        <div className="dropdown-item delete" onClick={handleRemoveAvatar}>
+                                        <div className="dropdown-item delete" onClick={confirmRemoveAvatar}>
                                             <span style={{ marginRight: '10px', display: 'flex', alignItems: 'center' }}><Trash2 size={18} /></span>
                                             Remove Photo
                                         </div>
@@ -584,6 +574,7 @@ const Profile = () => {
                                         post={post}
                                         onPostDeleted={() => setUserPosts(prev => prev.filter(p => p.idpost !== post.idpost))}
                                         onEdit={handleEditPost}
+                                        showOptions={true}
                                     />
                                 ))
                             ) : (
@@ -597,9 +588,42 @@ const Profile = () => {
                         <CreatePostModal 
                             isOpen={isModalOpen} 
                             onClose={() => { setIsModalOpen(false); setEditingPost(null); }}
-                            onPostCreated={() => { /* Refresh logic if needed */ }}
+                            onPostCreated={handlePostSaved}
                             postToEdit={editingPost}
                         />
+                    )}
+
+                    {/* Delete Avatar Confirmation Modal */}
+                    {showDeleteAvatarModal && (
+                        <div style={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: 'rgba(0,0,0,0.5)',
+                            zIndex: 3000,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            <div style={{
+                                background: 'white',
+                                width: '90%',
+                                maxWidth: '350px',
+                                borderRadius: '12px',
+                                padding: '24px',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                textAlign: 'center'
+                            }}>
+                                <h3 style={{ margin: '0 0 10px 0', fontSize: '1.125rem', fontWeight: '700', color: '#111827' }}>Delete Profile Picture?</h3>
+                                <p style={{ color: '#667781', marginBottom: '20px', fontSize: '14px' }}>Are you sure you want to delete your profile picture?</p>
+                                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                                    <button onClick={() => setShowDeleteAvatarModal(false)} style={{ padding: '8px 16px', borderRadius: '20px', fontWeight: '500', cursor: 'pointer', background: 'none', border: '1px solid #ddd', color: '#111b21' }}>Cancel</button>
+                                    <button onClick={handleRemoveAvatar} style={{ padding: '8px 16px', borderRadius: '20px', fontWeight: '500', cursor: 'pointer', background: '#ea0038', border: 'none', color: 'white' }}>Delete</button>
+                                </div>
+                            </div>
+                        </div>
                     )}
 
                     {/* CSS Styles */}

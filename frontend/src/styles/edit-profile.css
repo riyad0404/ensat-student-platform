@@ -26,10 +26,7 @@
 /* AJOUTEZ ceci pour le titre DANS la carte */
 .edit-profile-title {
     font-size: 1.8rem;
-    background: linear-gradient(90deg, #E7A33E, #FF6B00);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #333333;
     font-weight: 600;
     margin-bottom: 30px;
     text-align: left;

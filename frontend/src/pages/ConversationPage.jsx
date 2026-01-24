@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Send, Trash2, ArrowLeft, Users, Pencil, CheckCircle, User, X, Check, Copy } from 'lucide-react';
+import { Send, Trash2, ArrowLeft, Users, Pencil, CheckCircle, User, X, Check, Copy, CheckCheck } from 'lucide-react';
 import conversationAPI from '../api/conversationAPI';
 import '../styles/conversations.css';
 import { useAuth } from '../contexts/AuthContext';
@@ -521,6 +521,22 @@ const ConversationPage = () => {
               const currentDate = new Date(msg.sentAt || msg.createdAt).toDateString();
               const prevDate = index > 0 ? new Date(messages[index - 1].sentAt || messages[index - 1].createdAt).toDateString() : null;
               const showDate = currentDate !== prevDate;
+              
+              // Logique améliorée pour le statut de lecture
+              let isRead = false;
+              if (msg.readBy && msg.readBy.length > 0) isRead = true;
+              else if (conversation?.members) {
+                 // Filtrer les autres membres actifs (qui n'ont pas quitté) et qui ne sont pas moi
+                 const otherMembers = conversation.members.filter(m => String(m.iduser) !== String(currentUserId));
+                 
+                 if (otherMembers.length > 0) {
+                    const msgTime = new Date(msg.sentAt || msg.createdAt).getTime();
+                    // Le message est lu si TOUS les autres membres ont un lastReadAt postérieur à la date du message
+                    // On ignore ceux qui ont quitté le groupe (leftAt) pour la logique de lecture si nécessaire, 
+                    // mais ici on veut savoir si les membres actuels l'ont lu.
+                    isRead = otherMembers.every(m => m.lastReadAt && new Date(m.lastReadAt).getTime() >= msgTime);
+                 }
+              }
 
               return (
                 <React.Fragment key={msg.id || msg.idmessage || index}>
@@ -555,6 +571,13 @@ const ConversationPage = () => {
                         <span className={`message-time ${isOwn ? 'user' : 'other'}`}>
                           {new Date(msg.sentAt || msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
+                        {isOwn && (
+                           isRead ? (
+                             <CheckCheck size={14} color="rgba(255, 255, 255, 0.8)" style={{ marginLeft: '4px' }} />
+                           ) : (
+                             <Check size={14} color="rgba(255, 255, 255, 0.8)" style={{ marginLeft: '4px' }} />
+                           )
+                        )}
                         {!isImageMessage(msg.content) && (
                           <div className="message-action-buttons">
                             <button className="message-action-btn" onClick={() => copyMessage(msg.content)} title="Copy message">
@@ -602,7 +625,7 @@ const ConversationPage = () => {
                 disabled={loading}
               />
               <button className="send-btn" onClick={handleSendMessage} disabled={!newMessage.trim() || loading}>
-                {editingMessageId ? <CheckCircle size={20} /> : <Send size={20} />}
+                {editingMessageId ? <CheckCircle size={24} /> : <Send size={24} />}
               </button>
             </div>
           </div>

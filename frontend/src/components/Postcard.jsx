@@ -8,13 +8,14 @@ import {
   getReactionCounts,
   getMyReactions,
   toggleReaction,
- 
+  deletePost,
+  updatePost
 } from "../api/postAPI";
 import { MoreVertical, Edit2, Trash2, Bookmark, BookmarkMinus } from 'lucide-react';
 
 import "../styles/PostCard.css";
 
-const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEdit }) => {
+const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEdit, showOptions = false }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isLiked, setIsLiked] = useState(false);
@@ -28,6 +29,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
   const [commentCount, setCommentCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Helper pour l'image de profil - Version Améliorée
   const getProfileImage = (userObj) => {
@@ -79,9 +81,14 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
   const isPostAnon = post.isAnonymat === true || post.isAnonymat === 'true';
   const currentUser = JSON.parse(localStorage.getItem('user'));
   
-  const isAuthor = currentUser && post && (
-    Number(currentUser.iduser) === Number(post.iduser) ||
-    Number(currentUser.iduser) === Number(post.auteur?.iduser)
+  // Utiliser user du contexte si localStorage est vide ou incomplet
+  const effectiveUser = user || currentUser;
+  const currentUserId = effectiveUser?.iduser || effectiveUser?.id;
+
+  const isAuthor = effectiveUser && post && (
+    String(currentUserId) === String(post.iduser) ||
+    (post.auteur && String(currentUserId) === String(post.auteur.iduser)) ||
+    (post.auteur && String(currentUserId) === String(post.auteur.id))
   );
 
   const loadPostData = async () => {
@@ -313,13 +320,17 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
   };
 
   const handleDelete = async () => {
-    if (window.confirm("Are you sure you want to delete this post?")) {
-      try {
-        await deletePost(post.idpost);
-        if (onPostDeleted) onPostDeleted();
-      } catch (error) {
-        console.error("Error deleting post:", error);
-      }
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await deletePost(post.idpost);
+      if (onPostDeleted) onPostDeleted();
+    } catch (error) {
+      console.error("Error deleting post:", error);
+    } finally {
+      setShowDeleteModal(false);
     }
   };
 
@@ -352,16 +363,13 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
             <p className="author-role">{isPostAnon ? "Student" : post.auteur?.niveau}</p>
           </div>
         </div>
-        {(isAuthor || isBookmark) && (
+        {showOptions && (
           <div className="post-menu" ref={menuRef}>
             <button 
               className="menu-btn" 
               onClick={() => setShowMenu(!showMenu)}
               title="Options"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" />
-              </svg>
               <MoreVertical size={20} />
             </button>
             {showMenu && (
@@ -715,6 +723,20 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="delete-modal-overlay">
+          <div className="delete-modal-content">
+            <h3>Delete Post?</h3>
+            <p>Are you sure you want to delete this post? This action cannot be undone.</p>
+            <div className="delete-modal-actions">
+              <button className="cancel-btn" onClick={() => setShowDeleteModal(false)} style={{background: 'none', border: '1px solid #ddd', color: '#111b21'}}>Cancel</button>
+              <button className="confirm-btn" onClick={confirmDelete} style={{background: '#ea0038', border: 'none', color: 'white'}}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

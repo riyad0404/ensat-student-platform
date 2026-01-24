@@ -22,6 +22,27 @@ const Sidebar = () => {
         setIsCollapsed(!isCollapsed);
     };
 
+    // Fonction pour déterminer si un onglet est actif
+    const isItemActive = (itemPath) => {
+        if (itemPath === '/') {
+            return location.pathname === '/';
+        }
+        // Gestion des sous-routes standards (ex: /library/ap1 active /library)
+        if (location.pathname.startsWith(itemPath)) {
+            return true;
+        }
+        // Cas spécial : les conversations
+        if (location.pathname.startsWith('/conversations')) {
+            if (itemPath === '/groups' && location.state?.type === 'group') {
+                return true;
+            }
+            if (itemPath === '/messages' && location.state?.type !== 'group') {
+                return true;
+            }
+        }
+        return false;
+    };
+
     return (
         <div className={`sidebar-container ${isCollapsed ? 'collapsed' : ''}`}>
             {/* Section logo avec bouton */}
@@ -45,7 +66,7 @@ const Sidebar = () => {
                     <Link
                         key={item.path}
                         to={item.path}
-                        className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
+                        className={`nav-item ${isItemActive(item.path) ? 'active' : ''}`}
                         title={isCollapsed ? item.label : ''}
                     >
                         <span className="material-icons">{item.icon}</span>

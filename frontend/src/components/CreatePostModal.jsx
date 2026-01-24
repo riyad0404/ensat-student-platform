@@ -99,9 +99,9 @@ const handleSubmit = async (e) => {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>{postToEdit ? 'Edit Post' : 'Create a post'}</h2>
-          <button className="close-btn" onClick={onClose}>×</button>
+        <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#333333', background: 'none', WebkitTextFillColor: 'initial' }}>{postToEdit ? 'Edit Post' : 'Create a post'}</h2>
+          <button className="close-btn" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '24px', color: '#666' }}>×</button>
         </div>
         
         <form onSubmit={handleSubmit}>
@@ -209,18 +209,36 @@ const handleSubmit = async (e) => {
             </div>
           </div>
           
-          <div className="modal-footer">
-            <button type="button" className="cancel-btn" onClick={onClose}>
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="submit-btn"
-              disabled={loading || (!content.trim() && !file)}
-            >
-              {loading ? (postToEdit ? 'Saving...' : 'Publishing...') : (postToEdit ? 'Save Changes' : 'Publish')}
-            </button>
-          </div>
+            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px' }}>
+                <button 
+                  type="button" 
+                  onClick={onClose}
+                  style={{
+                    height: '44px', borderRadius: '25px', background: 'transparent',
+                    border: '2px solid #E7A33E', color: '#E7A33E', fontWeight: '700',
+                    fontSize: '14px', padding: '0 30px', cursor: 'pointer', transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => { e.target.style.background = 'linear-gradient(90deg, #E7A33E, #FF6B00)'; e.target.style.color = 'white'; e.target.style.borderColor = 'transparent'; }}
+                  onMouseLeave={(e) => { e.target.style.background = 'transparent'; e.target.style.color = '#E7A33E'; e.target.style.borderColor = '#E7A33E'; }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={loading || (!content.trim() && !file)}
+                  style={{
+                    height: '44px', borderRadius: '25px', background: 'linear-gradient(90deg, #4a82fc, #0040D0)', 
+                    color: 'white', fontWeight: '700', fontSize: '14px', border: 'none', 
+                    padding: '0 30px', cursor: 'pointer', transition: 'all 0.3s ease',
+                    opacity: (loading || (!content.trim() && !file)) ? 0.7 : 1,
+                    cursor: (loading || (!content.trim() && !file)) ? 'not-allowed' : 'pointer'
+                  }}
+                  onMouseEnter={(e) => !(loading || (!content.trim() && !file)) && (e.target.style.transform = 'translateY(-1px)')}
+                  onMouseLeave={(e) => !(loading || (!content.trim() && !file)) && (e.target.style.transform = 'translateY(0)')}
+                >
+                  {loading ? (postToEdit ? 'Saving...' : 'Publishing...') : (postToEdit ? 'Save Changes' : 'Publish')}
+                </button>
+            </div>
         </form>
       </div>
     </div>

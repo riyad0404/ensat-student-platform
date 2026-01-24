@@ -64,7 +64,7 @@ const MessagesPage = () => {
       const conv = response.data || response
       const convId = getConvId(conv);
       if (convId) {
-        navigate(`/conversations/${convId}`);
+        navigate(`/conversations/${convId}`, { state: { type: 'direct' } });
       } else {
         alert("Erreur: Impossible de récupérer l'ID de la conversation.");
       }
@@ -189,7 +189,7 @@ const MessagesPage = () => {
           return (
           <div 
             key={convId}
-            onClick={() => navigate(`/conversations/${convId}`)}
+            onClick={() => navigate(`/conversations/${convId}`, { state: { type: 'direct' } })}
             style={{ 
               background: 'white',
               borderRadius: '20px',
@@ -212,9 +212,7 @@ const MessagesPage = () => {
             }}
           >
             {hasUnread && (
-              <div style={{ position: 'absolute', top: '15px', right: '15px', minWidth: '20px', height: '20px', background: '#FF6B00', borderRadius: '50%', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '11px', fontWeight: 'bold' }}>
-                1
-              </div>
+              <div style={{ position: 'absolute', top: '15px', right: '15px', width: '12px', height: '12px', background: '#25D366', borderRadius: '50%', border: '2px solid white' }} />
             )}
 
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>

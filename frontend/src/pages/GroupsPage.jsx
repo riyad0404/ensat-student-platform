@@ -222,7 +222,7 @@ const GroupsPage = () => {
           return (
           <div 
             key={groupId || index} 
-            onClick={() => groupId ? navigate(`/conversations/${groupId}`) : console.error("ID manquant pour le groupe", group)}
+            onClick={() => groupId ? navigate(`/conversations/${groupId}`, { state: { type: 'group' } }) : console.error("ID manquant pour le groupe", group)}
              style={{ 
                background: 'white',
                borderRadius: '20px',
@@ -245,9 +245,7 @@ const GroupsPage = () => {
              }}
            >
              {hasUnread && (
-               <div style={{ position: 'absolute', top: '15px', right: '15px', minWidth: '20px', height: '20px', background: '#FF6B00', borderRadius: '50%', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '11px', fontWeight: 'bold' }}>
-                 1
-               </div>
+               <div style={{ position: 'absolute', top: '15px', right: '15px', width: '12px', height: '12px', background: '#25D366', borderRadius: '50%', border: '2px solid white' }} />
              )}
  
              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
@@ -319,10 +317,7 @@ const GroupsPage = () => {
                 margin: 0, 
                 fontSize: '22px', 
                 fontWeight: '700',
-                background: 'linear-gradient(90deg, #4a82fc, #0040D0)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text'
+                color: '#333333'
               }}>Create New Group</h3>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
                 <X size={24} color="#0040D0" />
