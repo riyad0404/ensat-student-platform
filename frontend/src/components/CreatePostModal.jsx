@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { createPost } from '../api/postAPI';
+import { createPost, updatePost } from '../api/postAPI';
 import '../styles/CreatePostModal.css';
 
-const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
+const CreatePostModal = ({ isOpen, onClose, onPostCreated, postToEdit }) => {
   const [content, setContent] = useState('');
   const [file, setFile] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
@@ -12,15 +12,26 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
   const [isAnonymous, setIsAnonymous] = useState(false);
 
   useEffect(() => {
-    if (!isOpen) {
-      setContent('');
-      setFile(null);
-      setFilePreview(null);
-      setNiveau('GINF1');
-      setIsAnonymous(false);
+    if (isOpen) {
+      if (postToEdit) {
+        setContent(postToEdit.contenu || '');
+        setNiveau(postToEdit.niveau || 'GINF1');
+        setIsAnonymous(postToEdit.isAnonymat === true || postToEdit.isAnonymat === 'true');
+        // Note: Handling existing files for edit is complex, usually we just let them replace it
+        setFile(null);
+        setFilePreview(null);
+      } else {
+        setContent('');
+        setFile(null);
+        setFilePreview(null);
+        setNiveau('GINF1');
+        setIsAnonymous(false);
+      }
       setError('');
+    } else {
+      setContent('');
     }
-  }, [isOpen]);
+  }, [isOpen, postToEdit]);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -48,17 +59,23 @@ const handleSubmit = async (e) => {
   setError('');
 
   try {
-    const formData = new FormData();
-    formData.append('contenu', content.trim());
-    formData.append('isAnonymat', isAnonymous ? 'true' : 'false');
+    let response;
+    
+    if (postToEdit) {
+        // Update logic
+        response = await updatePost(postToEdit.idpost, { contenu: content.trim(), isAnonymat: isAnonymous });
+    } else {
+        // Create logic
+        const formData = new FormData();
+        formData.append('contenu', content.trim());
+        formData.append('isAnonymat', isAnonymous ? 'true' : 'false');
 
-    if (file) {
-      formData.append('file', file);
-      formData.append('niveau', niveau);
+        if (file) {
+          formData.append('file', file);
+          formData.append('niveau', niveau);
+        }
+        response = await createPost(formData);
     }
-
-    console.log('🔵 Envoi au backend...');
-    const response = await createPost(formData);
     
     console.log('🔍 Réponse complète du backend:', response);
     
@@ -83,7 +100,7 @@ const handleSubmit = async (e) => {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Create a post</h2>
+          <h2>{postToEdit ? 'Edit Post' : 'Create a post'}</h2>
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
         
@@ -201,7 +218,7 @@ const handleSubmit = async (e) => {
               className="submit-btn"
               disabled={loading || (!content.trim() && !file)}
             >
-              {loading ? 'Publishing...' : 'Publish'}
+              {loading ? (postToEdit ? 'Saving...' : 'Publishing...') : (postToEdit ? 'Save Changes' : 'Publish')}
             </button>
           </div>
         </form>

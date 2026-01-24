@@ -4,6 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import conversationAPI from '../api/conversationAPI';
 import '../styles/profile.css'; // On réutilise le même style
+import { getAllPosts } from '../api/postAPI';
+import PostCard from '../components/Postcard';
 
 const OtherUserProfile = () => {
     const { user: authUser, loading: authLoading } = useAuth();
@@ -11,6 +13,7 @@ const OtherUserProfile = () => {
     const { id } = useParams();
     
     const [user, setUser] = useState(null);
+    const [userPosts, setUserPosts] = useState([]);
     const [profileLoading, setProfileLoading] = useState(true);
     const [showImageModal, setShowImageModal] = useState(false);
 
@@ -26,6 +29,21 @@ const OtherUserProfile = () => {
             try {
                 const response = await axios.get(`http://localhost:5000/api/users/${id}`, { withCredentials: true });
                 setUser(response.data);
+
+                // Fetch user's posts
+                const data = await getAllPosts();
+                const allPosts = Array.isArray(data) ? data : (data?.posts || []);
+                
+                // Filtrer les posts de cet utilisateur
+                const userPostsRaw = allPosts.filter(p => {
+                    const authorId = p.iduser || p.auteur?.iduser || p.auteur?.id;
+                    return String(authorId) === String(id);
+                });
+
+                // FILTRE : Ne garder que les posts NON anonymes
+                const publicPosts = userPostsRaw.filter(p => p.isAnonymat !== true && p.isAnonymat !== 'true' && p.isAnonymat !== 1);
+                publicPosts.sort((a, b) => new Date(b.createdAt || b.dateCreation) - new Date(a.createdAt || a.dateCreation));
+                setUserPosts(publicPosts);
             } catch (error) {
                 console.error("Error fetching other user's profile:", error);
                 setUser(null);
@@ -77,25 +95,11 @@ const OtherUserProfile = () => {
         // 2. Sinon, utiliser la photo venant du backend
         profileImageUrl = user.photo;
     }
-
-    // Données fictives pour les publications, pour correspondre à la mise en page de Profile.jsx
-    const posts = [
-        {
-            id: 1,
-            username: fullName,
-            role: program,
-            content: `Welcome to ${fullName}'s profile!`,
-            tags: ['#ensat', '#student'],
-            likes: 0,
-            comments: 0,
-            shares: 0
-        }
-    ];
-
-    const bannerStyle = {
-        background: "url('https://cdn.pixabay.com/photo/2015/07/17/22/43/student-849825_1280.jpg')",
+ const bannerStyle = {
+        backgroundImage: "url('https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2029&auto=format&fit=crop')",
         backgroundSize: 'cover',
         backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
     };
 
     return (
@@ -154,19 +158,15 @@ const OtherUserProfile = () => {
                           onClick={() => startConversation(user.iduser)}
                           title="Send Message"
                           style={{
-                            background: 'white',
-                            border: '2px solid #E334FE',
-                            color: '#E334FE',
-                            fontSize: '20px' // Taille de l'icône
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#0040D0',
+                            fontSize: '24px'
                           }}
                           onMouseEnter={(e) => {
-                            e.currentTarget.style.background = '#E334FE';
-                            e.currentTarget.style.color = 'white';
                             e.currentTarget.style.transform = 'scale(1.1)';
                           }}
                           onMouseLeave={(e) => {
-                            e.currentTarget.style.background = 'white';
-                            e.currentTarget.style.color = '#E334FE';
                             e.currentTarget.style.transform = 'scale(1)';
                           }}
                         >
@@ -178,42 +178,14 @@ const OtherUserProfile = () => {
                 {/* Section des publications pour la cohérence visuelle */}
                 <div className="posts-section">
                     <div className="posts-title">Posts</div>
-                    {posts.length > 0 ? posts.map(post => (
-                        <div key={post.id} className="post">
-                            <div className="post-header">
-                                <div className="post-avatar">
-                                    {post.username.substring(0, 2)}
-                                </div>
-                                <div className="post-user">
-                                    <h4>{post.username}</h4>
-                                    <p>{post.role}</p>
-                                </div>
-                            </div>
-                            
-                            <p className="post-content">{post.content}</p>
-                            
-                            <div className="post-tags">
-                                {post.tags.map((tag, i) => (
-                                    <span key={i} className="tag">{tag}</span>
-                                ))}
-                            </div>
-                            
-                            <div className="post-stats">
-                                <div className="stat">
-                                    <span>❤️</span>
-                                    <span>{post.likes} Likes</span>
-                                </div>
-                                <div className="stat">
-                                    <span>💬</span>
-                                    <span>{post.comments} Comments</span>
-                                </div>
-                                <div className="stat">
-                                    <span>↪️</span>
-                                    <span>{post.shares} Share</span>
-                                </div>
-                            </div>
-                        </div>
-                    )) : (
+                    {userPosts.length > 0 ? (
+                        userPosts.map(post => (
+                            <PostCard 
+                                key={post.idpost} 
+                                post={post}
+                            />
+                        ))
+                    ) : (
                         <p style={{textAlign: 'center', color: '#666', padding: '20px'}}>This user has no posts yet.</p>
                     )}
                 </div>

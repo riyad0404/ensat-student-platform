@@ -473,21 +473,21 @@ const ConversationPage = () => {
               style={{ cursor: !isGroup && conversation.otherUser?.iduser ? 'pointer' : 'default' }}
             >
               <button onClick={() => navigate(-1)} className="conversation-header-back-btn">
-                <ArrowLeft size={20} color="#7c3aed" />
+                <ArrowLeft size={20} color="#6b7280" /> {/* Gris */}
               </button>
               
               <div className="conversation-header-avatar">
                 {headerImage ? (
                   <img src={headerImage} alt="Icon" />
                 ) : (
-                  isGroup ? <Users size={20} color="#7c3aed" /> : <User size={20} color="#7c3aed" />
+                  isGroup ? <Users size={20} color="#6b7280" /> : <User size={20} color="#6b7280" />
                 )}
               </div>
 
               <div>
                 <h2 className="conversation-title">{getConvName()}</h2>
                 <div className="conversation-status-container">
-                  <div className="conversation-status-dot" style={{backgroundColor: isOnline ? '#00A884' : '#7c3aed'}} />
+                  <div className="conversation-status-dot" style={{backgroundColor: isOnline ? '#25D366' : '#E7A33E'}} /> {/* Vert WhatsApp si en ligne */}
                   <p className="conversation-status">
                     {typingUsers.length > 0
                       ? <span className="typing">{typingUsers.map(u => u.name).join(', ')} is typing...</span>
@@ -508,7 +508,7 @@ const ConversationPage = () => {
             
             <div className="conversation-header-actions">
               <button onClick={() => setShowGroupInfo(true)}>
-                <Users size={20} color="#7c3aed" />
+                <Users size={20} color="#E7A33E" /> {/* Orange */}
               </button>
             </div>
           </div>
@@ -589,7 +589,7 @@ const ConversationPage = () => {
             <div className="input-wrapper">
               {editingMessageId && (
                 <button type="button" className="cancel-edit-btn" onClick={() => { setEditingMessageId(null); setNewMessage(''); }}>
-                  <X size={20} color="#7c3aed" />
+                  <X size={20} color="#6b7280" />
                 </button>
               )}
               <input

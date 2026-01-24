@@ -2,12 +2,18 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import '../styles/profile.css';
 import { useNavigate } from 'react-router-dom';
+import PostCard from '../components/Postcard';
+import { getAllPosts } from '../api/postAPI';
+import { Pencil, Trash2, Camera, Upload } from 'lucide-react';
 
 const Profile = () => {
     const { user, updateProfile } = useAuth();
     const navigate = useNavigate();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingPost, setEditingPost] = useState(null);
     
     const [localProfileImage, setLocalProfileImage] = useState(null);
+    const [userPosts, setUserPosts] = useState([]);
     const [bannerImage, setBannerImage] = useState('');
     const [showBannerMenu, setShowBannerMenu] = useState(false);
     const [showAvatarMenu, setShowAvatarMenu] = useState(false);
@@ -26,6 +32,29 @@ const Profile = () => {
             if (savedImage) {
                 setLocalProfileImage(savedImage);
             }
+
+            // Fetch user's posts (Correction: Utilisation de getAllPosts + filtre)
+            const fetchUserPosts = async () => {
+                try {
+                    const data = await getAllPosts();
+                    const allPosts = Array.isArray(data) ? data : (data?.posts || []);
+                    const currentUserId = user.iduser || user.id;
+
+                    // Filtrer les posts de l'utilisateur connecté
+                    const myPosts = allPosts.filter(p => {
+                        const authorId = p.iduser || p.auteur?.iduser || p.auteur?.id;
+                        return String(authorId) === String(currentUserId);
+                    });
+
+                    myPosts.sort((a, b) => new Date(b.createdAt || b.dateCreation) - new Date(a.createdAt || a.dateCreation));
+                    setUserPosts(myPosts);
+                } catch (error) {
+                    console.error("Error fetching user posts:", error);
+                    setUserPosts([]);
+                }
+            };
+
+            fetchUserPosts();
         }
     }, [user]);
     
@@ -35,19 +64,6 @@ const Profile = () => {
     
     const fullName = `${user.prenom || ''} ${user.nom || ''}`.trim();
     const program = user.niveau;
-    
-    const posts = [
-        {
-            id: 1,
-            username: 'X_AE_A-13',
-            role: 'Product Designer, slothUI',
-            content: 'Habitant morbi tristique senectus et netus et. Suspendisse sed nisi lacus sed viverra. Dolor morbi non arcu risus quis varius.',
-            tags: ['#amazing', '#great', '#lifetime', '#uiux', '#machinelearning'],
-            likes: 12,
-            comments: 25,
-            shares: 187
-        }
-    ];
 
     const convertToBase64 = (file) => {
         return new Promise((resolve, reject) => {
@@ -236,13 +252,15 @@ const Profile = () => {
     };
 
     const bannerStyle = bannerImage ? {
-        background: `url(${bannerImage})`,
+        backgroundImage: `url(${bannerImage})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
     } : {
-        background: "url('https://cdn.pixabay.com/photo/2015/07/17/22/43/student-849825_1280.jpg')",
+        backgroundImage: "url('https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=2029&auto=format&fit=crop')",
         backgroundSize: 'cover',
         backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
     };
 
     const handleClickOutside = (e) => {
@@ -260,6 +278,11 @@ const Profile = () => {
             document.removeEventListener('click', handleClickOutside);
         };
     }, []);
+
+    const handleEditPost = (post) => {
+        setEditingPost(post);
+        setIsModalOpen(true);
+    };
 
     const profileImageUrl = getProfileImage();
 
@@ -394,13 +417,15 @@ const Profile = () => {
                         <div className={`dropdown-menu ${showBannerMenu ? 'show' : ''}`} 
                              style={{ bottom: '70px', right: '20px' }}>
                             <div className="dropdown-item" onClick={() => !loading && bannerFileInputRef.current.click()}>
-                                <span style={{ marginRight: '10px' }}>📤</span>
-                                Edit banner
+                                <span style={{ marginRight: '10px', display: 'flex', alignItems: 'center' }}><Upload size={18} /></span>
+                                {bannerImage ? 'Change banner' : 'Add banner'}
                             </div>
-                            <div className="dropdown-item delete" onClick={handleRemoveBanner}>
-                                <span style={{ marginRight: '10px' }}>🗑️</span>
-                                Remove banner
-                            </div>
+                            {bannerImage && (
+                                <div className="dropdown-item delete" onClick={handleRemoveBanner}>
+                                    <span style={{ marginRight: '10px', display: 'flex', alignItems: 'center' }}><Trash2 size={18} /></span>
+                                    Remove banner
+                                </div>
+                            )}
                         </div>
                         
                         <input
@@ -513,8 +538,8 @@ const Profile = () => {
                                     )}
                                     {profileImageUrl && (
                                         <div className="dropdown-item delete" onClick={handleRemoveAvatar}>
-                                            <span style={{ marginRight: '10px' }}>🗑️</span>
-                                            Remove photo
+                                            <span style={{ marginRight: '10px', display: 'flex', alignItems: 'center' }}><Trash2 size={18} /></span>
+                                            Remove Photo
                                         </div>
                                     )}
                                 </div>
@@ -552,44 +577,30 @@ const Profile = () => {
                         {/* Posts */}
                         <div className="posts-section">
                             <div className="posts-title">Posts</div>
-                            {posts.map(post => (
-                                <div key={post.id} className="post">
-                                    <div className="post-header">
-                                        <div className="post-avatar">
-                                            {post.username.substring(0, 2)}
-                                        </div>
-                                        <div className="post-user">
-                                            <h4>{post.username}</h4>
-                                            <p>{post.role}</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <p className="post-content">{post.content}</p>
-                                    
-                                    <div className="post-tags">
-                                        {post.tags.map((tag, i) => (
-                                            <span key={i} className="tag">{tag}</span>
-                                        ))}
-                                    </div>
-                                    
-                                    <div className="post-stats">
-                                        <div className="stat">
-                                            <span>❤️</span>
-                                            <span>{post.likes} Likes</span>
-                                        </div>
-                                        <div className="stat">
-                                            <span>💬</span>
-                                            <span>{post.comments} Comments</span>
-                                        </div>
-                                        <div className="stat">
-                                            <span>↪️</span>
-                                            <span>{post.shares} Share</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+                            {userPosts.length > 0 ? (
+                                userPosts.map(post => (
+                                    <PostCard 
+                                        key={post.idpost} 
+                                        post={post}
+                                        onPostDeleted={() => setUserPosts(prev => prev.filter(p => p.idpost !== post.idpost))}
+                                        onEdit={handleEditPost}
+                                    />
+                                ))
+                            ) : (
+                                <p style={{textAlign: 'center', color: '#666', padding: '20px'}}>You have no posts yet.</p>
+                            )}
                         </div>
                     </div>
+
+                    {/* Modal pour créer/éditer un post */}
+                    {isModalOpen && (
+                        <CreatePostModal 
+                            isOpen={isModalOpen} 
+                            onClose={() => { setIsModalOpen(false); setEditingPost(null); }}
+                            onPostCreated={() => { /* Refresh logic if needed */ }}
+                            postToEdit={editingPost}
+                        />
+                    )}
 
                     {/* CSS Styles */}
                     <style jsx="true">{`

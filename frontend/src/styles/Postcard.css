@@ -1,10 +1,11 @@
 .post-card {
   width: 100%;
   background: white;
-  border-radius: 16px;
-  padding: 24px;
+  border-radius: 8px;
+  padding: 40px;
   margin-bottom: 24px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  border: 1px solid #e0e0e0;
 }
 
 /* --- EN-TÊTE DU POST --- */
@@ -43,6 +44,69 @@
   font-size: 13px;
   color: #6b7280;
   margin: 0;
+}
+
+.post-menu {
+  position: relative;
+  z-index: 5;
+}
+
+.menu-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  transition: background-color 0.2s;
+}
+
+.menu-btn:hover {
+  background-color: #f3f4f6;
+}
+
+/* --- MENU DÉROULANT (3 points) --- */
+.menu-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 10;
+  min-width: 150px;
+  overflow: hidden;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 16px;
+  text-align: left;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+  transition: background 0.2s;
+}
+
+.menu-item:hover {
+  background-color: #f3f4f6;
+}
+
+.menu-item.delete-item {
+  color: #ef4444;
+}
+
+.menu-item.delete-item:hover {
+  background-color: #fef2f2;
 }
 
 /* --- CONTENU DU POST --- */
@@ -105,11 +169,11 @@
 
 /* ✅ Style pour le bouton bookmark */
 .stat-btn.bookmarked {
-  color: #a855f7;
+  color: #FF6B00; /* Orange pour les favoris */
 }
 
 .stat-btn.bookmarked:hover {
-  color: #7c3aed;
+  color: #e65100;
 }
 
 /* --- SECTION COMMENTAIRE --- */
@@ -216,7 +280,7 @@
 }
 
 .post-file-link:hover {
-  color: #a855f7;
+  color: #0040D0;
   background-color: #f3f4f6;
 }
 
@@ -236,8 +300,8 @@
 .file-niveau-badge {
   display: inline-block;
   padding: 2px 8px;
-  background-color: #ddd6fe;
-  color: #7c3aed;
+  background-color: #E6F0FF;
+  color: #0040D0;
   font-size: 11px;
   font-weight: 600;
   border-radius: 4px;
@@ -246,7 +310,7 @@
 
 /* ✅ Bouton de téléchargement dans le post */
 .download-btn {
-  background: #a855f7;
+  background: #0040D0;
   border: none;
   padding: 8px;
   border-radius: 6px;
@@ -259,7 +323,7 @@
 }
 
 .download-btn:hover {
-  background: #7c3aed;
+  background: #002884;
   transform: scale(1.05);
 }
 
@@ -277,13 +341,13 @@
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
-  color: #a855f7;
+  color: #0040D0;
   border-radius: 4px;
 }
 
 .download-btn-small:hover {
   background: #f3f4f6;
-  color: #7c3aed;
+  color: #002884;
 }
 
 /* --- UPLOAD DE FICHIER DANS COMMENTAIRE --- */
@@ -388,7 +452,7 @@
 
 .comment-file-link:hover {
   background-color: #f9fafb;
-  border-color: #a855f7;
+  border-color: #0040D0;
 }
 
 .file-name-link {

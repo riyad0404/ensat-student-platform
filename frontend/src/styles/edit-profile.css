@@ -1,22 +1,18 @@
 .edit-profile-page {
     width: 100%;
     min-height: 100vh;
-    background: #f5f5f5;
+    background: #ffffff;
     display: flex;
     flex-direction: column;
-    padding-top: 350px;
-    margin-left: -32px; /* Même correction que profile */
-    width: calc(100% + 60px); 
+    padding: 20px 20px;
+    align-items: center;
 }
 
 .edit-profile-container {
-    max-width: 1500px;
+    max-width: 800px;
     width: 100%;
     margin: 0 auto;
-    padding: 0 20px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
+    padding: 0;
 }
 
 .edit-profile-card {
@@ -30,7 +26,10 @@
 /* AJOUTEZ ceci pour le titre DANS la carte */
 .edit-profile-title {
     font-size: 1.8rem;
-    color: #A6048E;
+    background: linear-gradient(90deg, #E7A33E, #FF6B00);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     font-weight: 600;
     margin-bottom: 30px;
     text-align: left;
@@ -96,7 +95,7 @@
 }
 
 /* Style des boutons comme login/register */
-.cancel-btn, .save-btn {
+.edit-profile-card .cancel-btn, .edit-profile-card .save-btn {
     height: 44px;
     border-radius: 25px;
     font-size: 14px;
@@ -110,30 +109,30 @@
 }
 
 /* Bouton Cancel - style secondaire comme dans login */
-.cancel-btn {
+.edit-profile-card .cancel-btn {
     background: transparent;
-    border: 2px solid #E334FE;
-    color: #E334FE;
+    border: 2px solid #E7A33E;
+    color: #E7A33E;
 }
 
-.cancel-btn:hover:not(:disabled) {
-    background: linear-gradient(90deg, #E334FE, #A6048E);
+.edit-profile-card .cancel-btn:hover:not(:disabled) {
+    background: linear-gradient(90deg, #E7A33E, #FF6B00);
     color: white;
     border-color: transparent;
     transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(227, 52, 254, 0.25);
+    box-shadow: 0 6px 18px rgba(231, 163, 62, 0.25);
 }
 
 /* Bouton Save - style primaire comme dans login */
-.save-btn {
-    background: linear-gradient(90deg, #E334FE, #A6048E);
+.edit-profile-card .save-btn {
+    background: linear-gradient(90deg, #4a82fc, #0040D0);
     color: white;
     border: none;
 }
 
-.save-btn:hover:not(:disabled) {
+.edit-profile-card .save-btn:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(227, 52, 254, 0.25);
+    box-shadow: 0 6px 18px rgba(0, 64, 208, 0.25);
 }
 
 @media (max-width: 768px) {
@@ -202,7 +201,7 @@
     padding: 10px 15px;
    background: #f8f9fa;
     border-radius: 6px;
-    border-left: 3px solid #E334FE;
+    border-left: 3px solid #0040D0;
 }
 
 .edit-info p {
@@ -282,4 +281,3 @@ button:disabled {
         margin-bottom: 0;
     }
 }
-

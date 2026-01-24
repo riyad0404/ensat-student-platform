@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import '../styles/edit-profile.css';
-import { FiEye, FiEyeOff, FiCamera } from 'react-icons/fi'; // ⚠️ IMPORTEZ LES ICÔNES
+import { FiEye, FiEyeOff } from 'react-icons/fi'; // ⚠️ IMPORTEZ LES ICÔNES
 
 const EditProfile = () => {
     const { user, updateProfile } = useAuth();
@@ -19,9 +19,6 @@ const EditProfile = () => {
         confirmPassword: ''
     });
 
-    const [selectedPhoto, setSelectedPhoto] = useState(null);
-    const [photoPreview, setPhotoPreview] = useState(user.photo || null);
-    const fileInputRef = useRef(null);
 
     const [passwordError, setPasswordError] = useState('');
     const [message, setMessage] = useState('');
@@ -62,26 +59,6 @@ const EditProfile = () => {
     // Effacer le message quand l'utilisateur tape
     if (message) setMessage('');
 };
-
-    // Gestionnaire pour la sélection de photo
-    const handlePhotoChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setSelectedPhoto(file);
-            const reader = new FileReader();
-            reader.onload = (e) => setPhotoPreview(e.target.result);
-            reader.readAsDataURL(file);
-        }
-    };
-
-    // Gestionnaire pour supprimer la photo
-    const handleRemovePhoto = () => {
-        setSelectedPhoto(null);
-        setPhotoPreview(null);
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-        }
-    };
 
 const handleSubmit = async (e) => {
     e.preventDefault();
@@ -133,11 +110,6 @@ const handleSubmit = async (e) => {
         if (formData.level !== user.niveau) dataToSend.niveau = formData.level;
         if (formData.about !== user.bio) dataToSend.bio = formData.about;
         if (formData.email !== user.email) dataToSend.email = formData.email;
-
-        // Vérifier si la photo a changé
-        if (photoPreview !== user.photo) {
-            dataToSend.photo = photoPreview; // Envoyer l'image en base64
-        }
 
         // ⚠️ CORRECTION : Vérifier d'abord les changements sur les autres champs
         const hasProfileChanges = Object.keys(dataToSend).length > 0;
@@ -298,55 +270,6 @@ const handleSubmit = async (e) => {
                                 placeholder="Enter Your email"
                                 disabled={loading}
                             />
-                        </div>
-
-                        {/* Photo Upload Section */}
-                        <div className="photo-section">
-                            <h3>Profile Picture</h3>
-                            <div className="photo-upload-container">
-                                <div className="current-photo">
-                                    {photoPreview ? (
-                                        <img
-                                            src={photoPreview}
-                                            alt="Profile Preview"
-                                            className="photo-preview"
-                                        />
-                                    ) : (
-                                        <div className="photo-placeholder">
-                                            <FiCamera size={40} />
-                                            <p>No photo selected</p>
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="photo-controls">
-                                    <input
-                                        type="file"
-                                        ref={fileInputRef}
-                                        onChange={handlePhotoChange}
-                                        accept="image/*"
-                                        style={{ display: 'none' }}
-                                        disabled={loading}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="photo-btn"
-                                        disabled={loading}
-                                    >
-                                        <FiCamera /> Choose Photo
-                                    </button>
-                                    {photoPreview && (
-                                        <button
-                                            type="button"
-                                            onClick={handleRemovePhoto}
-                                            className="remove-photo-btn"
-                                            disabled={loading}
-                                        >
-                                            Remove Photo
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
                         </div>
 
                         {/* Section pour changer le mot de passe */}
