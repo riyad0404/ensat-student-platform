@@ -18,7 +18,11 @@ import GroupsPage from './pages/GroupsPage';
 import ConversationPage from './pages/ConversationPage';
 import OtherUserProfile from './pages/OtherUserProfile'; 
 import HomePage from './pages/homepage';
-import Bookmarks from './pages/Bookmarks';
+import Bookmarks from './pages/BookMarks';
+import Library from './pages/Library';
+import LibraryDocuments from './pages/LibraryDocuments';
+
+
 
 // HOC pour protéger les routes
 const RequireAuth = ({ children }) => {
@@ -120,6 +124,8 @@ function App() {
           <Route path="/groupes" element={<Navigate to="/groups" replace />} />
           <Route path="/conversations/:id" element={<ConversationPage />} />
           <Route path="/bookmarks" element={<Bookmarks />} />
+          <Route path="/library" element={<Library />} />
+          <Route path="/library/:niveau" element={<LibraryDocuments />} />
         </Route>
         
 

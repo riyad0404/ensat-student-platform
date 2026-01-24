@@ -8,8 +8,7 @@ import {
   getReactionCounts,
   getMyReactions,
   toggleReaction,
-  deletePost,
-  updatePost
+ 
 } from "../api/postAPI";
 import { MoreVertical, Edit2, Trash2, Bookmark, BookmarkMinus } from 'lucide-react';
 
