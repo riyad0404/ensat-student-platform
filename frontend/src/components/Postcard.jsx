@@ -8,8 +8,7 @@ import {
   getReactionCounts,
   getMyReactions,
   toggleReaction,
-  deletePost,
-  updatePost
+ 
 } from "../api/postAPI";
 import "../styles/PostCard.css";
 
