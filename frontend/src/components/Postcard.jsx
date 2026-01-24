@@ -8,11 +8,14 @@ import {
   getReactionCounts,
   getMyReactions,
   toggleReaction,
- 
+  deletePost,
+  updatePost
 } from "../api/postAPI";
+import { MoreVertical, Edit2, Trash2, Bookmark, BookmarkMinus } from 'lucide-react';
+
 import "../styles/PostCard.css";
 
-const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false }) => {
+const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEdit, showOptions = false }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isLiked, setIsLiked] = useState(false);
@@ -26,6 +29,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false }) =>
   const [commentCount, setCommentCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Helper pour l'image de profil - Version Améliorée
   const getProfileImage = (userObj) => {
@@ -77,9 +81,14 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false }) =>
   const isPostAnon = post.isAnonymat === true || post.isAnonymat === 'true';
   const currentUser = JSON.parse(localStorage.getItem('user'));
   
-  const isAuthor = currentUser && post && (
-    Number(currentUser.iduser) === Number(post.iduser) ||
-    Number(currentUser.iduser) === Number(post.auteur?.iduser)
+  // Utiliser user du contexte si localStorage est vide ou incomplet
+  const effectiveUser = user || currentUser;
+  const currentUserId = effectiveUser?.iduser || effectiveUser?.id;
+
+  const isAuthor = effectiveUser && post && (
+    String(currentUserId) === String(post.iduser) ||
+    (post.auteur && String(currentUserId) === String(post.auteur.iduser)) ||
+    (post.auteur && String(currentUserId) === String(post.auteur.id))
   );
 
   const loadPostData = async () => {
@@ -198,6 +207,15 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false }) =>
 
       const newComment = await createComment(post.idpost, formData);
       
+      // 🔔 Notification : Informer l'auteur du post (si ce n'est pas moi)
+      if (!isAuthor && newComment && newComment.idcomment) {
+        try {
+          await notificationAPI.notifyComment(post.idpost, newComment.idcomment);
+        } catch (err) {
+          console.error("Failed to send comment notification", err);
+        }
+      }
+
       // Recharger les commentaires pour être sûr d'avoir la dernière version
       await loadPostData();
       if (onPostUpdated) onPostUpdated(); // Notifier le parent
@@ -222,6 +240,16 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false }) =>
       setIsLiked(newStatus);
       setLikeCount(prev => newStatus ? prev + 1 : prev - 1);
       await toggleReaction(post.idpost, 'LIKE');
+      
+      // 🔔 Notification : Informer l'auteur du post (si ce n'est pas moi et que c'est un like)
+      if (newStatus && !isAuthor) {
+        try {
+          await notificationAPI.notifyLike(post.idpost, 'LIKE');
+        } catch (err) {
+          console.error("Failed to send like notification", err);
+        }
+      }
+
       // Recharger pour confirmer l'état serveur
       loadPostData();
     } catch (error) {
@@ -291,6 +319,21 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false }) =>
     }
   };
 
+  const handleDelete = async () => {
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    try {
+      await deletePost(post.idpost);
+      if (onPostDeleted) onPostDeleted();
+    } catch (error) {
+      console.error("Error deleting post:", error);
+    } finally {
+      setShowDeleteModal(false);
+    }
+  };
+
   const postDoc = post.documents?.[0] || post.document || null;
 
   // Gestion de l'avatar auteur
@@ -320,33 +363,32 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false }) =>
             <p className="author-role">{isPostAnon ? "Student" : post.auteur?.niveau}</p>
           </div>
         </div>
-        {isBookmark && (
+        {showOptions && (
           <div className="post-menu" ref={menuRef}>
             <button 
               className="menu-btn" 
               onClick={() => setShowMenu(!showMenu)}
               title="Options"
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="1"></circle>
-                <circle cx="12" cy="5" r="1"></circle>
-                <circle cx="12" cy="19" r="1"></circle>
-              </svg>
+              <MoreVertical size={20} />
             </button>
             {showMenu && (
               <div className="menu-dropdown">
-                <button 
-                  className="menu-item delete-item"
-                  onClick={handleDeletePost}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="3 6 5 6 21 6"></polyline>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    <line x1="10" y1="11" x2="10" y2="17"></line>
-                    <line x1="14" y1="11" x2="14" y2="17"></line>
-                  </svg>
-                  Remove from bookmarks
-                </button>
+                {isAuthor && (
+                  <>
+                    <button className="menu-item" onClick={() => { setShowMenu(false); if(onEdit) onEdit(post); }}>
+                      <Edit2 size={16} /> Edit
+                    </button>
+                    <button className="menu-item delete-item" onClick={handleDelete}>
+                      <Trash2 size={16} /> Delete
+                    </button>
+                  </>
+                )}
+                {isBookmark && (
+                  <button className="menu-item delete-item" onClick={handleDeletePost}>
+                    <BookmarkMinus size={16} /> Remove bookmark
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -433,7 +475,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false }) =>
           onClick={handleBookmark}
           title={isBookmarked ? "Retirer des favoris" : "Ajouter aux favoris"}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill={isBookmarked ? "#a855f7" : "none"} stroke={isBookmarked ? "#a855f7" : "currentColor"} strokeWidth="2">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill={isBookmarked ? "#FF6B00" : "none"} stroke={isBookmarked ? "#FF6B00" : "currentColor"} strokeWidth="2">
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
           </svg>
           <span>{isBookmarked ? 'Saved' : 'Save'}</span>
@@ -462,7 +504,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false }) =>
               className={`comment-icon-btn anon-toggle ${isCommentAnon ? 'active' : ''}`}
               title={isCommentAnon ? "Disable anonymous" : "Comment anonymously"}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={isCommentAnon ? "white" : "#d946ef"} strokeWidth="2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={isCommentAnon ? "white" : "#0040D0"} strokeWidth="2">
                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                 <circle cx="12" cy="7" r="4"></circle>
               </svg>
@@ -475,7 +517,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false }) =>
                 style={{display: 'none'}}
                 accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.jpg,.jpeg,.png"
               />
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d946ef" strokeWidth="2">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0040D0" strokeWidth="2">
                 <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
               </svg>
             </label>
@@ -486,7 +528,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false }) =>
               disabled={(!commentText.trim() && !commentFile) || loading}
             >
               {loading ? (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d946ef" strokeWidth="2">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0040D0" strokeWidth="2">
                   <circle cx="12" cy="12" r="10" opacity="0.3"/>
                   <path d="M12 2 A10 10 0 0 1 22 12" strokeLinecap="round">
                     <animateTransform
@@ -500,7 +542,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false }) =>
                   </path>
                 </svg>
               ) : (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#d946ef" strokeWidth="2">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0040D0" strokeWidth="2">
                   <line x1="22" y1="2" x2="11" y2="13"></line>
                   <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                 </svg>
@@ -511,7 +553,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false }) =>
           {commentFile && (
             <div className="file-selected-container">
               <div className="file-info">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d946ef" strokeWidth="2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0040D0" strokeWidth="2">
                   <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
                   <polyline points="13 2 13 9 20 9"></polyline>
                 </svg>
@@ -681,6 +723,20 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false }) =>
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="delete-modal-overlay">
+          <div className="delete-modal-content">
+            <h3>Delete Post?</h3>
+            <p>Are you sure you want to delete this post? This action cannot be undone.</p>
+            <div className="delete-modal-actions">
+              <button className="cancel-btn" onClick={() => setShowDeleteModal(false)} style={{background: 'none', border: '1px solid #ddd', color: '#111b21'}}>Cancel</button>
+              <button className="confirm-btn" onClick={confirmDelete} style={{background: '#ea0038', border: 'none', color: 'white'}}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

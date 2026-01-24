@@ -17,6 +17,7 @@ import {
   Trash2,
   Menu,
   X,
+  CheckCheck,
 } from "lucide-react"
 
 const API_BASE_URL = "http://localhost:5000/api/chat"
@@ -35,12 +36,12 @@ const styles = {
     right: 0,
     bottom: 0,
     backgroundImage:
-      "radial-gradient(circle at 20% 50%, rgba(227, 52, 254, 0.03) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(227, 52, 254, 0.02) 0%, transparent 50%)",
+      "radial-gradient(circle at 20% 50%, rgba(0, 64, 208, 0.03) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(0, 64, 208, 0.02) 0%, transparent 50%)",
     pointerEvents: "none",
   },
   sidebar: {
-    position: "fixed",
-    left: "320px", // global sidebar width
+    position: "absolute",
+    left: 0,
     top: 0,
     bottom: 0,
     width: "320px",
@@ -58,20 +59,20 @@ const styles = {
   sidebarHeader: {
     padding: "1.5rem 1rem",
      paddingTop: "1.75rem",
-    borderBottom: "1px solid rgba(227, 52, 254, 0.08)",
-    background: "linear-gradient(135deg, rgba(227, 52, 254, 0.02) 0%, rgba(255, 255, 255, 0) 100%)",
+    borderBottom: "1px solid rgba(0, 64, 208, 0.08)",
+    background: "linear-gradient(135deg, rgba(0, 64, 208, 0.02) 0%, rgba(255, 255, 255, 0) 100%)",
   },
   sidebarTitle: {
     fontSize: "1.25rem",
     fontWeight: "600",
-    color: "#E334FE",
+    color: "#333333",
     marginBottom: "1rem",
     textAlign: "center",
   },
   newConvBtn: {
     width: "100%",
     padding: "0.875rem 1rem",
-    background: "#6366f1",
+    background: "linear-gradient(90deg, #4a82fc, #0040D0)",
     color: "white",
     border: "none",
     borderRadius: "0.875rem",
@@ -82,7 +83,7 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     gap: "0.5rem",
-    boxShadow: "0 4px 12px rgba(99, 102, 241, 0.2)", 
+    boxShadow: "0 4px 12px rgba(0, 64, 208, 0.2)", 
     transition: "all 0.3s",
   },
   conversationsList: {
@@ -93,7 +94,7 @@ const styles = {
   conversationItem: {
     padding: "1rem",
     marginBottom: "0.5rem",
-    background: "rgba(227, 52, 254, 0.04)",
+    background: "rgba(0, 64, 208, 0.04)",
     borderRadius: "0.75rem",
     cursor: "pointer",
     transition: "all 0.3s",
@@ -103,8 +104,8 @@ const styles = {
     gap: "0.75rem",
   },
   conversationItemActive: {
-    background: "rgba(227, 52, 254, 0.08)",
-    borderLeft: "4px solid #E334FE",
+    background: "rgba(0, 64, 208, 0.08)",
+    borderLeft: "4px solid #0040D0",
   },
   conversationInfo: {
     flex: 1,
@@ -136,15 +137,15 @@ const styles = {
     transition: "all 0.2s",
   },
   toggleSidebarBtn: {
-    position: "fixed",
+    position: "absolute",
     left: "1rem",
     top: "1rem",
-    width: "2.5rem",
-    height: "2.5rem",
-    borderRadius: "0.75rem",
+    width: "2rem",
+    height: "2rem",
+    borderRadius: "0.5rem",
     background: "rgba(255, 255, 255, 0.98)",
     backdropFilter: "blur(10px)",
-    border: "1px solid rgba(227, 52, 254, 0.12)",
+    border: "1px solid rgba(0, 64, 208, 0.12)",
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
@@ -154,7 +155,7 @@ const styles = {
     transition: "all 0.3s",
   },
   mainContent: {
-    marginLeft: "640px", // global sidebar + chatbot sidebar
+    marginLeft: "320px",
     transition: "margin-left 0.3s ease",
     display: "flex",
     flexDirection: "column",
@@ -169,7 +170,7 @@ const styles = {
     color: "#4a5568",
     padding: "1.5rem 1rem",
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.03)",
-    borderBottom: "1px solid rgba(227, 52, 254, 0.06)",
+    borderBottom: "1px solid rgba(0, 64, 208, 0.06)",
     position: "relative",
     zIndex: 10,
   },
@@ -188,20 +189,20 @@ const styles = {
   logoCircle: {
     width: "3.5rem",
     height: "3.5rem",
-    background: "linear-gradient(90deg, #E334FE, #A6048E)",
+    background: "linear-gradient(90deg, #0040D0, #0055FF)",
     borderRadius: "1rem",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    boxShadow: "0 4px 16px rgba(227, 52, 254, 0.15)",
+    boxShadow: "0 4px 16px rgba(0, 64, 208, 0.15)",
   },
   title: {
     fontSize: "1.5rem",
     fontWeight: "600",
     margin: 0,
-    background: "linear-gradient(90deg, #E334FE, #A6048E)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
+    color: "#333333",
+    background: "none",
+    WebkitTextFillColor: "initial",
     backgroundClip: "text",
   },
   statusContainer: {
@@ -212,7 +213,7 @@ const styles = {
   statusDot: {
     width: "8px",
     height: "8px",
-    backgroundColor: "#E334FE",
+    backgroundColor: "#25D366",
     borderRadius: "50%",
     animation: "pulse 2s infinite",
   },
@@ -250,12 +251,12 @@ const styles = {
   botAvatar: {
     width: "2.5rem",
     height: "2.5rem",
-    background: "#6366f1",
+    background: "#0040D0",
     borderRadius: "0.75rem",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    boxShadow: "0 4px 12px rgba(99, 102, 241, 0.15)",
+    boxShadow: "0 4px 12px rgba(0, 64, 208, 0.15)",
   },
   userAvatar: {
     width: "2.5rem",
@@ -267,7 +268,7 @@ const styles = {
     justifyContent: "center",
     boxShadow: "0 4px 12px rgba(0, 0, 0, 0.06)",
     marginLeft: "0.75rem",
-    color: "#E334FE",
+    color: "#0040D0",
   },
   messageBubble: {
     borderRadius: "1.25rem",
@@ -278,13 +279,13 @@ const styles = {
     border: "1px solid rgba(255, 255, 255, 0.5)",
   },
   messageBubbleUser: {
-    background: "linear-gradient(90deg, #E334FE, #A6048E)",
+    background: "linear-gradient(90deg, #4a82fc, #0040D0)",
     color: "white",
   },
   messageBubbleBot: {
     backgroundColor: "rgba(255, 255, 255, 0.99)",
-    color: "#2d3748",
-    borderColor: "rgba(227, 52, 254, 0.08)",
+    color: "#1f2937",
+    borderColor: "rgba(0, 64, 208, 0.08)",
   },
   messageText: {
     fontSize: "0.9375rem",
@@ -315,7 +316,7 @@ const styles = {
   },
   actionBtn: {
     padding: "0.5rem",
-    backgroundColor: "rgba(227, 52, 254, 0.06)",
+    backgroundColor: "rgba(0, 64, 208, 0.06)",
     border: "none",
     cursor: "pointer",
     borderRadius: "0.5rem",
@@ -332,21 +333,24 @@ const styles = {
   dot: {
     width: "0.625rem",
     height: "0.625rem",
-    background: "#E334FE",
+    background: "#0040D0",
     borderRadius: "50%",
     animation: "bounce 1s infinite",
   },
   inputArea: {
     background: "#f9f8fa", // Changed from white to match the main background
     backdropFilter: "blur(20px)",
-    borderTop: "1px solid rgba(227, 52, 254, 0.06)",
-    padding: "1.5rem 1rem",
+    borderTop: "1px solid rgba(0, 64, 208, 0.06)",
+    padding: "0.75rem 1rem",
+    paddingRight: "6rem",
     boxShadow: "0 -2px 8px rgba(0, 0, 0, 0.03)",
     zIndex: 10,
   },
   inputContent: {
     maxWidth: "56rem",
     margin: "0 auto",
+    width: "100%",
+    position: "relative", // Pour le contexte d'empilement
   },
   quickButtons: {
     display: "flex",
@@ -356,9 +360,9 @@ const styles = {
   },
   quickBtn: {
     fontSize: "0.875rem",
-    color: "#E334FE",
-    background: "rgba(227, 52, 254, 0.06)",
-    border: "1px solid rgba(227, 52, 254, 0.12)",
+    color: "#0040D0",
+    background: "rgba(0, 64, 208, 0.06)",
+    border: "1px solid rgba(0, 64, 208, 0.12)",
     cursor: "pointer",
     fontWeight: "500",
     padding: "0.625rem 1rem",
@@ -375,7 +379,7 @@ const styles = {
     backgroundColor: "white",
     borderRadius: "1.25rem",
     padding: "0.75rem 1rem",
-    border: "2px solid rgba(227, 52, 254, 0.12)",
+    border: "2px solid rgba(0, 64, 208, 0.12)",
     transition: "all 0.3s",
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
   },
@@ -389,8 +393,8 @@ const styles = {
     fontSize: "0.9375rem",
   },
   sendBtn: {
-    background:  "#6366f1",
-    color: "white",
+    background: "transparent",
+    color: "#0040D0",
     borderRadius: "0.875rem",
     padding: "0.875rem",
     border: "none",
@@ -399,7 +403,8 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    boxShadow: "0 4px 12px rgba(99, 102, 241, 0.15)", 
+    boxShadow: "none",
+    zIndex: 5, // S'assurer qu'il est au-dessus
   },
   sendBtnDisabled: {
     opacity: 0.5,
@@ -409,14 +414,14 @@ const styles = {
     position: "fixed",
     top: "6rem",
     right: "1.5rem",
-    background: "linear-gradient(90deg, #E334FE, #A6048E)",
+    background: "linear-gradient(90deg, #4a82fc, #0040D0)",
     color: "white",
     padding: "1rem 1.5rem",
     borderRadius: "0.875rem",
     display: "flex",
     alignItems: "center",
     gap: "0.75rem",
-    boxShadow: "0 8px 24px rgba(227, 52, 254, 0.2)",
+    boxShadow: "0 8px 24px rgba(0, 64, 208, 0.2)",
     zIndex: 1000,
     animation: "slideInRight 0.3s ease-out",
     fontWeight: "500",
@@ -428,7 +433,7 @@ const styles = {
     width: "1.75rem",
     height: "1.75rem",
     borderRadius: "0.5rem",
-    background: "#E334FE",
+    background: "#0040D0",
     color: "white",
     fontWeight: "bold",
     fontSize: "0.875rem",
@@ -440,16 +445,16 @@ const styles = {
     alignItems: "flex-start",
     padding: "1rem",
     marginBottom: "0.75rem",
-    background: "rgba(227, 52, 254, 0.04)",
+    background: "rgba(0, 64, 208, 0.04)",
     borderRadius: "0.75rem",
-    borderLeft: "3px solid #E334FE",
+    borderLeft: "3px solid #0040D0",
     transition: "all 0.2s",
   },
   bulletPoint: {
     width: "0.5rem",
     height: "0.5rem",
     borderRadius: "50%",
-    background: "#E334FE",
+    background: "#0040D0",
     marginRight: "0.75rem",
     marginTop: "0.5rem",
     flexShrink: 0,
@@ -509,12 +514,12 @@ const RichContent = ({ content }) => {
 
     processed = processed.replace(
       /\[(.+?)\]$$(.+?)$$/g,
-      '<a href="$2" style="color: #E334FE; text-decoration: underline; font-weight: 500;" target="_blank" rel="noopener noreferrer">$1 ↗</a>',
+      '<a href="$2" style="color: #0040D0; text-decoration: underline; font-weight: 500;" target="_blank" rel="noopener noreferrer">$1 ↗</a>',
     )
 
     processed = processed.replace(
       /`(.+?)`/g,
-      '<code style="background-color: rgba(227, 52, 254, 0.1); padding: 0.125rem 0.5rem; border-radius: 0.375rem; font-family: monospace; color: #E334FE;">$1</code>',
+      '<code style="background-color: rgba(0, 64, 208, 0.1); padding: 0.125rem 0.5rem; border-radius: 0.375rem; font-family: monospace; color: #0040D0;">$1</code>',
     )
 
     return <span dangerouslySetInnerHTML={{ __html: processed }} />
@@ -802,7 +807,7 @@ export default function ChatbotInterface() {
         onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
         onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
       >
-        {sidebarOpen ? <X size={20} color="#E334FE" /> : <Menu size={20} color="#E334FE" />}
+        {sidebarOpen ? <X size={18} color="#0040D0" /> : <Menu size={18} color="#0040D0" />}
       </button>
 
       <div style={{ ...styles.sidebar, ...(sidebarOpen ? {} : styles.sidebarHidden) }}>
@@ -833,10 +838,10 @@ export default function ChatbotInterface() {
                   ...(currentConversationId === conv.idConvChat ? styles.conversationItemActive : {}),
                 }}
                 onClick={() => loadConversation(conv.idConvChat)}
-                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.08)")}
+                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(0, 64, 208, 0.08)")}
                 onMouseOut={(e) =>
                   (e.currentTarget.style.backgroundColor =
-                    currentConversationId === conv.idConvChat ? "rgba(227, 52, 254, 0.08)" : "rgba(227, 52, 254, 0.04)")
+                    currentConversationId === conv.idConvChat ? "rgba(0, 64, 208, 0.08)" : "rgba(0, 64, 208, 0.04)")
                 }
               >
                 <div style={styles.conversationInfo}>
@@ -869,7 +874,7 @@ export default function ChatbotInterface() {
                 <h1 style={styles.title}>DocentraBot</h1>
                 <div style={styles.statusContainer}>
                   <div style={styles.statusDot} />
-                  <p style={styles.status}>En ligne</p>
+                  <p style={styles.status}>Online</p>
                 </div>
               </div>
             </div>
@@ -914,32 +919,35 @@ export default function ChatbotInterface() {
                         <Clock size={12} />
                         {message.time}
                       </span>
+                      {message.type === "user" && (
+                        <CheckCheck size={14} color="#E7A33E" style={{ marginLeft: '4px' }} />
+                      )}
                       {message.type === "bot" && (
                         <div style={styles.actionButtons}>
                           <button
                             style={styles.actionBtn}
                             onClick={() => copyMessage(message.text)}
-                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.15)")}
-                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.06)")}
+                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(0, 64, 208, 0.15)")}
+                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "rgba(0, 64, 208, 0.06)")}
                             title="Copier le message"
                           >
-                            <Copy style={{ width: "1rem", height: "1rem", color: "#E334FE" }} />
+                            <Copy style={{ width: "1rem", height: "1rem", color: "#0040D0" }} />
                           </button>
                           <button
                             style={styles.actionBtn}
-                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.15)")}
-                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.06)")}
+                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(0, 64, 208, 0.15)")}
+                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "rgba(0, 64, 208, 0.06)")}
                             title="Utile"
                           >
-                            <ThumbsUp style={{ width: "1rem", height: "1rem", color: "#E334FE" }} />
+                            <ThumbsUp style={{ width: "1rem", height: "1rem", color: "#0040D0" }} />
                           </button>
                           <button
                             style={styles.actionBtn}
-                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.15)")}
-                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.06)")}
+                            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(0, 64, 208, 0.15)")}
+                            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "rgba(0, 64, 208, 0.06)")}
                             title="Pas utile"
                           >
-                            <ThumbsDown style={{ width: "1rem", height: "1rem", color: "#E334FE" }} />
+                            <ThumbsDown style={{ width: "1rem", height: "1rem", color: "#0040D0" }} />
                           </button>
                         </div>
                       )}
@@ -949,7 +957,7 @@ export default function ChatbotInterface() {
 
                 {message.type === "user" && (
                   <div style={styles.userAvatar}>
-                    <User color="#E334FE" size={20} />
+                    <User color="#0040D0" size={20} />
                   </div>
                 )}
               </div>
@@ -981,12 +989,12 @@ export default function ChatbotInterface() {
                 style={styles.quickBtn}
                 onClick={() => handleQuickQuestion("Qu'est-ce que l'ENSA Tanger?")}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.background = "#6366f1"
+                  e.currentTarget.style.background = "#0040D0"
                   e.currentTarget.style.color = "white"
                 }}
                 onMouseOut={(e) => {
-                  e.currentTarget.style.background = "rgba(227, 52, 254, 0.06)"
-                  e.currentTarget.style.color = "#E334FE"
+                  e.currentTarget.style.background = "rgba(0, 64, 208, 0.06)"
+                  e.currentTarget.style.color = "#0040D0"
                 }}
                 disabled={isLoading}
               >
@@ -997,12 +1005,12 @@ export default function ChatbotInterface() {
                 style={styles.quickBtn}
                 onClick={() => handleQuickQuestion("Quelles sont les filières disponibles à l'ENSA Tanger?")}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.background = "#6366f1"
+                  e.currentTarget.style.background = "#0040D0"
                   e.currentTarget.style.color = "white"
                 }}
                 onMouseOut={(e) => {
-                  e.currentTarget.style.background = "rgba(227, 52, 254, 0.06)"
-                  e.currentTarget.style.color = "#E334FE"
+                  e.currentTarget.style.background = "rgba(0, 64, 208, 0.06)"
+                  e.currentTarget.style.color = "#0040D0"
                 }}
                 disabled={isLoading}
               >
@@ -1012,8 +1020,8 @@ export default function ChatbotInterface() {
             </div>
             <div
               style={styles.inputWrapper}
-              onFocus={(e) => (e.currentTarget.style.borderColor = "#E334FE")}
-              onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(227, 52, 254, 0.12)")}
+              onFocus={(e) => (e.currentTarget.style.borderColor = "#0040D0")}
+              onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(0, 64, 208, 0.12)")}
             >
               <input
                 style={styles.input}
@@ -1038,7 +1046,7 @@ export default function ChatbotInterface() {
                 }}
                 onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
               >
-                <Send size={20} />
+                <Send size={24} />
               </button>
             </div>
           </div>
@@ -1047,4 +1055,3 @@ export default function ChatbotInterface() {
     </div>
   )
 }
-

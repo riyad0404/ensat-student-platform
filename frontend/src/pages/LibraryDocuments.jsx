@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, FileText, Image as ImageIcon, File } from 'lucide-react';
+import { useParams } from 'react-router-dom';
+import { Download, FileText, Image as ImageIcon, File } from 'lucide-react';
 import { getDocumentsByNiveau } from '../api/DocumentsAPI';
 
 const LibraryDocuments = () => {
   const { niveau } = useParams();
-  const navigate = useNavigate();
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -111,46 +110,12 @@ const LibraryDocuments = () => {
 
   if (loading) {
     return (
-      <div style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto', minHeight: '100vh' }}>
-        <button 
-          onClick={() => navigate('/library')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '10px 18px',
-            background: 'white',
-            border: '1px solid #e5e7eb',
-            borderRadius: '10px',
-            color: '#6b7280',
-            fontSize: '14px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            marginBottom: '20px',
-            transition: 'all 0.2s'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = '#f9fafb';
-            e.currentTarget.style.borderColor = '#7c3aed';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'white';
-            e.currentTarget.style.borderColor = '#e5e7eb';
-          }}
-        >
-          <ArrowLeft size={18} />
-          Back to Levels
-        </button>
-        
+      <div style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto', minHeight: '100vh', background: '#ffffff' }}>
         <h1 style={{ 
           fontSize: '28px', 
           fontWeight: '800', 
           marginBottom: '8px',
-          background: 'linear-gradient(90deg, #E334FE, #A6048E)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          display: 'inline-block'
+          color: '#333333'
         }}>Documents {niveau?.toUpperCase()}</h1>
         
         <div style={{ display: 'flex', justifyContent: 'center', padding: '100px 0' }}>
@@ -162,37 +127,12 @@ const LibraryDocuments = () => {
 
   if (error) {
     return (
-      <div style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto', minHeight: '100vh' }}>
-        <button 
-          onClick={() => navigate('/library')}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '10px 18px',
-            background: 'white',
-            border: '1px solid #e5e7eb',
-            borderRadius: '10px',
-            color: '#6b7280',
-            fontSize: '14px',
-            fontWeight: '600',
-            cursor: 'pointer',
-            marginBottom: '20px'
-          }}
-        >
-          <ArrowLeft size={18} />
-          Back to Library
-        </button>
-        
+      <div style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto', minHeight: '100vh', background: '#ffffff' }}>
         <h1 style={{ 
           fontSize: '28px', 
           fontWeight: '800', 
           marginBottom: '8px',
-          background: 'linear-gradient(90deg, #E334FE, #A6048E)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          display: 'inline-block'
+          color: '#333333'
         }}>Documents {niveau?.toUpperCase()}</h1>
         
         <div style={{ textAlign: 'center', padding: '60px 20px' }}>
@@ -201,7 +141,7 @@ const LibraryDocuments = () => {
             onClick={loadDocuments}
             style={{
               padding: '10px 20px',
-              background: '#7c3aed',
+              background: '#0040D0',
               color: 'white',
               border: 'none',
               borderRadius: '10px',
@@ -218,38 +158,7 @@ const LibraryDocuments = () => {
   }
 
   return (
-    <div style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto', minHeight: '100vh' }}>
-      {/* Back Button */}
-      <button 
-        onClick={() => navigate('/library')}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '10px 18px',
-          background: 'white',
-          border: '1px solid #e5e7eb',
-          borderRadius: '10px',
-          color: '#6b7280',
-          fontSize: '14px',
-          fontWeight: '600',
-          cursor: 'pointer',
-          marginBottom: '20px',
-          transition: 'all 0.2s'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = '#f9fafb';
-          e.currentTarget.style.borderColor = '#7c3aed';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'white';
-          e.currentTarget.style.borderColor = '#e5e7eb';
-        }}
-      >
-        <ArrowLeft size={18} />
-        Back to Levels
-      </button>
-
+    <div style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto', minHeight: '100vh', background: '#ffffff' }}>
       {/* Header */}
       <div style={{ marginBottom: '30px' }}>
         <h1 style={{ 
@@ -257,11 +166,7 @@ const LibraryDocuments = () => {
           fontWeight: '800', 
           marginBottom: '8px',
           marginTop: 0,
-          background: 'linear-gradient(90deg, #E334FE, #A6048E)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          display: 'inline-block'
+          color: '#333333'
         }}>Documents {niveau?.toUpperCase()}</h1>
         <p style={{ color: '#6b7280', margin: 0 }}>
           {documents.length} document{documents.length > 1 ? 's' : ''} available
@@ -287,8 +192,8 @@ const LibraryDocuments = () => {
             style={{
               padding: '10px 20px',
               background: filter === key ? '#faf5ff' : 'white',
-              color: filter === key ? '#7c3aed' : '#6b7280',
-              border: `2px solid ${filter === key ? '#e9d5ff' : '#e5e7eb'}`,
+              color: filter === key ? '#0040D0' : '#6b7280',
+              border: `2px solid ${filter === key ? '#e6f0ff' : '#e5e7eb'}`,
               borderRadius: '10px',
               fontSize: '14px',
               fontWeight: '600',
@@ -297,8 +202,8 @@ const LibraryDocuments = () => {
             }}
             onMouseEnter={(e) => {
               if (filter !== key) {
-                e.currentTarget.style.borderColor = '#e9d5ff';
-                e.currentTarget.style.color = '#7c3aed';
+                e.currentTarget.style.borderColor = '#e6f0ff';
+                e.currentTarget.style.color = '#0040D0';
               }
             }}
             onMouseLeave={(e) => {
@@ -355,7 +260,7 @@ const LibraryDocuments = () => {
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-4px)';
                 e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.08)';
-                e.currentTarget.style.borderColor = '#e9d5ff';
+                e.currentTarget.style.borderColor = '#e6f0ff';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
@@ -372,7 +277,7 @@ const LibraryDocuments = () => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#7c3aed',
+                color: '#0040D0',
                 flexShrink: 0
               }}>
                 {getFileIcon(doc.filename)}
@@ -424,7 +329,7 @@ const LibraryDocuments = () => {
                   width: '40px',
                   height: '40px',
                   borderRadius: '10px',
-                  background: '#7c3aed',
+                  background: '#0040D0',
                   border: 'none',
                   color: 'white',
                   cursor: 'pointer',
@@ -435,11 +340,11 @@ const LibraryDocuments = () => {
                   flexShrink: 0
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#6d28d9';
+                  e.currentTarget.style.background = '#002884';
                   e.currentTarget.style.transform = 'scale(1.1)';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#7c3aed';
+                  e.currentTarget.style.background = '#0040D0';
                   e.currentTarget.style.transform = 'scale(1)';
                 }}
               >

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { createPost } from '../api/postAPI';
+import { createPost, updatePost } from '../api/postAPI';
 import '../styles/CreatePostModal.css';
 
-const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
+const CreatePostModal = ({ isOpen, onClose, onPostCreated, postToEdit }) => {
   const [content, setContent] = useState('');
   const [file, setFile] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
@@ -12,15 +12,26 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated }) => {
   const [isAnonymous, setIsAnonymous] = useState(false);
 
   useEffect(() => {
-    if (!isOpen) {
-      setContent('');
-      setFile(null);
-      setFilePreview(null);
-      setNiveau('GINF1');
-      setIsAnonymous(false);
+    if (isOpen) {
+      if (postToEdit) {
+        setContent(postToEdit.contenu || '');
+        setNiveau(postToEdit.niveau || 'GINF1');
+        setIsAnonymous(postToEdit.isAnonymat === true || postToEdit.isAnonymat === 'true');
+        // Note: Handling existing files for edit is complex, usually we just let them replace it
+        setFile(null);
+        setFilePreview(null);
+      } else {
+        setContent('');
+        setFile(null);
+        setFilePreview(null);
+        setNiveau('GINF1');
+        setIsAnonymous(false);
+      }
       setError('');
+    } else {
+      setContent('');
     }
-  }, [isOpen]);
+  }, [isOpen, postToEdit]);
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -48,17 +59,23 @@ const handleSubmit = async (e) => {
   setError('');
 
   try {
-    const formData = new FormData();
-    formData.append('contenu', content.trim());
-    formData.append('isAnonymat', isAnonymous ? 'true' : 'false');
+    let response;
+    
+    if (postToEdit) {
+        // Update logic
+        response = await updatePost(postToEdit.idpost, { contenu: content.trim(), isAnonymat: isAnonymous });
+    } else {
+        // Create logic
+        const formData = new FormData();
+        formData.append('contenu', content.trim());
+        formData.append('isAnonymat', isAnonymous ? 'true' : 'false');
 
-    if (file) {
-      formData.append('file', file);
-      formData.append('niveau', niveau);
+        if (file) {
+          formData.append('file', file);
+          formData.append('niveau', niveau);
+        }
+        response = await createPost(formData);
     }
-
-    console.log('🔵 Envoi au backend...');
-    const response = await createPost(formData);
     
     console.log('🔍 Réponse complète du backend:', response);
     
@@ -82,9 +99,9 @@ const handleSubmit = async (e) => {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Create a post</h2>
-          <button className="close-btn" onClick={onClose}>×</button>
+        <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#333333', background: 'none', WebkitTextFillColor: 'initial' }}>{postToEdit ? 'Edit Post' : 'Create a post'}</h2>
+          <button className="close-btn" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '24px', color: '#666' }}>×</button>
         </div>
         
         <form onSubmit={handleSubmit}>
@@ -192,18 +209,36 @@ const handleSubmit = async (e) => {
             </div>
           </div>
           
-          <div className="modal-footer">
-            <button type="button" className="cancel-btn" onClick={onClose}>
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="submit-btn"
-              disabled={loading || (!content.trim() && !file)}
-            >
-              {loading ? 'Publishing...' : 'Publish'}
-            </button>
-          </div>
+            <div className="modal-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px' }}>
+                <button 
+                  type="button" 
+                  onClick={onClose}
+                  style={{
+                    height: '44px', borderRadius: '25px', background: 'transparent',
+                    border: '2px solid #E7A33E', color: '#E7A33E', fontWeight: '700',
+                    fontSize: '14px', padding: '0 30px', cursor: 'pointer', transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => { e.target.style.background = 'linear-gradient(90deg, #E7A33E, #FF6B00)'; e.target.style.color = 'white'; e.target.style.borderColor = 'transparent'; }}
+                  onMouseLeave={(e) => { e.target.style.background = 'transparent'; e.target.style.color = '#E7A33E'; e.target.style.borderColor = '#E7A33E'; }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  disabled={loading || (!content.trim() && !file)}
+                  style={{
+                    height: '44px', borderRadius: '25px', background: 'linear-gradient(90deg, #4a82fc, #0040D0)', 
+                    color: 'white', fontWeight: '700', fontSize: '14px', border: 'none', 
+                    padding: '0 30px', cursor: 'pointer', transition: 'all 0.3s ease',
+                    opacity: (loading || (!content.trim() && !file)) ? 0.7 : 1,
+                    cursor: (loading || (!content.trim() && !file)) ? 'not-allowed' : 'pointer'
+                  }}
+                  onMouseEnter={(e) => !(loading || (!content.trim() && !file)) && (e.target.style.transform = 'translateY(-1px)')}
+                  onMouseLeave={(e) => !(loading || (!content.trim() && !file)) && (e.target.style.transform = 'translateY(0)')}
+                >
+                  {loading ? (postToEdit ? 'Saving...' : 'Publishing...') : (postToEdit ? 'Save Changes' : 'Publish')}
+                </button>
+            </div>
         </form>
       </div>
     </div>

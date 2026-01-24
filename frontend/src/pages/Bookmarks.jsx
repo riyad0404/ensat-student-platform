@@ -55,17 +55,13 @@ const Bookmarks = () => {
         maxWidth: '1400px', 
         margin: '0 auto', 
         minHeight: '100vh',
-        background: '#f9f8fa'
+        background: '#ffffff'
       }}>
         <h1 style={{ 
           fontSize: '28px', 
           fontWeight: '800', 
           marginBottom: '8px',
-          background: 'linear-gradient(90deg, #E334FE, #A6048E)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          display: 'inline-block'
+          color: '#333333'
         }}>Saved Posts</h1>
         <div style={{ display: 'flex', justifyContent: 'center', padding: '100px 0' }}>
           <div style={{ fontSize: '18px', color: '#666' }}>Loading...</div>
@@ -80,7 +76,7 @@ const Bookmarks = () => {
       maxWidth: '1400px', 
       margin: '0 auto', 
       minHeight: '100vh',
-      background: '#f9f8fa'
+      background: '#ffffff'
     }}>
       {/* Header */}
       <div style={{ 
@@ -97,11 +93,7 @@ const Bookmarks = () => {
             fontWeight: '800', 
             marginBottom: '8px', 
             marginTop: 0,
-            background: 'linear-gradient(90deg, #E334FE, #A6048E)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            display: 'inline-block'
+            color: '#333333'
           }}>Saved Posts</h1>
           <p style={{ color: '#6b7280', margin: 0 }}>
             {bookmarks.length} {bookmarks.length === 1 ? 'post' : 'posts'} saved
@@ -111,7 +103,7 @@ const Bookmarks = () => {
           <button 
             onClick={clearAllBookmarks}
             style={{ 
-              background: '#7c3aed', 
+              background: '#0040D0', 
               color: 'white', 
               border: 'none', 
               padding: '12px 24px', 
@@ -121,7 +113,7 @@ const Bookmarks = () => {
               display: 'flex',
               alignItems: 'center',
               gap: '8px',
-              boxShadow: '0 4px 12px rgba(124, 58, 237, 0.2)',
+              boxShadow: '0 4px 12px rgba(0, 64, 208, 0.2)',
               transition: 'transform 0.2s'
             }}
             onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}

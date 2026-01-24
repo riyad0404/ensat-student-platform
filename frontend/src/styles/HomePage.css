@@ -42,7 +42,7 @@
 }
 
 .search-input:focus {
-    border-color: #a855f7;
+    border-color: #0040D0;
 }
 
 .search-results {
@@ -111,7 +111,7 @@
 }
 
 .create-post-btn {
-    background: linear-gradient(135deg, #7C3AED 0%, #ec4899 100%);
+    background: linear-gradient(135deg, #0040D0 0%, #0055FF 100%);
     color: white;
     border: none;
     padding: 12px 24px;
@@ -125,7 +125,7 @@
 
 .create-post-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 64, 208, 0.3);
 }
 
 .posts-feed {
