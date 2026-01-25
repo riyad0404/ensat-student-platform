@@ -10,7 +10,7 @@
 
 /* Quand sidebar est collapsed, élargir le contenu */
 .sidebar-container.collapsed ~ div .homepage-container {
-    /* No longer needed */
+ 
 }
 
 .page-header {
