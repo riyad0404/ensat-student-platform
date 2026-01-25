@@ -9,7 +9,10 @@ export const NOTIF_TYPES = {
   GROUP_INVITE: "GROUP_INVITE",
   GROUP_INVITE_ACCEPTED: "GROUP_INVITE_ACCEPTED",
   GROUP_INVITE_DECLINED: "GROUP_INVITE_DECLINED",
-  REACTION_COMMENT: "REACTION_COMMENT"
+  JOIN_REQUEST: "JOIN_REQUEST",
+  REACTION_COMMENT: "REACTION_COMMENT",
+    JOIN_ACCEPTED: "JOIN_ACCEPTED",  // Quand un admin accepte une demande
+  GROUP_ADD: "GROUP_ADD",  // Quand un admin ajoute un membre
 };
 
 export async function createNotification({
