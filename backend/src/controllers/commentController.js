@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { Comment } from "../models/comment.js";
 import { Post } from "../models/post.js";
+import { createNotification, NOTIF_TYPES } from "../services/notificationservice.js";
 import { Document } from "../models/document.js";
 import { User } from "../models/user.js";
 
@@ -13,7 +14,7 @@ const UPLOAD_DIR =
 // =========================
 export const createComment = async (req, res) => {
   try {
-    const { idpost, contenu, isAnonymat } = req.body;
+    const { idpost, contenu, isAnonymat, idparent } = req.body; // Ajout de idparent
     const iduser = req.user.iduser;
 
     console.log('📦 req.files:', req.files ? `OUI - ${req.files.length} fichier(s)` : 'NON');
@@ -39,10 +40,56 @@ export const createComment = async (req, res) => {
       isAnonymat: isAnonymat === 'true' || isAnonymat === true,
       iduser,
       idpost: parseInt(idpost),
-      idparent: null,
+      idparent: idparent || null, // Ajout de idparent
     });
 
     console.log('✅ Commentaire créé:', newComment.idcomment);
+    
+    // 🔔 NOTIFICATION : si c'est un commentaire sur un post
+    if (!idparent) {
+      const post = await Post.findByPk(idpost);
+      if (post) {
+        await createNotification({
+          toUserId: post.iduser,
+          fromUserId: iduser,
+          type: NOTIF_TYPES.COMMENT_PUB,
+          message: `${req.user.prenom} ${req.user.nom} a commenté votre publication`,
+          metadata: {
+            idpost: post.idpost,
+            idcomment: newComment.idcomment,
+            sender: {
+              iduser: req.user.iduser,
+              nom: req.user.nom,
+              prenom: req.user.prenom,
+              photo: req.user.photo ?? null,
+            },
+          },
+        });
+      }
+    } else {
+      // 🔔 NOTIFICATION : commentaire sur un autre commentaire
+      const parentComment = await Comment.findByPk(idparent);
+      if (parentComment) {
+        const sender = {
+          iduser: req.user.iduser,
+          nom: req.user.nom,
+          prenom: req.user.prenom,
+          photo: req.user.photo ?? null,
+        };
+
+        await createNotification({
+          toUserId: parentComment.iduser,  // Destinataire : auteur du commentaire parent
+          fromUserId: iduser,              // Expéditeur : auteur du commentaire
+          type: NOTIF_TYPES.REPLY_COMMENT, // Type de notification
+          message: `${sender.prenom} ${sender.nom} a répondu à votre commentaire`,
+          metadata: {
+            idpost: idpost,
+            idcomment: newComment.idcomment,  // Ajouter l'id du nouveau commentaire
+            sender, // Sender dans la notification
+          },
+        });
+      }
+    }
 
     // ✅ 2. Si fichier, créer le document
     if (req.files && req.files.length > 0) {
@@ -120,6 +167,64 @@ export const createComment = async (req, res) => {
     });
   }
 };
+
+// =========================
+// Répondre à un commentaire
+// =========================
+export const replyComment = async (req, res) => {
+  try {
+    const { contenu, isAnonymat } = req.body;
+    const iduser = req.user.iduser;
+    const idcomment = req.params.idcomment; // L'ID du commentaire parent
+
+    // Vérifier si le commentaire parent existe
+    const parentComment = await Comment.findByPk(idcomment);
+    if (!parentComment) {
+      return res.status(404).json({ message: "Commentaire parent non trouvé" });
+    }
+
+    // Créer la réponse (commentaire sur un commentaire)
+    const newComment = await Comment.create({
+      contenu: contenu?.trim() || '',
+      typeContenu: "TEXTE",
+      isAnonymat: isAnonymat === 'true' || isAnonymat === true,
+      iduser,
+      idpost: parentComment.idpost, // On associe la réponse au même post
+      idparent: idcomment, // Le commentaire parent est associé ici
+    });
+
+    // Notifier l'auteur du commentaire parent
+    const sender = {
+      iduser: req.user.iduser,
+      nom: req.user.nom,
+      prenom: req.user.prenom,
+      photo: req.user.photo ?? null,
+    };
+
+    await createNotification({
+      toUserId: parentComment.iduser,  // Destinataire : auteur du commentaire parent
+      fromUserId: iduser,              // Expéditeur : auteur de la réponse
+      type: NOTIF_TYPES.REPLY_COMMENT, // Type de notification
+      message: `${sender.prenom} ${sender.nom} a répondu à votre commentaire`,
+      metadata: {
+        idpost: parentComment.idpost,
+        idcomment: newComment.idcomment,  // Ajouter l'id du nouveau commentaire
+        sender, // Sender dans la notification
+      },
+    });
+
+    // Retourner le nouveau commentaire créé
+    return res.status(201).json(newComment);
+
+  } catch (error) {
+    console.error('❌ replyComment ERROR:', error);
+    return res.status(500).json({ 
+      message: "Erreur lors de la réponse au commentaire",
+      error: error.message 
+    });
+  }
+};
+
 // =========================
 // GET COMMENT BY ID (détails)
 // =========================
@@ -184,7 +289,6 @@ export const getCommentsByPost = async (req, res) => {
 
     console.log('📝 Nombre de commentaires trouvés:', comments.length);
     
-    // Log détaillé de chaque commentaire
     comments.forEach((c, index) => {
       console.log(`📌 Commentaire ${index + 1}:`, {
         idcomment: c.idcomment,
@@ -340,30 +444,3 @@ export const deleteComment = async (req, res) => {
     return res.status(500).json({ message: "Erreur suppression commentaire" });
   }
 };
-
-// =========================
-// DOCUMENT TYPE DETECTION
-// =========================
-function guessDocType(mimetype, filename = "") {
-  const ext = filename.toLowerCase();
-
-  if (mimetype?.startsWith("image/")) return "IMAGE";
-
-  if (
-    mimetype?.includes("excel") ||
-    ext.endsWith(".xls") ||
-    ext.endsWith(".xlsx")
-  ) {
-    return "TABLEUR";
-  }
-
-  if (
-    mimetype?.includes("powerpoint") ||
-    ext.endsWith(".ppt") ||
-    ext.endsWith(".pptx")
-  ) {
-    return "PRESENTATION";
-  }
-
-  return "DOCUMENT";
-}

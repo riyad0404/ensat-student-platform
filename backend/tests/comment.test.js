@@ -9,21 +9,29 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 describe("Comment Integration", () => {
-  let userA, tokenA, postId;
+  let userA, tokenA, userB, tokenB, postId;
 
   beforeEach(async () => {
-    // Créer un utilisateur
+    // Créer deux utilisateurs
     const password = await bcrypt.hash("Password123!", 10);
     userA = await User.create({
       nom: "Test",
-      prenom: "User",
-      email: "testuser@example.com",
+      prenom: "UserA",
+      email: "testuserA@example.com",
+      password,
+      niveau: "3A",
+      secretCode: 1234,
+    });
+    userB = await User.create({
+      nom: "Test",
+      prenom: "UserB",
+      email: "testuserB@example.com",
       password,
       niveau: "3A",
       secretCode: 1234,
     });
 
-    // Connexion de l'utilisateur pour obtenir son token
+    // Connexion des utilisateurs pour obtenir leurs tokens
     const login = async (email) => {
       const res = await request(app)
         .post("/api/auth/login")
@@ -31,7 +39,8 @@ describe("Comment Integration", () => {
       return res.headers["set-cookie"];
     };
 
-    tokenA = await login("testuser@example.com");
+    tokenA = await login("testuserA@example.com");
+    tokenB = await login("testuserB@example.com");
 
     // Créer un post pour les tests de commentaire
     const postPayload = {
@@ -86,6 +95,59 @@ describe("Comment Integration", () => {
     
     // Clean up the file after test
     fs.unlinkSync(filePath);
+  });
+
+  it("should reply to a comment and send a notification", async () => {
+    // Créer un commentaire parent
+    const commentPayload = {
+      contenu: "This is a test comment.",
+      typeContenu: "TEXTE",
+      isAnonymat: false,
+      niveau: "3A",
+      idpost: postId
+    };
+
+    const createdComment = await request(app)
+      .post("/api/comments/")
+      .set("Cookie", tokenA)
+      .field("contenu", commentPayload.contenu)
+      .field("typeContenu", commentPayload.typeContenu)
+      .field("isAnonymat", commentPayload.isAnonymat)
+      .field("niveau", commentPayload.niveau)
+      .field("idpost", commentPayload.idpost)
+      .expect(201);
+
+    // Répondre au commentaire créé
+    const replyPayload = {
+      contenu: "This is a reply to the test comment.",
+      typeContenu: "TEXTE",
+      isAnonymat: false,
+      idparent: createdComment.body.idcomment, // Lier la réponse au commentaire précédent
+    };
+
+    const res = await request(app)
+      .post(`/api/comments/comment/reply/${createdComment.body.idcomment}`)
+      .set("Cookie", tokenB) // Utiliser userB pour répondre
+      .send(replyPayload)
+      .expect(201);
+
+    // Vérifier que la réponse a bien été ajoutée
+    expect(res.body.contenu).toBe(replyPayload.contenu);
+    expect(res.body.idparent).toBe(createdComment.body.idcomment); // Vérifier que c'est bien une réponse au bon commentaire
+
+    // Attendez un peu pour permettre à la notification de se propager
+    await new Promise((resolve) => setTimeout(resolve, 1000)); // Attente de 1 seconde (ajustez si nécessaire)
+
+    // Vérifier que la notification a été envoyée
+    const notifications = await request(app)
+      .get("/api/notifications")
+      .set("Cookie", tokenA) // Assurez-vous que l'utilisateur reçoit la notification
+      .expect(200);
+
+    expect(notifications.body.length).toBeGreaterThan(0);  // S'assurer qu'il y a des notifications
+    expect(notifications.body[0].message).toBe(
+      `${userB.prenom} ${userB.nom} a répondu à votre commentaire`
+    );  // Vérifier que le message de notification est correct
   });
 
   it("should create a comment with multiple files and store it in the database", async () => {
