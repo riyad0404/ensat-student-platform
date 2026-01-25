@@ -1,7 +1,7 @@
 "use client"
 
 import { MessageCircle } from "lucide-react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 const styles = {
   floatingButton: {
@@ -11,10 +11,10 @@ const styles = {
     width: "3.5rem",
     height: "3.5rem",
     borderRadius: "50%",
-    background: "linear-gradient(135deg, #d946ef 0%, #ec4899 100%)",
+    background: "linear-gradient(135deg, #4a82fc 0%, #0040D0 100%)",
     border: "none",
     cursor: "pointer",
-    boxShadow: "0 8px 24px rgba(217, 70, 239, 0.4)",
+    boxShadow: "0 8px 24px rgba(0, 64, 208, 0.4)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -56,8 +56,36 @@ const styles = {
   },
 }
 
-export default function ChatbotButton({ onClick }) {
+export default function ChatbotButton({ onClick, isOpen }) {
   const [showTooltip, setShowTooltip] = useState(false)
+  const [isChatbotPage, setIsChatbotPage] = useState(false)
+
+  useEffect(() => {
+    // Fonction pour vérifier le pathname
+    const checkPath = () => {
+      setIsChatbotPage(window.location.pathname === '/chatbot')
+    }
+
+    // Vérifier au montage
+    checkPath()
+
+    // Écouter les changements de navigation
+    window.addEventListener('popstate', checkPath)
+    
+    // Vérifier périodiquement (pour les navigations sans popstate)
+    const interval = setInterval(checkPath, 100)
+
+    // Nettoyage
+    return () => {
+      window.removeEventListener('popstate', checkPath)
+      clearInterval(interval)
+    }
+  }, [])
+
+  // Ne rien afficher si on est sur la page chatbot
+  if (isChatbotPage) {
+    return null
+  }
 
   return (
     <div style={{ position: "relative" }}>
@@ -66,21 +94,21 @@ export default function ChatbotButton({ onClick }) {
         onClick={onClick}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = "scale(1.1)"
-          e.currentTarget.style.boxShadow = "0 12px 32px rgba(217, 70, 239, 0.5)"
+          e.currentTarget.style.boxShadow = "0 12px 32px rgba(0, 64, 208, 0.5)"
           setShowTooltip(true)
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = "scale(1)"
-          e.currentTarget.style.boxShadow = "0 8px 24px rgba(217, 70, 239, 0.4)"
+          e.currentTarget.style.boxShadow = "0 8px 24px rgba(0, 64, 208, 0.4)"
           setShowTooltip(false)
         }}
-        aria-label="Ouvrir le chatbot"
+        aria-label={isOpen ? "Fermer le chatbot" : "Ouvrir le chatbot"}
       >
-        <MessageCircle color="white" size={24} />
+        {isOpen ? <X color="white" size={24} /> : <MessageCircle color="white" size={24} />}
       </button>
-      <div style={{ ...styles.tooltip, ...(showTooltip && styles.tooltipVisible) }}>
+      {!isOpen && <div style={{ ...styles.tooltip, ...(showTooltip && styles.tooltipVisible) }}>
         Besoin d'aide? Discutez avec notre assistant
-      </div>
+      </div>}
     </div>
   )
 }

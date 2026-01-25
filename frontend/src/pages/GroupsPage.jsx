@@ -127,7 +127,7 @@ const GroupsPage = () => {
   };
 
   return (
-    <div className="groups-page" style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto', minHeight: '100vh' }}>
+    <div className="groups-page-container">
       {/* Header Moderne */}
       <div style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
         <div>
@@ -136,18 +136,14 @@ const GroupsPage = () => {
             fontWeight: '800', 
             marginBottom: '8px', 
             marginTop: 0,
-            background: 'linear-gradient(90deg, #E334FE, #A6048E)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            display: 'inline-block'
+            color: '#333333'
           }}>Work Groups</h1>
           <p style={{ color: '#6b7280', margin: 0 }}>Join groups and collaborate with your peers.</p>
         </div>
         <button 
           onClick={() => setShowModal(true)}
           style={{ 
-            background: '#7c3aed', 
+             background: 'linear-gradient(90deg, #4a82fc, #0040D0)', 
             color: 'white', 
             border: 'none', 
             padding: '12px 24px', 
@@ -157,7 +153,7 @@ const GroupsPage = () => {
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            boxShadow: '0 4px 12px rgba(124, 58, 237, 0.2)',
+            boxShadow: '0 4px 12px rgba(0, 64, 208, 0.2)',
             transition: 'transform 0.2s'
           }}
           onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
@@ -186,7 +182,7 @@ const GroupsPage = () => {
             boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
             transition: 'border-color 0.2s'
           }}
-          onFocus={(e) => e.target.style.borderColor = '#7c3aed'}
+          onFocus={(e) => e.target.style.borderColor = '#0040D0'}
           onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
         />
       </div>
@@ -226,7 +222,7 @@ const GroupsPage = () => {
           return (
           <div 
             key={groupId || index} 
-            onClick={() => groupId ? navigate(`/conversations/${groupId}`) : console.error("ID manquant pour le groupe", group)}
+            onClick={() => groupId ? navigate(`/conversations/${groupId}`, { state: { type: 'group' } }) : console.error("ID manquant pour le groupe", group)}
              style={{ 
                background: 'white',
                borderRadius: '20px',
@@ -249,16 +245,14 @@ const GroupsPage = () => {
              }}
            >
              {hasUnread && (
-               <div style={{ position: 'absolute', top: '15px', right: '15px', minWidth: '20px', height: '20px', background: '#25D366', borderRadius: '50%', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '11px', fontWeight: 'bold' }}>
-                 1
-               </div>
+               <div style={{ position: 'absolute', top: '15px', right: '15px', width: '12px', height: '12px', background: '#25D366', borderRadius: '50%', border: '2px solid white' }} />
              )}
  
              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
                <div style={{ 
-                 width: '56px', height: '56px', borderRadius: '16px', 
-                 background: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                 color: '#7c3aed', marginRight: '16px'
+                 width: '56px', height: '56px', borderRadius: '50%', 
+                 background: '#E6F0FF', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                 color: '#0040D0', marginRight: '16px'
                }}>
                  <Users size={28} />
                </div>
@@ -316,47 +310,52 @@ const GroupsPage = () => {
           <div style={{
             background: 'white', width: '90%', maxWidth: '500px',
             borderRadius: '16px', padding: '32px',
-            boxShadow: '0 10px 25px rgba(227, 52, 254, 0.15)', border: '1px solid rgba(227, 52, 254, 0.1)'
+            boxShadow: '0 10px 25px rgba(0, 64, 208, 0.15)', border: '1px solid rgba(0, 64, 208, 0.1)'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h3 style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#111827' }}>Create New Group</h3>
+              <h3 style={{ 
+                margin: 0, 
+                fontSize: '22px', 
+                fontWeight: '700',
+                color: '#333333'
+              }}>Create New Group</h3>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-                <X size={24} color="#6b7280" />
+                <X size={24} color="#0040D0" />
               </button>
             </div>
 
             <form onSubmit={handleCreateGroup}>
               <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>Group Name</label>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '13px', color: '#060606', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Group Name</label>
                 <input
                   type="text"
                   placeholder="Group Name"
                   value={newGroup.name}
                   onChange={(e) => setNewGroup({...newGroup, name: e.target.value, nom: e.target.value})}
                   style={{ 
-                    width: '100%', padding: '12px 16px', border: '1px solid #e5e7eb', 
-                    borderRadius: '8px', outline: 'none', fontSize: '15px',
-                    background: '#f9fafb', transition: 'border-color 0.2s'
+                    width: '100%', height: '44px', padding: '0 16px', border: '1.5px solid #e0e0e0', 
+                    borderRadius: '6px', outline: 'none', fontSize: '14px',
+                    background: '#ffffff', transition: 'all 0.2s ease', color: '#333'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#E334FE'}
-                  onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
+                  onFocus={(e) => { e.target.style.borderColor = '#0040D0'; e.target.style.boxShadow = '0 0 0 2px rgba(0, 64, 208, 0.1)'; }}
+                  onBlur={(e) => { e.target.style.borderColor = '#e0e0e0'; e.target.style.boxShadow = 'none'; }}
                   required
                 />
               </div>
 
               <div style={{ marginBottom: '32px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>Description</label>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '13px', color: '#060606', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Description</label>
                 <textarea
                   placeholder="Description (Optional)"
                   value={newGroup.description}
                   onChange={(e) => setNewGroup({...newGroup, description: e.target.value})}
                   style={{ 
-                    width: '100%', padding: '12px 16px', border: '1px solid #e5e7eb', 
-                    borderRadius: '8px', outline: 'none', fontSize: '15px',
-                    background: '#f9fafb', minHeight: '80px', resize: 'vertical', transition: 'border-color 0.2s'
+                    width: '100%', padding: '12px 16px', border: '1.5px solid #e0e0e0', 
+                    borderRadius: '6px', outline: 'none', fontSize: '14px',
+                    background: '#ffffff', minHeight: '100px', resize: 'vertical', transition: 'all 0.2s ease', color: '#333'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#E334FE'}
-                  onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
+                  onFocus={(e) => { e.target.style.borderColor = '#0040D0'; e.target.style.boxShadow = '0 0 0 2px rgba(0, 64, 208, 0.1)'; }}
+                  onBlur={(e) => { e.target.style.borderColor = '#e0e0e0'; e.target.style.boxShadow = 'none'; }}
                 ></textarea>
               </div>
 
@@ -364,14 +363,27 @@ const GroupsPage = () => {
                 <button 
                   type="button" 
                   onClick={() => setShowModal(false)}
-                  className="group-modal-btn cancel"
+                  style={{
+                    height: '44px', borderRadius: '25px', background: 'transparent',
+                    border: '2px solid #E7A33E', color: '#E7A33E', fontWeight: '700',
+                    fontSize: '14px', padding: '0 30px', cursor: 'pointer', transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => { e.target.style.background = 'linear-gradient(90deg, #E7A33E, #FF6B00)'; e.target.style.color = 'white'; e.target.style.borderColor = 'transparent'; }}
+                  onMouseLeave={(e) => { e.target.style.background = 'transparent'; e.target.style.color = '#E7A33E'; e.target.style.borderColor = '#E7A33E'; }}
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
                   disabled={creating}
-                  className="group-modal-btn create"
+                  style={{
+                    height: '44px', borderRadius: '25px', background: 'linear-gradient(90deg, #4a82fc, #0040D0)', 
+                    color: 'white', fontWeight: '700', fontSize: '14px', border: 'none', 
+                    padding: '0 30px', cursor: 'pointer', transition: 'all 0.3s ease',
+                    opacity: creating ? 0.7 : 1
+                  }}
+                  onMouseEnter={(e) => !creating && (e.target.style.transform = 'translateY(-1px)')}
+                  onMouseLeave={(e) => !creating && (e.target.style.transform = 'translateY(0)')}
                 >
                   {creating ? 'Creating...' : 'Create'}
                 </button>

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import './../styles/sidebar.css';
+import { PanelRight } from 'lucide-react';
+import './../styles/Sidebar.css';
 
 const Sidebar = () => {
     const location = useLocation();
@@ -10,11 +11,10 @@ const Sidebar = () => {
 
     const navItems = [
         { path: '/', label: 'Home', icon: 'home' },
-        { path: '/notifications', label: 'Notifications', icon: 'notifications' },
-        { path: '/messages', label: 'Messages', icon: 'message' },
         { path: '/library', label: 'Library', icon: 'library_books' },
         { path: '/bookmarks', label: 'Bookmarks', icon: 'bookmark' },
-        { path: '/groupes', label: 'Groupes', icon: 'groups' },
+        { path: '/messages', label: 'Messages', icon: 'message' },
+        { path: '/groups', label: 'Groups', icon: 'groups' },
         { path: '/profile', label: 'Profile', icon: 'person' },
     ];
 
@@ -22,34 +22,42 @@ const Sidebar = () => {
         setIsCollapsed(!isCollapsed);
     };
 
+    // Fonction pour déterminer si un onglet est actif
+    const isItemActive = (itemPath) => {
+        if (itemPath === '/') {
+            return location.pathname === '/';
+        }
+        // Gestion des sous-routes standards (ex: /library/ap1 active /library)
+        if (location.pathname.startsWith(itemPath)) {
+            return true;
+        }
+        // Cas spécial : les conversations
+        if (location.pathname.startsWith('/conversations')) {
+            if (itemPath === '/groups' && location.state?.type === 'group') {
+                return true;
+            }
+            if (itemPath === '/messages' && location.state?.type !== 'group') {
+                return true;
+            }
+        }
+        return false;
+    };
+
     return (
         <div className={`sidebar-container ${isCollapsed ? 'collapsed' : ''}`}>
-            {/* Section logo avec bouton À DROITE */}
+            {/* Section logo avec bouton */}
             <div className="logo-section">
                 {/* Logo centré */}
                 <div className="logo">{isCollapsed ? 'DC' : 'Docentra'}</div>
                 
-                {/* Bouton collapse À DROITE quand sidebar ouverte */}
-                {!isCollapsed && (
-                    <button 
-                        onClick={toggleSidebar}
-                        className="collapse-btn"
-                        title="Collapse sidebar"
-                    >
-                        <span className="material-icons">chevron_left</span>
-                    </button>
-                )}
-                
-                {/* Bouton collapse CENTRÉ quand sidebar collapsed */}
-                {isCollapsed && (
-                    <button 
-                        onClick={toggleSidebar}
-                        className="collapse-btn"
-                        title="Expand sidebar"
-                    >
-                        <span className="material-icons">chevron_right</span>
-                    </button>
-                )}
+                {/* Bouton collapse style IA (PanelRight) */}
+                <button 
+                    onClick={toggleSidebar}
+                    className="collapse-btn"
+                    title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                >
+                    <PanelRight size={18} />
+                </button>
             </div>
             
             {/* Navigation */}
@@ -58,7 +66,7 @@ const Sidebar = () => {
                     <Link
                         key={item.path}
                         to={item.path}
-                        className={`nav-item ${location.pathname === item.path ? 'active' : ''}`}
+                        className={`nav-item ${isItemActive(item.path) ? 'active' : ''}`}
                         title={isCollapsed ? item.label : ''}
                     >
                         <span className="material-icons">{item.icon}</span>
