@@ -8,9 +8,10 @@ import {
   groupInvite,
   inviteAccepted,
   inviteDeclined,
+  reactToComment,
   getNotifications,
   markAsRead,
-} from "../controllers/notificationController.js";
+} from "../controllers/notificationcontroller.js";
 
 const router = express.Router();
 
@@ -33,5 +34,7 @@ router.post("/group-invite/declined/:idgroup", inviteDeclined);
 // Récupérer et gérer les notifications
 router.get("/", getNotifications);
 router.put("/mark-as-read/:idNotif", markAsRead);
+// Réaction sur un commentaire (ajoutée dans notificationroutes.js)
+router.post("/comment/react/:idcomment", reactToComment);
 
 export default router;

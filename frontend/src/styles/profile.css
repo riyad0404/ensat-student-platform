@@ -1,24 +1,23 @@
 /* profile.css - Version finale avec sidebar collapsible */
 .profile-container {
     width: 100%;
-    min-height: 100vh;
-    background: #f5f5f5;
-    position: relative;
-    margin: 0;
+    max-width: 100%;
+    margin: 0 auto;
     padding: 0;
+    min-height: 100vh;
+    background-color: #ffffff;
+    box-sizing: border-box;
 }
 
 /* Bannière avec icône caméra */
 .profile-banner {
-    width: calc(100% + 17px);
-    height: 350px;
-    background: linear-gradient(90deg, #fdfcfd 0%, #7b787a 100%);
+    width: 100%;
+    height: 160px;
     background-size: cover;
     background-position: center;
     position: relative;
-    border-bottom: 2px solid #e0e0e0;
-    margin-left: -12px;
-   
+    border-radius: 0;
+    margin-left: 0;
 }
 
 /* Icône caméra pour bannière - style LinkedIn */
@@ -98,46 +97,47 @@
 
 /* Conteneur principal - AJUSTÉ pour sidebar */
 .profile-content {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 0 20px;
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
     position: relative;
-    margin-top: -20px;
+    margin-top: 0;
     transition: all 0.3s ease;
 }
 
 /* Quand sidebar est collapsed, élargir le contenu */
 .sidebar-container.collapsed ~ div .profile-content {
-    max-width: 1200px;
-    padding: 0 30px;
+    max-width: 100%;
+    padding: 0;
 }
 
 .profile-info-section {
-    background: white;
-    padding: 80px 40px 30px 40px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    margin-top: 18px;
-    margin-bottom: 5px;
-    border: 1px solid #e0e0e0;
-    width: calc(100% + 82px)!important; 
-    margin-left: -42px !important;
+    background: transparent;
+    padding: 80px 40px 10px 40px; /* Réduit padding-bottom de 30px à 10px */
+    border-radius: 0;
+    box-shadow: none;
+    margin-top: 0;
+    margin-bottom: 0;
+    border: none;
+    border-top: none;
+    width: 100% !important;
+    margin-left: 0 !important;
 }
 
 /* Quand sidebar est collapsed, ajuster la largeur */
 .sidebar-container.collapsed ~ div .profile-info-section {
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto;
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
 }
 
 /* Avatar avec icône caméra */
 .profile-avatar-container {
     position: absolute;
-    top: -90px;
-    left: 20px;
-    width: 140px;
-    height: 140px;
+    top: -100px;
+    left: 30px;
+    width: 150px;
+    height: 150px;
     z-index: 20;
 }
 
@@ -198,7 +198,7 @@
 .profile-name {
     font-size: 2rem;
     font-weight: bold;
-    color: #333;
+    color: #333333;
     margin-bottom: 20px;
     letter-spacing: -0.5px;
 }
@@ -223,48 +223,44 @@
 /* ICON EDIT SEULEMENT - repositionnée */
 .edit-profile-icon {
     position: absolute;
-    top: -70px;
+    top: -40px;
     right: -10px;
-    background: white;
-    border: 2px solid #E334FE;
-    color: #E334FE;
-    font-size: 20px;
+    background: transparent;
+    border: none;
+    color: #0040D0;
+    font-size: 24px;
     cursor: pointer;
     padding: 10px;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.3s;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.2);
     z-index: 10;
 }
 
 .edit-profile-icon:hover {
-    background: #E334FE;
-    color: white;
+    background: transparent;
+    color: #002884;
     transform: scale(1.1);
 }
 
 /* Posts Section */
 .posts-section {
-    background: white;
-    padding: 25px 30px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    margin-top: 10px;
-    border: 1px solid #e0e0e0;
-    width: calc(100% + 82px)!important; 
-     margin-left: -42px !important;
+    background: transparent;
+    padding: 15px 30px 25px 30px; /* Réduit padding-top de 25px à 15px */
+    border-radius: 0;
+    box-shadow: none;
+    margin-top: 0;
+    border: none;
+    width: 100% !important;
+    margin-left: 0 !important;
 }
 
 /* Quand sidebar est collapsed, ajuster les posts */
 .sidebar-container.collapsed ~ div .posts-section {
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto;
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
 }
 
 .posts-title {
@@ -470,28 +466,28 @@
 /* Responsive design */
 @media (max-width: 1200px) {
     .profile-content {
-        max-width: 95%;
-        padding: 0 15px;
+        max-width: 100%;
+        padding: 0;
     }
     
     .sidebar-container.collapsed ~ div .profile-content {
-        max-width: 98%;
-        padding: 0 20px;
+        max-width: 100%;
+        padding: 0;
     }
     
     .profile-info-section {
-        padding: 80px 30px 30px 30px;
+        padding: 90px 30px 30px 30px;
     }
 }
 
 @media (max-width: 768px) {
     .profile-content {
         max-width: 100%;
-        padding: 0 10px;
+        padding: 0;
     }
     
     .sidebar-container.collapsed ~ div .profile-content {
-        padding: 0 15px;
+        padding: 0;
     }
     
     .profile-banner {
@@ -499,9 +495,9 @@
     }
     
     .profile-avatar-container {
-        width: 120px;
-        height: 120px;
-        top: -60px;
+        width: 130px;
+        height: 130px;
+        top: -80px;
         left: 50%;
         transform: translateX(-50%);
     }

@@ -31,7 +31,7 @@ const MessagesPage = () => {
       const conversationsList = Array.isArray(allConvs) ? allConvs : (allConvs?.data || []);
       
       // Filtrer pour ne garder que les messages privés (DIRECT)
-      setConversations(conversationsList.filter(c => c.type === 'DIRECT'));
+      setConversations(conversationsList.filter(c => c.type === 'DIRECT' && c.lastMessage));
     } catch (error) {
       console.error("Erreur chargement messages", error);
     }
@@ -44,7 +44,7 @@ const MessagesPage = () => {
       try {
         const results = await conversationAPI.searchUsers(query);
         const users = Array.isArray(results) ? results : (results.data || []);
-        setSearchResults(users);
+        setSearchResults(users.filter(u => String(u.iduser) !== String(currentUserId)));
       } catch (error) {
         console.error("Erreur recherche", error);
       }
@@ -64,7 +64,7 @@ const MessagesPage = () => {
       const conv = response.data || response
       const convId = getConvId(conv);
       if (convId) {
-        navigate(`/conversations/${convId}`);
+        navigate(`/conversations/${convId}`, { state: { type: 'direct' } });
       } else {
         alert("Erreur: Impossible de récupérer l'ID de la conversation.");
       }
@@ -75,10 +75,16 @@ const MessagesPage = () => {
   };
 
   return (
-    <div className="messages-page" style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto', minHeight: '100vh' }}>
+    <div className="messages-page-container">
       {/* Header Moderne */}
       <div style={{ marginBottom: '30px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: '800', color: '#111827', marginBottom: '8px', marginTop: 0 }}>Messages</h1>
+        <h1 style={{ 
+          fontSize: '28px', 
+          fontWeight: '800', 
+          marginBottom: '8px', 
+          marginTop: 0,
+          color: '#333333'
+        }}>Messages</h1>
         <p style={{ color: '#6b7280', margin: 0 }}>Your private conversations.</p>
       </div>
 
@@ -101,7 +107,7 @@ const MessagesPage = () => {
             boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
             transition: 'border-color 0.2s'
           }}
-          onFocus={(e) => e.target.style.borderColor = '#7c3aed'}
+          onFocus={(e) => e.target.style.borderColor = '#0040D0'}
           onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
         />
         {searchResults.length > 0 && (
@@ -147,22 +153,24 @@ const MessagesPage = () => {
           const convId = getConvId(conv);
           
           // Logique de notification (Non lu)
+          const lastMsg = conv.lastMessage;
+          const isOwnMessage = lastMsg?.senderId && String(lastMsg.senderId) === String(currentUserId);
           let hasUnread = false;
 
-          // 1. Si le backend supporte unreadCount (Solution idéale)
-          if (conv.unreadCount !== undefined) {
-            hasUnread = conv.unreadCount > 0;
-          } 
-          // 2. Fallback local
-          else {
-            const lastRead = localStorage.getItem(`lastRead_${convId}`);
-            const lastMsg = conv.lastMessage;
-            const lastMsgDate = lastMsg?.sentAt || lastMsg?.createdAt || conv.updatedAt;
-            const isLastReadValid = lastRead && !isNaN(new Date(lastRead).getTime());
-            const isOwnMessage = lastMsg?.senderId && String(lastMsg.senderId) === String(currentUserId);
-            
-            // On affiche la notif seulement si ce n'est pas notre message ET qu'il est plus récent que la dernière lecture
-            hasUnread = !isOwnMessage && lastMsgDate && (!isLastReadValid || new Date(lastMsgDate) > new Date(lastRead));
+          // On ne montre JAMAIS de notification si le dernier message vient de nous
+          if (!isOwnMessage) {
+            // 1. Si le backend supporte unreadCount
+            if (conv.unreadCount !== undefined) {
+              hasUnread = conv.unreadCount > 0;
+            } 
+            // 2. Fallback local
+            else {
+              const lastRead = localStorage.getItem(`lastRead_${convId}`);
+              const lastMsgDate = lastMsg?.sentAt || lastMsg?.createdAt || conv.updatedAt;
+              const isLastReadValid = lastRead && !isNaN(new Date(lastRead).getTime());
+              
+              hasUnread = lastMsgDate && (!isLastReadValid || new Date(lastMsgDate) > new Date(lastRead));
+            }
           }
 
           // Avatar
@@ -181,7 +189,7 @@ const MessagesPage = () => {
           return (
           <div 
             key={convId}
-            onClick={() => navigate(`/conversations/${convId}`)}
+            onClick={() => navigate(`/conversations/${convId}`, { state: { type: 'direct' } })}
             style={{ 
               background: 'white',
               borderRadius: '20px',
@@ -204,16 +212,14 @@ const MessagesPage = () => {
             }}
           >
             {hasUnread && (
-              <div style={{ position: 'absolute', top: '15px', right: '15px', minWidth: '20px', height: '20px', background: '#25D366', borderRadius: '50%', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '11px', fontWeight: 'bold' }}>
-                1
-              </div>
+              <div style={{ position: 'absolute', top: '15px', right: '15px', width: '12px', height: '12px', background: '#25D366', borderRadius: '50%', border: '2px solid white' }} />
             )}
 
             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
                 <div style={{ 
-                  width: '56px', height: '56px', borderRadius: '16px', 
-                  background: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: '#7c3aed', marginRight: '16px', overflow: 'hidden'
+                  width: '56px', height: '56px', borderRadius: '50%', 
+                  background: '#f3f4f6', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#9ca3af', marginRight: '16px', overflow: 'hidden'
                 }}>
                   {avatarSrc ? (
                     <img src={avatarSrc} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />

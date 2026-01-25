@@ -1,5 +1,6 @@
 "use client"
-import { Routes, Route, Outlet, Navigate,useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Routes, Route, Outlet, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 import LoginPage from './pages/LoginPage';
 import LandingPage from './pages/Landing';
@@ -15,11 +16,21 @@ import ChatbotButton from "./components/ChatbotButton";
 import MessagesPage from './pages/MessagesPage';
 import GroupsPage from './pages/GroupsPage';
 import ConversationPage from './pages/ConversationPage';
+import OtherUserProfile from './pages/OtherUserProfile'; 
+import HomePage from './pages/homepage';
+import Bookmarks from './pages/BookMarks';
+import Library from './pages/Library';
+import LibraryDocuments from './pages/LibraryDocuments';
+
+
 
 // HOC pour protéger les routes
 const RequireAuth = ({ children }) => {
   const { user, loading } = useAuth();
   
+
+  console.log('RequireAuth state -> user:', user, 'loading:', loading);
+
   if (loading) {
     return <div>Chargement...</div>;
   }
@@ -59,7 +70,7 @@ const AlreadyAuthLayout = () => {
 const RequireAuthLayout = () => {
   return (
     <RequireAuth>
-      <Outlet />
+      <MainLayout />
     </RequireAuth>
   );
 };
@@ -81,9 +92,8 @@ const MainLayout = () => {
         flex: 1, 
         marginLeft: '270px', // Largeur initiale
         backgroundColor: '#f5f5f5',
-        minHeight: '100vh',
-        padding: '20px',
         width: 'calc(100vw - 270px)',
+        height: '100vh',
         overflowY: 'auto',
         transition: 'margin-left 0.3s ease, width 0.3s ease'
       }}>
@@ -93,41 +103,10 @@ const MainLayout = () => {
   );
 };
 
-// Page d'accueil
-const HomePage = () => {
-  const { user, logout } = useAuth();
-  
-  return (
-    <div style={{ padding: '20px' }}>
-      <h1>ENSAT Student Platform</h1>
-      <p>Bienvenue sur la plateforme étudiante</p>
-      
-      {user && (
-        <div>
-          <p>Connecté en tant que: <strong>{user.email}</strong></p>
-          <button 
-            onClick={logout}
-            style={{
-              padding: '10px 15px',
-              background: '#dc3545',
-              color: 'white',
-              border: 'none',
-              borderRadius: '5px',
-              cursor: 'pointer'
-            }}
-          >
-            Déconnexion
-          </button>
-        </div>
-      )}
-    </div>
-  );
-};
-
-
 function App() {
-  const navigate = useNavigate()
-  const { user } = useAuth()
+
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <>
@@ -135,17 +114,20 @@ function App() {
         <Route path="/landing" element={<LandingPage />} />
         {/* Routes protégées (nécessite authentification) avec Sidebar */}
         <Route element={<RequireAuthLayout />}>
-        <Route element={<MainLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/profile/edit" element={<EditProfile />} />
+          <Route path="/profile/:id" element={<OtherUserProfile />} />
           <Route path="/chatbot" element={<ChatbotPage />} />
           <Route path="/messages" element={<MessagesPage />} />
           <Route path="/groups" element={<GroupsPage />} />
           <Route path="/groupes" element={<Navigate to="/groups" replace />} />
           <Route path="/conversations/:id" element={<ConversationPage />} />
+          <Route path="/bookmarks" element={<Bookmarks />} />
+          <Route path="/library" element={<Library />} />
+          <Route path="/library/:niveau" element={<LibraryDocuments />} />
         </Route>
-        </Route>
+        
 
         {/* Routes publiques (si déjà authentifié, redirige) */}
         <Route element={<AlreadyAuthLayout />}>
@@ -156,8 +138,8 @@ function App() {
           <Route path="/reset-password/:token" element={<ResetPasswordToken />} />
         </Route>
       </Routes>
-
       {user && <ChatbotButton onClick={() => navigate("/chatbot")} />}
+      {/* ChatbotButton not present in project; removed to avoid runtime error */}
     </>
   )
 }

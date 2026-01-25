@@ -17,6 +17,7 @@ import {
   Trash2,
   Menu,
   X,
+  CheckCheck,
 } from "lucide-react"
 
 const API_BASE_URL = "http://localhost:5000/api/chat"
@@ -27,7 +28,7 @@ const styles = {
   flexDirection: "row", // Éléments sur une ligne
   width: "100%", // Assure que le container prend toute la largeur
   height: "100vh", // Prend toute la hauteur de la fenêtre
-  background: "#ffffff", // Couleur de fond
+  background: "#f4f6fa", // Couleur de fond
 },
   backgroundPattern: {
     position: "absolute",
@@ -36,7 +37,7 @@ const styles = {
     right: 0,
     bottom: 0,
     backgroundImage:
-      "radial-gradient(circle at 20% 50%, rgba(227, 52, 254, 0.03) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(227, 52, 254, 0.02) 0%, transparent 50%)",
+      "radial-gradient(circle at 20% 50%, rgba(0, 64, 208, 0.03) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(0, 64, 208, 0.02) 0%, transparent 50%)",
     pointerEvents: "none",
   },
 sidebar: {
@@ -47,7 +48,7 @@ sidebar: {
   width: "320px", // Largeur du sidebar
   background: "#ffffff",
   backdropFilter: "blur(20px)", // Flou d'arrière-plan
-  boxShadow: "2px 0 16px rgba(0, 0, 0, 0.04)",
+  boxShadow: "2px 0 16px rgba(0, 64, 208, 0.08)",
   zIndex: 20,
   transition: "transform 0.3s ease",
   display: "flex",
@@ -61,33 +62,34 @@ sidebar: {
   sidebarHeader: {
     padding: "1.5rem 1rem",
      paddingTop: "1.75rem",
-    borderBottom: "1px solid rgba(227, 52, 254, 0.08)",
-    background: "linear-gradient(135deg, rgba(227, 52, 254, 0.02) 0%, rgba(255, 255, 255, 0) 100%)",
+    borderBottom: "2px solid #0040D0",
+    background: "#ffffff",
   },
   sidebarTitle: {
     fontSize: "1.25rem",
     fontWeight: "600",
-    color: "#E334FE",
+    color: "#333333",
     marginBottom: "1rem",
     textAlign: "center",
   },
-  newConvBtn: {
-    width: "100%",
-    padding: "0.875rem 1rem",
-    background: "#6366f1",
-    color: "white",
-    border: "none",
-    borderRadius: "0.875rem",
-    cursor: "pointer",
-    fontSize: "0.9375rem",
-    fontWeight: "500",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: "0.5rem",
-    boxShadow: "0 4px 12px rgba(99, 102, 241, 0.2)", 
-    transition: "all 0.3s",
-  },
+newConvBtn: {
+  width: "100%",
+  padding: "1.1rem 1.25rem",
+  background: "linear-gradient(90deg, #0040D0 0%, #E7A33E 100%)",
+  color: "#ffffff",
+  border: "none",
+  borderRadius: "1.25rem",
+  cursor: "pointer",
+  fontSize: "1rem",
+  fontWeight: "600",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "0.6rem",
+  boxShadow: "0 8px 20px rgba(0, 64, 208, 0.25)",
+  transition: "all 0.3s ease",
+},
+
   conversationsList: {
     flex: 1,
     overflowY: "auto",
@@ -96,7 +98,7 @@ sidebar: {
   conversationItem: {
     padding: "1rem",
     marginBottom: "0.5rem",
-    background: "rgba(227, 52, 254, 0.04)",
+    background: "rgba(0, 64, 208, 0.04)",
     borderRadius: "0.75rem",
     cursor: "pointer",
     transition: "all 0.3s",
@@ -106,8 +108,8 @@ sidebar: {
     gap: "0.75rem",
   },
   conversationItemActive: {
-    background: "rgba(227, 52, 254, 0.08)",
-    borderLeft: "4px solid #E334FE",
+    background:  "rgba(0, 64, 208, 0.08)",
+    borderLeft: "4px solid #0040D0",
   },
   conversationInfo: {
     flex: 1,
@@ -116,43 +118,43 @@ sidebar: {
   conversationTitle: {
     fontSize: "0.9375rem",
     fontWeight: "500",
-    color: "#4a5568",
+    color:"#333333",
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
   },
   conversationDate: {
     fontSize: "0.75rem",
-    color: "#a0aec0",
+    color:  "#6b7280",
     marginTop: "0.25rem",
   },
   deleteBtn: {
     padding: "0.5rem",
-    background: "rgba(245, 101, 101, 0.08)",
+    background: "rgba(231, 163, 62, 0.08)",
     border: "none",
     borderRadius: "0.5rem",
     cursor: "pointer",
-    color: "#dc2626",
+    color:"#E7A33E",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     transition: "all 0.2s",
   },
   toggleSidebarBtn: {
-    position: "fixed",
+    position: "absolute",
     left: "1rem",
     top: "1rem",
-    width: "2.5rem",
-    height: "2.5rem",
-    borderRadius: "0.75rem",
+    width: "2rem",
+    height: "2rem",
+    borderRadius: "0.5rem",
     background: "rgba(255, 255, 255, 0.98)",
     backdropFilter: "blur(10px)",
-    border: "1px solid rgba(227, 52, 254, 0.12)",
+    border:  "1px solid rgba(0, 64, 208, 0.12)",
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    boxShadow: "0 4px 12px rgba(0, 0, 0, 0.06)",
+    boxShadow: "0 4px 12px rgba(0, 64, 208, 0.06)",
     zIndex: 30,
     transition: "all 0.3s",
   },
@@ -172,7 +174,7 @@ header: {
   color: "#4a5568",
   padding: "1rem 2rem",
   boxShadow: "0 2px 8px rgba(0, 0, 0, 0.03)",
-  borderBottom: "1px solid rgba(227, 52, 254, 0.06)",
+  borderBottom: "none",
   position: "fixed",
   top: 0,
   left: 0,
@@ -221,9 +223,9 @@ headerClosed: {
     fontSize: "1.5rem",
     fontWeight: "600",
     margin: 0,
-    background: "linear-gradient(90deg, #E334FE, #A6048E)",
-    WebkitBackgroundClip: "text",
-    WebkitTextFillColor: "transparent",
+    color: "#0040D0",
+    background: "none",
+    WebkitTextFillColor: "initial",
     backgroundClip: "text",
   },
   statusContainer: {
@@ -234,12 +236,12 @@ headerClosed: {
   statusDot: {
     width: "8px",
     height: "8px",
-    backgroundColor: "#E334FE",
+    backgroundColor: "#25D366",
     borderRadius: "50%",
     animation: "pulse 2s infinite",
   },
   status: {
-    color: "#718096",
+    color: "#6b7280",
     fontSize: "0.875rem",
     margin: 0,
     fontWeight: "500",
@@ -252,6 +254,7 @@ headerClosed: {
   paddingTop: "9rem",  // Ajouter un espace pour que les messages ne soient pas recouverts par le header
   overflowY: "auto",
   width: "100%",
+  
 },
   messageWrapper: {
     display: "flex",
@@ -273,12 +276,12 @@ headerClosed: {
   botAvatar: {
     width: "2.5rem",
     height: "2.5rem",
-    background: "#6366f1",
+    background: "#0040D0",
     borderRadius: "0.75rem",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    boxShadow: "0 4px 12px rgba(99, 102, 241, 0.15)",
+    boxShadow: "0 4px 12px rgba(0, 64, 208, 0.15)",
   },
   userAvatar: {
     width: "2.5rem",
@@ -290,7 +293,7 @@ headerClosed: {
     justifyContent: "center",
     boxShadow: "0 4px 12px rgba(0, 0, 0, 0.06)",
     marginLeft: "0.75rem",
-    color: "#E334FE",
+    color: "#0040D0",
   },
   messageBubble: {
     borderRadius: "1.25rem",
@@ -301,13 +304,13 @@ headerClosed: {
     border: "1px solid rgba(255, 255, 255, 0.5)",
   },
   messageBubbleUser: {
-    background: "linear-gradient(90deg, #E334FE, #A6048E)",
+    background: "linear-gradient(90deg, #4a82fc, #0040D0)",
     color: "white",
   },
   messageBubbleBot: {
     backgroundColor: "rgba(255, 255, 255, 0.99)",
-    color: "#2d3748",
-    borderColor: "rgba(227, 52, 254, 0.08)",
+    color: "#1f2937",
+    borderColor: "rgba(0, 64, 208, 0.08)",
   },
   messageText: {
     fontSize: "0.9375rem",
@@ -327,10 +330,10 @@ headerClosed: {
     gap: "0.25rem",
   },
   messageTimeUser: {
-    color: "rgba(255, 255, 255, 0.7)",
+    color: "#4B5563",
   },
   messageTimeBot: {
-    color: "#a0aec0",
+    color:  "#4B5563",
   },
   actionButtons: {
     display: "flex",
@@ -338,7 +341,7 @@ headerClosed: {
   },
   actionBtn: {
     padding: "0.5rem",
-    backgroundColor: "rgba(227, 52, 254, 0.06)",
+    backgroundColor: "transparent",
     border: "none",
     cursor: "pointer",
     borderRadius: "0.5rem",
@@ -355,14 +358,14 @@ headerClosed: {
   dot: {
     width: "0.625rem",
     height: "0.625rem",
-    background: "#E334FE",
+    background: "#0040D0",
     borderRadius: "50%",
     animation: "bounce 1s infinite",
   },
 inputArea: {
   background: "#ffffff",
   backdropFilter: "blur(20px)",
-  borderTop: "1px solid rgba(227, 52, 254, 0.06)",
+  borderTop: "1px solid rgba(0, 64, 208, 0.12)",
   padding: "1rem 1.5rem",
   boxShadow: "0 -2px 10px rgba(0, 0, 0, 0.02)", // Ombre inversée vers le haut
   zIndex: 10,
@@ -371,6 +374,8 @@ inputArea: {
   inputContent: {
     maxWidth: "56rem",
     margin: "0 auto",
+    width: "100%",
+    position: "relative", // Pour le contexte d'empilement
   },
   quickButtons: {
     display: "flex",
@@ -378,20 +383,21 @@ inputArea: {
     marginBottom: "1rem",
     flexWrap: "wrap",
   },
-  quickBtn: {
-    fontSize: "0.875rem",
-    color: "#E334FE",
-    background: "rgba(227, 52, 254, 0.06)",
-    border: "1px solid rgba(227, 52, 254, 0.12)",
-    cursor: "pointer",
-    fontWeight: "500",
-    padding: "0.625rem 1rem",
-    borderRadius: "9999px",
-    transition: "all 0.3s",
-    display: "flex",
-    alignItems: "center",
-    gap: "0.5rem",
-  },
+quickBtn: {
+  fontSize: "0.875rem",
+  color: "#0040D0",
+  background: "rgba(0, 64, 208, 0.06)",
+  border: "1px solid rgba(0, 64, 208, 0.18)",
+  cursor: "pointer",
+  fontWeight: "500",
+  padding: "0.625rem 1rem",
+  borderRadius: "9999px",
+  transition: "all 0.3s ease",
+  display: "flex",
+  alignItems: "center",
+  gap: "0.5rem",
+},
+
   inputWrapper: {
     display: "flex",
     alignItems: "center",
@@ -399,7 +405,7 @@ inputArea: {
     backgroundColor: "white",
     borderRadius: "1.25rem",
     padding: "0.75rem 1rem",
-    border: "2px solid rgba(227, 52, 254, 0.12)",
+    border: "2px solid #0040D0", 
     transition: "all 0.3s",
     boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
   },
@@ -409,12 +415,12 @@ inputArea: {
     padding: "0.5rem",
     outline: "none",
     border: "none",
-    color: "#2d3748",
+    color:  "#333333",
     fontSize: "0.9375rem",
   },
   sendBtn: {
-    background:  "#6366f1",
-    color: "white",
+    background: "transparent",
+    color: "#0040D0",
     borderRadius: "0.875rem",
     padding: "0.875rem",
     border: "none",
@@ -423,7 +429,8 @@ inputArea: {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    boxShadow: "0 4px 12px rgba(99, 102, 241, 0.15)", 
+    boxShadow: "none",
+    zIndex: 5, // S'assurer qu'il est au-dessus
   },
   sendBtnDisabled: {
     opacity: 0.5,
@@ -433,14 +440,14 @@ inputArea: {
     position: "fixed",
     top: "6rem",
     right: "1.5rem",
-    background: "linear-gradient(90deg, #E334FE, #A6048E)",
+    background: "linear-gradient(90deg, #4a82fc, #0040D0)",
     color: "white",
     padding: "1rem 1.5rem",
     borderRadius: "0.875rem",
     display: "flex",
     alignItems: "center",
     gap: "0.75rem",
-    boxShadow: "0 8px 24px rgba(227, 52, 254, 0.2)",
+    boxShadow: "0 8px 24px rgba(0, 64, 208, 0.2)",
     zIndex: 1000,
     animation: "slideInRight 0.3s ease-out",
     fontWeight: "500",
@@ -452,7 +459,7 @@ inputArea: {
     width: "1.75rem",
     height: "1.75rem",
     borderRadius: "0.5rem",
-    background: "#E334FE",
+    background: "#0040D0",
     color: "white",
     fontWeight: "bold",
     fontSize: "0.875rem",
@@ -464,16 +471,16 @@ inputArea: {
     alignItems: "flex-start",
     padding: "1rem",
     marginBottom: "0.75rem",
-    background: "rgba(227, 52, 254, 0.04)",
+    background: "rgba(0, 64, 208, 0.04)",
     borderRadius: "0.75rem",
-    borderLeft: "3px solid #E334FE",
+    borderLeft: "3px solid #0040D0",
     transition: "all 0.2s",
   },
   bulletPoint: {
     width: "0.5rem",
     height: "0.5rem",
     borderRadius: "50%",
-    background: "#E334FE",
+    background: "#0040D0",
     marginRight: "0.75rem",
     marginTop: "0.5rem",
     flexShrink: 0,
@@ -485,7 +492,7 @@ historyIcon: {
   width: "40px",  // Taille du fond
   height: "40px", // Taille du fond
   borderRadius: "8px",  // Bordure arrondie pour un effet rectangle
-  backgroundColor: "#6366f1",  // Couleur du fond (identique au bouton de nouvelle conversation)
+  backgroundColor: "#E7A33E",  // Couleur du fond (identique au bouton de nouvelle conversation)
   cursor: "pointer",
   transition: "all 0.3s",
   ":hover": {
@@ -538,7 +545,7 @@ modalHeader: {
 modalTitle: {
   fontSize: "1.25rem",
   fontWeight: "600",
-  color: "#333",
+  color: "#0040D0",
 },
 
 closeModalBtn: {
@@ -559,7 +566,7 @@ conversationItem: {
   justifyContent: "space-between",
   padding: "1rem",
   marginBottom: "1rem",
-  backgroundColor: "rgba(227, 52, 254, 0.1)", // Couleur de fond claire pour chaque conversation
+  backgroundColor: "rgba(0, 64, 208, 0.04)", // Couleur de fond claire pour chaque conversation
   borderRadius: "0.75rem",
   cursor: "pointer",
   transition: "all 0.3s ease",
@@ -574,7 +581,7 @@ conversationTitle: {
 
 conversationDate: {
   fontSize: "0.875rem",
-  color: "#718096",
+  color:"#6b7280",
   marginTop: "0.25rem",
 },
 
@@ -585,14 +592,14 @@ deleteBtn: {
   padding: "0.5rem",
   transition: "all 0.3s ease",
   ":hover": {
-    color: "#DC2626",
+    color:  "#E7A33E",
   },
 },
 
 newConvBtn: {
   width: "100%",
   padding: "1rem",
-  background: "#6366f1",
+  background: "linear-gradient(90deg, #4a82fc, #0040D0)",
   color: "white",
   border: "none",
   borderRadius: "1rem",
@@ -663,12 +670,12 @@ const RichContent = ({ content }) => {
 
     processed = processed.replace(
       /\[(.+?)\]$$(.+?)$$/g,
-      '<a href="$2" style="color: #E334FE; text-decoration: underline; font-weight: 500;" target="_blank" rel="noopener noreferrer">$1 ↗</a>',
+      '<a href="$2" style="color: #0040D0; text-decoration: underline; font-weight: 500;" target="_blank" rel="noopener noreferrer">$1 ↗</a>',
     )
 
     processed = processed.replace(
       /`(.+?)`/g,
-      '<code style="background-color: rgba(227, 52, 254, 0.1); padding: 0.125rem 0.5rem; border-radius: 0.375rem; font-family: monospace; color: #E334FE;">$1</code>',
+      '<code style="background-color: rgba(0, 64, 208, 0.1); padding: 0.125rem 0.5rem; border-radius: 0.375rem; font-family: monospace; color: #0040D0;">$1</code>',
     )
 
     return <span dangerouslySetInnerHTML={{ __html: processed }} />
@@ -966,7 +973,7 @@ const toggleHistoryModal = () => {
     {/* Afficher l'icône uniquement si isChatbotInterface est faux */}
     {!isChatbotInterface && (
   <button style={styles.toggleSidebarBtn}>
-    <MessageCircle size={32} color="#E334FE" /> {/* Icône du chatbot */}
+    <MessageCircle size={32} color="#0040D0" /> {/* Icône du chatbot */}
   </button>
 )}
 
@@ -976,7 +983,7 @@ const toggleHistoryModal = () => {
       onMouseOver={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
       onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
     >
-      {sidebarOpen ? <X size={20} color="#E334FE" /> : <Menu size={20} color="#E334FE" />}
+     {sidebarOpen ? <X size={20} color="#0040D0" /> : <Menu size={20} color="#0040D0" />}
     </button>
 
     <div style={{ ...styles.mainContent, ...(sidebarOpen ? {} : styles.mainContentExpanded) }}>
@@ -1049,42 +1056,54 @@ const toggleHistoryModal = () => {
                       <Clock size={12} />
                       {message.time}
                     </span>
-                    {message.type === "bot" && (
-                      <div style={styles.actionButtons}>
-                        <button
-                          style={styles.actionBtn}
-                          onClick={() => copyMessage(message.text)}
-                          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.15)")}
-                          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.06)")}
-                          title="Copier le message"
-                        >
-                          <Copy style={{ width: "1rem", height: "1rem", color: "#E334FE" }} />
-                        </button>
-                        <button
-                          style={styles.actionBtn}
-                          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.15)")}
-                          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.06)")}
-                          title="Utile"
-                        >
-                          <ThumbsUp style={{ width: "1rem", height: "1rem", color: "#E334FE" }} />
-                        </button>
-                        <button
-                          style={styles.actionBtn}
-                          onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.15)")}
-                          onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "rgba(227, 52, 254, 0.06)")}
-                          title="Pas utile"
-                        >
-                          <ThumbsDown style={{ width: "1rem", height: "1rem", color: "#E334FE" }} />
-                        </button>
-                      </div>
-                    )}
+ {message.type === "bot" && (
+  <div style={styles.actionButtons}>
+    <button
+      style={styles.actionBtn}
+      onClick={() => copyMessage(message.text)}
+      onMouseOver={(e) => {
+        e.currentTarget.style.backgroundColor = "rgba(0, 64, 208, 0.15)";
+      }}
+      onMouseOut={(e) => {
+        e.currentTarget.style.backgroundColor = "rgba(0, 64, 208, 0.08)";
+      }}
+      title="Copier le message"
+    >
+      <Copy style={{ width: "1rem", height: "1rem", color: "#0040D0" }} />
+    </button>
+    <button
+      style={styles.actionBtn}
+      onMouseOver={(e) => {
+        e.currentTarget.style.backgroundColor = "rgba(0, 64, 208, 0.15)";
+      }}
+      onMouseOut={(e) => {
+        e.currentTarget.style.backgroundColor = "rgba(0, 64, 208, 0.08)";
+      }}
+      title="Utile"
+    >
+      <ThumbsUp style={{ width: "1rem", height: "1rem", color: "#0040D0" }} />
+    </button>
+    <button
+      style={styles.actionBtn}
+      onMouseOver={(e) => {
+        e.currentTarget.style.backgroundColor = "rgba(0, 64, 208, 0.15)";
+      }}
+      onMouseOut={(e) => {
+        e.currentTarget.style.backgroundColor = "rgba(0, 64, 208, 0.08)";
+      }}
+      title="Pas utile"
+    >
+      <ThumbsDown style={{ width: "1rem", height: "1rem", color: "#0040D0" }} />
+    </button>
+  </div>
+)}
                   </div>
                 </div>
               </div>
 
               {message.type === "user" && (
                 <div style={styles.userAvatar}>
-                  <User color="#E334FE" size={20} />
+                  <User color="#E7A33E" size={20} />
                 </div>
               )}
             </div>
@@ -1108,6 +1127,7 @@ const toggleHistoryModal = () => {
           <div ref={messagesEndRef} />
         </div>
       </div>
+      
 
       {showHistoryModal && (
         <div style={styles.historyModal}>
@@ -1115,7 +1135,7 @@ const toggleHistoryModal = () => {
             <div style={styles.modalHeader}>
               <h3 style={styles.modalTitle}>Historique des Conversations</h3>
               <button onClick={toggleHistoryModal} style={styles.closeModalBtn}>
-                <X size={20} color="#E334FE" />
+                <X size={20} color="#0040D0" />
               </button>
             </div>
             <div style={styles.conversationsList}>
@@ -1132,14 +1152,29 @@ const toggleHistoryModal = () => {
                       deleteConversation(conv.idConvChat, e); // Appel de la fonction pour supprimer la conversation
                     }}
                   >
-                    <Trash2 size={18} color="#DC2626" />
+                    <Trash2 size={18} color="#E7A33E" />
                   </button>
                 </div>
               ))}
             </div>
-            <button style={styles.newConvBtn} onClick={createNewConversation}>
-              Nouvelle conversation
-            </button>
+            <button
+  onClick={createNewConversation}
+  style={{
+    width: "100%",
+    padding: "1.1rem",
+    background: "linear-gradient(90deg, #0040D0, #E7A33E)",
+    color: "#fff",
+    border: "none",
+    borderRadius: "20px",
+    fontSize: "1rem",
+    fontWeight: "600",
+    cursor: "pointer",
+    boxShadow: "0 8px 20px rgba(0,0,0,0.25)"
+  }}
+>
+  ➕ Nouvelle conversation
+</button>
+
           </div>
         </div>
       )}
@@ -1150,14 +1185,17 @@ const toggleHistoryModal = () => {
             <button
               style={styles.quickBtn}
               onClick={() => handleQuickQuestion("Qu'est-ce que l'ENSA Tanger?")}
-              onMouseOver={(e) => {
-                e.currentTarget.style.background = "#6366f1";
-                e.currentTarget.style.color = "white";
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = "rgba(227, 52, 254, 0.06)";
-                e.currentTarget.style.color = "#E334FE";
-              }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.background = "linear-gradient(90deg, #E7A33E, #FF9F1C)";
+               e.currentTarget.style.color = "#ffffff";
+               e.currentTarget.style.borderColor = "#E7A33E";
+}}
+
+       onMouseOut={(e) => {
+        e.currentTarget.style.background = "rgba(0, 64, 208, 0.06)";
+        e.currentTarget.style.color = "#0040D0";
+         e.currentTarget.style.borderColor = "rgba(0, 64, 208, 0.18)";
+}}
               disabled={isLoading}
             >
               <Sparkles size={14} />
@@ -1166,14 +1204,17 @@ const toggleHistoryModal = () => {
             <button
               style={styles.quickBtn}
               onClick={() => handleQuickQuestion("Quelles sont les filières disponibles à l'ENSA Tanger?")}
-              onMouseOver={(e) => {
-                e.currentTarget.style.background = "#6366f1";
-                e.currentTarget.style.color = "white";
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.background = "rgba(227, 52, 254, 0.06)";
-                e.currentTarget.style.color = "#E334FE";
-              }}
+                     onMouseOver={(e) => {
+              e.currentTarget.style.background = "linear-gradient(90deg, #E7A33E, #FF9F1C)";
+               e.currentTarget.style.color = "#ffffff";
+               e.currentTarget.style.borderColor = "#E7A33E";
+}}
+
+       onMouseOut={(e) => {
+        e.currentTarget.style.background = "rgba(0, 64, 208, 0.06)";
+        e.currentTarget.style.color = "#0040D0";
+         e.currentTarget.style.borderColor = "rgba(0, 64, 208, 0.18)";
+}}
               disabled={isLoading}
             >
               <MessageCircle size={14} />
@@ -1182,7 +1223,7 @@ const toggleHistoryModal = () => {
           </div>
           <div
             style={styles.inputWrapper}
-            onFocus={(e) => (e.currentTarget.style.borderColor = "#E334FE")}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "#0040D0")}
             onBlur={(e) => (e.currentTarget.style.borderColor = "rgba(227, 52, 254, 0.12)")}
           >
             <input

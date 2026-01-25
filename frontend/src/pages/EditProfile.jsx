@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import '../styles/edit-profile.css';
@@ -7,6 +7,7 @@ import { FiEye, FiEyeOff } from 'react-icons/fi'; // ⚠️ IMPORTEZ LES ICÔNES
 const EditProfile = () => {
     const { user, updateProfile } = useAuth();
     const navigate = useNavigate();
+    const pageRef = useRef(null);
     
     const [formData, setFormData] = useState({
         firstName: user.prenom || '',
@@ -18,7 +19,8 @@ const EditProfile = () => {
         newPassword: '',
         confirmPassword: ''
     });
-    
+
+
     const [passwordError, setPasswordError] = useState('');
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
@@ -62,6 +64,19 @@ const EditProfile = () => {
 const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Scroll to top
+    // 1. Essayer window
+    window.scrollTo(0, 0);
+
+    // 2. Essayer de trouver n'importe quel parent qui a scrollé et le remettre à 0
+    let el = pageRef.current;
+    while (el) {
+        if (el.scrollTop > 0) {
+            el.scrollTop = 0;
+        }
+        el = el.parentElement;
+    }
+
     // Réinitialiser les messages
     setPasswordError('');
     setMessage('');
@@ -109,14 +124,14 @@ const handleSubmit = async (e) => {
         if (formData.level !== user.niveau) dataToSend.niveau = formData.level;
         if (formData.about !== user.bio) dataToSend.bio = formData.about;
         if (formData.email !== user.email) dataToSend.email = formData.email;
-        
+
         // ⚠️ CORRECTION : Vérifier d'abord les changements sur les autres champs
         const hasProfileChanges = Object.keys(dataToSend).length > 0;
-        const hasPasswordChanges = wantsToChangePassword && 
-                                  formData.currentPassword && 
-                                  formData.newPassword && 
+        const hasPasswordChanges = wantsToChangePassword &&
+                                  formData.currentPassword &&
+                                  formData.newPassword &&
                                   formData.confirmPassword;
-        
+
         // Si pas de changements du tout
         if (!hasProfileChanges && !hasPasswordChanges) {
             setMessage('Aucune modification détectée');
@@ -177,7 +192,7 @@ const handleSubmit = async (e) => {
     };
     
     return (
-        <div className="edit-profile-page">
+        <div className="edit-profile-page" ref={pageRef}>
             <div className="edit-profile-container">
                 <div className="edit-profile-card">
                     <h1 className="edit-profile-title">Edit Profile</h1>
@@ -270,7 +285,7 @@ const handleSubmit = async (e) => {
                                 disabled={loading}
                             />
                         </div>
-                        
+
                         {/* Section pour changer le mot de passe */}
                         <div className="password-section">
                             <h3>Change Password </h3>

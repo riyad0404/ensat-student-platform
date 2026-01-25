@@ -2,12 +2,20 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import '../styles/profile.css';
 import { useNavigate } from 'react-router-dom';
+import PostCard from '../components/Postcard';
+import { getAllPosts } from '../api/postAPI';
+import CreatePostModal from '../components/CreatePostModal';
+import { Pencil, Trash2, Camera, Upload } from 'lucide-react';
+import defaultBanner from '../assets/Blue Monotone Gradient Professional Company LinkedIn Banner.png';
 
 const Profile = () => {
     const { user, updateProfile } = useAuth();
     const navigate = useNavigate();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingPost, setEditingPost] = useState(null);
     
     const [localProfileImage, setLocalProfileImage] = useState(null);
+    const [userPosts, setUserPosts] = useState([]);
     const [bannerImage, setBannerImage] = useState('');
     const [showBannerMenu, setShowBannerMenu] = useState(false);
     const [showAvatarMenu, setShowAvatarMenu] = useState(false);
@@ -15,17 +23,40 @@ const Profile = () => {
     const [imagePreview, setImagePreview] = useState(null);
     const [showImageModal, setShowImageModal] = useState(false);
     const [showNotification, setShowNotification] = useState({ show: false, message: '', type: '' });
+    const [showDeleteAvatarModal, setShowDeleteAvatarModal] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); // État pour sidebar
     
     const bannerFileInputRef = useRef(null);
     const avatarFileInputRef = useRef(null);
     
+    const fetchUserPosts = async () => {
+        if (!user?.iduser && !user?.id) return;
+        try {
+            const data = await getAllPosts();
+            const allPosts = Array.isArray(data) ? data : (data?.posts || []);
+            const currentUserId = user.iduser || user.id;
+
+            // Filtrer les posts de l'utilisateur connecté
+            const myPosts = allPosts.filter(p => {
+                const authorId = p.iduser || p.auteur?.iduser || p.auteur?.id;
+                return String(authorId) === String(currentUserId);
+            });
+
+            myPosts.sort((a, b) => new Date(b.createdAt || b.dateCreation) - new Date(a.createdAt || a.dateCreation));
+            setUserPosts(myPosts);
+        } catch (error) {
+            console.error("Error fetching user posts:", error);
+            setUserPosts([]);
+        }
+    };
+
     useEffect(() => {
         if (user?.iduser) {
             const savedImage = localStorage.getItem(`profile_image_${user.iduser}`);
             if (savedImage) {
                 setLocalProfileImage(savedImage);
             }
+            fetchUserPosts();
         }
     }, [user]);
     
@@ -35,19 +66,6 @@ const Profile = () => {
     
     const fullName = `${user.prenom || ''} ${user.nom || ''}`.trim();
     const program = user.niveau;
-    
-    const posts = [
-        {
-            id: 1,
-            username: 'X_AE_A-13',
-            role: 'Product Designer, slothUI',
-            content: 'Habitant morbi tristique senectus et netus et. Suspendisse sed nisi lacus sed viverra. Dolor morbi non arcu risus quis varius.',
-            tags: ['#amazing', '#great', '#lifetime', '#uiux', '#machinelearning'],
-            likes: 12,
-            comments: 25,
-            shares: 187
-        }
-    ];
 
     const convertToBase64 = (file) => {
         return new Promise((resolve, reject) => {
@@ -165,11 +183,11 @@ const Profile = () => {
         }
     };
 
+    const confirmRemoveAvatar = () => {
+        setShowDeleteAvatarModal(true);
+    };
+
     const handleRemoveAvatar = async () => {
-        // Custom confirmation dialog
-        const confirmDelete = window.confirm('Are you sure you want to delete your profile picture?');
-        if (!confirmDelete) return;
-        
         setLoading(true);
         
         try {
@@ -195,6 +213,7 @@ const Profile = () => {
         } finally {
             setLoading(false);
             setShowAvatarMenu(false);
+            setShowDeleteAvatarModal(false);
         }
     };
 
@@ -236,13 +255,15 @@ const Profile = () => {
     };
 
     const bannerStyle = bannerImage ? {
-        background: `url(${bannerImage})`,
+        backgroundImage: `url(${bannerImage})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
     } : {
-        background: "url('https://cdn.pixabay.com/photo/2015/07/17/22/43/student-849825_1280.jpg')",
+        backgroundImage: `url(${defaultBanner})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
     };
 
     const handleClickOutside = (e) => {
@@ -260,6 +281,26 @@ const Profile = () => {
             document.removeEventListener('click', handleClickOutside);
         };
     }, []);
+
+    const handleEditPost = (post) => {
+        setEditingPost(post);
+        setIsModalOpen(true);
+    };
+
+    const handlePostSaved = (savedPost) => {
+        // Mise à jour immédiate de l'interface (Optimistic UI)
+        if (savedPost && savedPost.idpost) {
+            setUserPosts(prev => {
+                const exists = prev.find(p => p.idpost === savedPost.idpost);
+                if (exists) {
+                    return prev.map(p => p.idpost === savedPost.idpost ? { ...p, ...savedPost } : p);
+                }
+                return [savedPost, ...prev];
+            });
+        }
+        // Rafraîchissement des données serveur pour être sûr
+        fetchUserPosts();
+    };
 
     const profileImageUrl = getProfileImage();
 
@@ -285,37 +326,9 @@ const Profile = () => {
                             gap: '10px',
                             maxWidth: '400px'
                         }}>
-                            {showNotification.type === 'success' ? '✅' : 
-                             showNotification.type === 'error' ? '❌' : 'ℹ️'}
+                            {showNotification.type === 'success' ? '' : 
+                             showNotification.type === 'error' ? '' : 'ℹ️'}
                             {showNotification.message}
-                        </div>
-                    )}
-
-                    {/* Loading indicator */}
-                    {loading && (
-                        <div style={{
-                            position: 'fixed',
-                            top: '20px',
-                            right: '20px',
-                            background: '#E334FE',
-                            color: 'white',
-                            padding: '10px 20px',
-                            borderRadius: '8px',
-                            zIndex: 2000,
-                            boxShadow: '0 4px 12px rgba(227, 52, 254, 0.3)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px'
-                        }}>
-                            <div style={{
-                                width: '16px',
-                                height: '16px',
-                                border: '2px solid rgba(255,255,255,0.3)',
-                                borderTop: '2px solid white',
-                                borderRadius: '50%',
-                                animation: 'spin 1s linear infinite'
-                            }}></div>
-                            Saving...
                         </div>
                     )}
 
@@ -394,13 +407,15 @@ const Profile = () => {
                         <div className={`dropdown-menu ${showBannerMenu ? 'show' : ''}`} 
                              style={{ bottom: '70px', right: '20px' }}>
                             <div className="dropdown-item" onClick={() => !loading && bannerFileInputRef.current.click()}>
-                                <span style={{ marginRight: '10px' }}>📤</span>
-                                Edit banner
+                                <span style={{ marginRight: '10px', display: 'flex', alignItems: 'center' }}><Upload size={18} /></span>
+                                {bannerImage ? 'Change banner' : 'Add banner'}
                             </div>
-                            <div className="dropdown-item delete" onClick={handleRemoveBanner}>
-                                <span style={{ marginRight: '10px' }}>🗑️</span>
-                                Remove banner
-                            </div>
+                            {bannerImage && (
+                                <div className="dropdown-item delete" onClick={handleRemoveBanner}>
+                                    <span style={{ marginRight: '10px', display: 'flex', alignItems: 'center' }}><Trash2 size={18} /></span>
+                                    Remove banner
+                                </div>
+                            )}
                         </div>
                         
                         <input
@@ -512,9 +527,9 @@ const Profile = () => {
                                         </div>
                                     )}
                                     {profileImageUrl && (
-                                        <div className="dropdown-item delete" onClick={handleRemoveAvatar}>
-                                            <span style={{ marginRight: '10px' }}>🗑️</span>
-                                            Remove photo
+                                        <div className="dropdown-item delete" onClick={confirmRemoveAvatar}>
+                                            <span style={{ marginRight: '10px', display: 'flex', alignItems: 'center' }}><Trash2 size={18} /></span>
+                                            Remove Photo
                                         </div>
                                     )}
                                 </div>
@@ -552,44 +567,64 @@ const Profile = () => {
                         {/* Posts */}
                         <div className="posts-section">
                             <div className="posts-title">Posts</div>
-                            {posts.map(post => (
-                                <div key={post.id} className="post">
-                                    <div className="post-header">
-                                        <div className="post-avatar">
-                                            {post.username.substring(0, 2)}
-                                        </div>
-                                        <div className="post-user">
-                                            <h4>{post.username}</h4>
-                                            <p>{post.role}</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <p className="post-content">{post.content}</p>
-                                    
-                                    <div className="post-tags">
-                                        {post.tags.map((tag, i) => (
-                                            <span key={i} className="tag">{tag}</span>
-                                        ))}
-                                    </div>
-                                    
-                                    <div className="post-stats">
-                                        <div className="stat">
-                                            <span>❤️</span>
-                                            <span>{post.likes} Likes</span>
-                                        </div>
-                                        <div className="stat">
-                                            <span>💬</span>
-                                            <span>{post.comments} Comments</span>
-                                        </div>
-                                        <div className="stat">
-                                            <span>↪️</span>
-                                            <span>{post.shares} Share</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+                            {userPosts.length > 0 ? (
+                                userPosts.map(post => (
+                                    <PostCard 
+                                        key={post.idpost} 
+                                        post={post}
+                                        onPostDeleted={() => setUserPosts(prev => prev.filter(p => p.idpost !== post.idpost))}
+                                        onEdit={handleEditPost}
+                                        showOptions={true}
+                                    />
+                                ))
+                            ) : (
+                                <p style={{textAlign: 'center', color: '#666', padding: '20px'}}>You have no posts yet.</p>
+                            )}
                         </div>
                     </div>
+
+                    {/* Modal pour créer/éditer un post */}
+                    {isModalOpen && (
+                        <CreatePostModal 
+                            isOpen={isModalOpen} 
+                            onClose={() => { setIsModalOpen(false); setEditingPost(null); }}
+                            onPostCreated={handlePostSaved}
+                            postToEdit={editingPost}
+                        />
+                    )}
+
+                    {/* Delete Avatar Confirmation Modal */}
+                    {showDeleteAvatarModal && (
+                        <div style={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: 'rgba(0,0,0,0.5)',
+                            zIndex: 3000,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            <div style={{
+                                background: 'white',
+                                width: '90%',
+                                maxWidth: '350px',
+                                borderRadius: '12px',
+                                padding: '24px',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                textAlign: 'center'
+                            }}>
+                                <h3 style={{ margin: '0 0 10px 0', fontSize: '1.125rem', fontWeight: '700', color: '#111827' }}>Delete Profile Picture?</h3>
+                                <p style={{ color: '#667781', marginBottom: '20px', fontSize: '14px' }}>Are you sure you want to delete your profile picture?</p>
+                                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                                    <button onClick={() => setShowDeleteAvatarModal(false)} style={{ padding: '8px 16px', borderRadius: '20px', fontWeight: '500', cursor: 'pointer', background: 'none', border: '1px solid #ddd', color: '#111b21' }}>Cancel</button>
+                                    <button onClick={handleRemoveAvatar} style={{ padding: '8px 16px', borderRadius: '20px', fontWeight: '500', cursor: 'pointer', background: '#ea0038', border: 'none', color: 'white' }}>Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* CSS Styles */}
                     <style jsx="true">{`
