@@ -25,7 +25,7 @@ const API_BASE_URL = "http://localhost:5000/api/chat"
 const styles = {
   container: {
     minHeight: "100vh",
-    background: "#f9f8fa",
+    background: "#F3F2EF",
     position: "relative",
     overflow: "hidden",
   },
@@ -45,7 +45,7 @@ const styles = {
     top: 0,
     bottom: 0,
     width: "320px",
-    background: "#f9f8fa", // Changed from white to match the main background
+    background: "#ffffff", // Changed from white to match the main background
     backdropFilter: "blur(20px)",
     boxShadow: "2px 0 16px rgba(0, 0, 0, 0.04)",
     zIndex: 20,
@@ -165,7 +165,7 @@ const styles = {
     marginLeft: 0,
   },
   header: {
-    background: "#f9f8fa", // Changed from white to match the main background
+    background: "#ffffff",
     backdropFilter: "blur(20px)",
     color: "#4a5568",
     padding: "1.5rem 1rem",
@@ -230,6 +230,7 @@ const styles = {
     padding: "2rem 1rem",
     overflowY: "auto",
     width: "100%",
+    background: "#F3F2EF",
   },
   messageWrapper: {
     display: "flex",
@@ -338,7 +339,7 @@ const styles = {
     animation: "bounce 1s infinite",
   },
   inputArea: {
-    background: "#f9f8fa", // Changed from white to match the main background
+    background: " #ffffff", // Changed from white to match the main background
     backdropFilter: "blur(20px)",
     borderTop: "1px solid rgba(0, 64, 208, 0.06)",
     padding: "0.75rem 1rem",

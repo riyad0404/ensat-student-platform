@@ -7,6 +7,7 @@ import '../styles/profile.css'; // On réutilise le même style
 import { getAllPosts } from '../api/postAPI';
 import PostCard from '../components/Postcard';
 import defaultBanner from '../assets/Blue Monotone Gradient Professional Company LinkedIn Banner.png';
+import { Search } from 'lucide-react';
 
 const OtherUserProfile = () => {
     const { user: authUser, loading: authLoading } = useAuth();
@@ -17,6 +18,10 @@ const OtherUserProfile = () => {
     const [userPosts, setUserPosts] = useState([]);
     const [profileLoading, setProfileLoading] = useState(true);
     const [showImageModal, setShowImageModal] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [searchLoading, setSearchLoading] = useState(false);
+    const currentUserId = authUser?.iduser || authUser?.id;
 
     useEffect(() => {
         // Si l'ID dans l'URL est celui de l'utilisateur connecté, on le redirige vers sa propre page de profil
@@ -58,6 +63,16 @@ const OtherUserProfile = () => {
         }
     }, [id, authUser, authLoading, navigate]);
 
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+          if (!event.target.closest('.search-container')) {
+            setSearchResults([]);
+          }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     const startConversation = async (userId) => {
         if (!userId) return;
         try {
@@ -75,6 +90,51 @@ const OtherUserProfile = () => {
         }
     };
     
+    const handleSearch = async (e) => {
+        const term = e.target.value;
+        setSearchTerm(term);
+        if (term.length > 1) {
+          setSearchLoading(true);
+          try {
+            const promises = [];
+            const lowerTerm = term.toLowerCase();
+    
+            // 1. Recherche Utilisateurs
+            if (conversationAPI && typeof conversationAPI.searchUsers === 'function') {
+              promises.push(
+                conversationAPI.searchUsers(term)
+                  .then(res => ({ type: 'users', data: res }))
+                  .catch(err => {
+                    console.error("Error searching users:", err);
+                    return { type: 'users', data: [] };
+                  })
+              );
+            }
+    
+            const results = await Promise.all(promises);
+            
+            let users = [];
+    
+            results.forEach(res => {
+              if (res.type === 'users') {
+                const raw = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+                users = raw.filter(u => String(u.iduser) !== String(currentUserId))
+                           .map(u => ({ ...u, resultType: 'user' }));
+              }
+            });
+    
+            setSearchResults([...users]);
+          } catch (error) {
+            console.error("A general error occurred during search:", error);
+            setSearchResults([]);
+          } finally {
+            setSearchLoading(false);
+          }
+        } else {
+          setSearchResults([]);
+        }
+    };
+
     if (profileLoading || authLoading) {
         return <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>Loading profile...</div>;
     }
@@ -104,7 +164,75 @@ const OtherUserProfile = () => {
     };
 
     return (
-        <div className="profile-container">
+        <div className="profile-container" style={{ backgroundColor: '#F3F2EF', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            {/* Header */}
+            <div className="page-header">
+                <div className="search-container" style={{ position: 'relative', flex: 1 }}>
+                <Search size={20} color="#9ca3af" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', zIndex: 1 }} />
+                <input 
+                    type="text" 
+                    placeholder="Search for students..." 
+                    value={searchTerm}
+                    onChange={handleSearch}
+                    onFocus={handleSearch}
+                    className="search-input"
+                    style={{ paddingLeft: '45px', width: '100%' }}
+                />
+                {searchTerm.length > 1 && (
+                    <div className="search-results">
+                    {searchLoading ? (
+                        <div className="search-loading">Searching...</div>
+                    ) : searchResults.length > 0 ? (
+                        searchResults.map(item => {
+                        if (item.resultType === 'user') {
+                            let avatarSrc = null;
+                            if (item.iduser) {
+                            avatarSrc = localStorage.getItem(`profile_image_${item.iduser}`);
+                            }
+                            if (!avatarSrc && item.photo) {
+                            if (item.photo.startsWith('http') || item.photo.startsWith('data:')) {
+                                avatarSrc = item.photo;
+                            } else {
+                                avatarSrc = `http://localhost:5000${item.photo.startsWith('/') ? '' : '/'}${item.photo}`;
+                            }
+                            }
+                            return (
+                            <div 
+                                key={`user-${item.iduser}`} 
+                                className="search-result-item"
+                                onClick={() => {
+                                navigate(`/profile/${item.iduser}`);
+                                setSearchResults([]);
+                                setSearchTerm('');
+                                }}
+                            >
+                                <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                                {avatarSrc ? (
+                                    <img src={avatarSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                    <circle cx="12" cy="7" r="4"></circle>
+                                    </svg>
+                                )}
+                                </div>
+                                <div>
+                                <div style={{ fontWeight: '500', color: '#1f2937' }}>{item.prenom || item.firstname} {item.nom || item.lastname}</div>
+                                <div style={{ fontSize: '12px', color: '#6b7280' }}>{item.niveau || item.level}</div>
+                                </div>
+                            </div>
+                            );
+                        }
+                        return null;
+                        })
+                    ) : (
+                        <div className="no-results">No results found for "{searchTerm}"</div>
+                    )}
+                    </div>
+                )}
+                </div>
+            </div>
+
             {showImageModal && profileImageUrl && (
                 <div className="image-modal" onClick={() => setShowImageModal(false)}>
                     <div className="image-modal-content">
@@ -114,11 +242,11 @@ const OtherUserProfile = () => {
                 </div>
             )}
             
-            <div className="profile-banner" style={bannerStyle}>
-                {/* Pas d'icône caméra pour les autres utilisateurs */}
-            </div>
-            
-            <div className="profile-content">
+            <div className="page-content" style={{ maxWidth: '1200px', margin: '10px auto', width: '100%', padding: '0 20px' }}>
+                {/* Section 1: User Info Card */}
+                <div style={{ background: 'white', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e0e0e0', marginBottom: '15px', position: 'relative' }}>
+                    <div className="profile-banner" style={bannerStyle}></div>
+                    <div style={{ position: 'relative' }}>
                 <div className="profile-avatar-container">
                     <div className="profile-avatar">
                         {profileImageUrl ? (
@@ -175,10 +303,20 @@ const OtherUserProfile = () => {
                         </button>
                     </div>
                 </div>
+                
+                <div style={{ padding: '0 20px 15px 20px', marginTop: '10px' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#333', margin: '5px 0 0 0' }}>Posts</h3>
+                    <div style={{ height: '1px', background: '#f0f0f0', marginTop: '10px' }}></div>
+                    {userPosts.length === 0 && (
+                        <p style={{textAlign: 'center', color: '#666', padding: '20px'}}>This user has no posts yet.</p>
+                    )}
+                </div>
+                </div>
+                </div>
 
                 {/* Section des publications pour la cohérence visuelle */}
-                <div className="posts-section">
-                    <div className="posts-title">Posts</div>
+                <div className="posts-section-wrapper" style={{ width: '100%' }}>
+                <div className="posts-section" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {userPosts.length > 0 ? (
                         userPosts.map(post => (
                             <PostCard 
@@ -186,9 +324,8 @@ const OtherUserProfile = () => {
                                 post={post}
                             />
                         ))
-                    ) : (
-                        <p style={{textAlign: 'center', color: '#666', padding: '20px'}}>This user has no posts yet.</p>
-                    )}
+                    ) : null}
+                </div>
                 </div>
             </div>
         </div>

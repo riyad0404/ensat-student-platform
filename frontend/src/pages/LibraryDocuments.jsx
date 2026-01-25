@@ -110,7 +110,7 @@ const LibraryDocuments = () => {
 
   if (loading) {
     return (
-      <div style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto', minHeight: '100vh', background: '#ffffff' }}>
+      <div className="library-page-container" style={{ minHeight: '100vh', background: '#F3F2EF', display: 'flex', flexDirection: 'column' }}>
         <h1 style={{ 
           fontSize: '28px', 
           fontWeight: '800', 
@@ -127,7 +127,7 @@ const LibraryDocuments = () => {
 
   if (error) {
     return (
-      <div style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto', minHeight: '100vh', background: '#ffffff' }}>
+      <div className="library-page-container" style={{ minHeight: '100vh', background: '#F3F2EF', display: 'flex', flexDirection: 'column' }}>
         <h1 style={{ 
           fontSize: '28px', 
           fontWeight: '800', 
@@ -158,204 +158,194 @@ const LibraryDocuments = () => {
   }
 
   return (
-    <div style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto', minHeight: '100vh', background: '#ffffff' }}>
+    <div className="library-page-container" style={{ minHeight: '100vh', background: '#F3F2EF', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
-      <div style={{ marginBottom: '30px' }}>
+      <div className="page-header">
         <h1 style={{ 
-          fontSize: '28px', 
+          fontSize: '24px', 
           fontWeight: '800', 
-          marginBottom: '8px',
-          marginTop: 0,
+          margin: 0,
           color: '#333333'
         }}>Documents {niveau?.toUpperCase()}</h1>
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+        {/* Filters */}
+        <div style={{ 
+          display: 'flex', 
+          gap: '10px', 
+          flexWrap: 'wrap'
+        }}>
+          {[
+            { key: 'all', label: 'All' },
+            { key: 'pdf', label: 'PDF' },
+            { key: 'image', label: 'Images' },
+            { key: 'other', label: 'Others' }
+          ].map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setFilter(key)}
+              style={{
+                padding: '8px 16px',
+                background: filter === key ? '#0040D0' : '#e5e7eb',
+                color: filter === key ? 'white' : '#374151',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        </div>
         <p style={{ color: '#6b7280', margin: 0 }}>
           {documents.length} document{documents.length > 1 ? 's' : ''} available
         </p>
       </div>
 
-      {/* Filters */}
-      <div style={{ 
-        display: 'flex', 
-        gap: '10px', 
-        marginBottom: '30px',
-        flexWrap: 'wrap'
-      }}>
-        {[
-          { key: 'all', label: 'All' },
-          { key: 'pdf', label: 'PDF' },
-          { key: 'image', label: 'Images' },
-          { key: 'other', label: 'Others' }
-        ].map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => setFilter(key)}
-            style={{
-              padding: '10px 20px',
-              background: filter === key ? '#faf5ff' : 'white',
-              color: filter === key ? '#0040D0' : '#6b7280',
-              border: `2px solid ${filter === key ? '#e6f0ff' : '#e5e7eb'}`,
-              borderRadius: '10px',
-              fontSize: '14px',
-              fontWeight: '600',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              if (filter !== key) {
-                e.currentTarget.style.borderColor = '#e6f0ff';
-                e.currentTarget.style.color = '#0040D0';
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (filter !== key) {
-                e.currentTarget.style.borderColor = '#e5e7eb';
-                e.currentTarget.style.color = '#6b7280';
-              }
-            }}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* Documents Grid */}
-      {filteredDocuments.length === 0 ? (
-        <div style={{ 
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '80px 20px',
-          textAlign: 'center'
-        }}>
-          <FileText size={64} color="#d1d5db" strokeWidth={1.5} style={{ marginBottom: '20px' }} />
-          <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#1f2937', margin: '0 0 8px 0' }}>
-            No documents found
-          </h2>
-          <p style={{ color: '#6b7280', margin: 0 }}>
-            No documents available for this level
-          </p>
-        </div>
-      ) : (
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-          gap: '20px'
-        }}>
-          {filteredDocuments.map((doc) => (
-            <div 
-              key={doc.id}
-              style={{
-                background: 'white',
-                borderRadius: '16px',
-                padding: '20px',
-                border: '1px solid #f3f4f6',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '16px',
-                transition: 'all 0.2s ease',
-                cursor: 'pointer'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-4px)';
-                e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.08)';
-                e.currentTarget.style.borderColor = '#e6f0ff';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.04)';
-                e.currentTarget.style.borderColor = '#f3f4f6';
-              }}
-            >
-              {/* Icon */}
-              <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '12px',
-                background: '#f5f3ff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#0040D0',
-                flexShrink: 0
-              }}>
-                {getFileIcon(doc.filename)}
-              </div>
-
-              {/* Info */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <h3 style={{
-                  fontSize: '15px',
-                  fontWeight: '700',
-                  color: '#1f2937',
-                  margin: '0 0 8px 0',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
-                }}>
-                  {doc.filename}
-                </h3>
-                
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                  <span style={{
-                    fontSize: '11px',
-                    fontWeight: '600',
-                    padding: '3px 8px',
-                    borderRadius: '6px',
-                    background: '#f3f4f6',
-                    color: '#6b7280'
-                  }}>
-                    {doc.filename.split('.').pop().toUpperCase()}
-                  </span>
-                </div>
-
-                <div style={{ fontSize: '12px', color: '#9ca3af' }}>
-                  {new Date(doc.uploadDate).toLocaleDateString('en-US', { 
-                    month: 'short', 
-                    day: 'numeric',
-                    year: 'numeric'
-                  })}
-                </div>
-              </div>
-
-              {/* Download Button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDownload(doc);
-                }}
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '10px',
-                  background: '#0040D0',
-                  border: 'none',
-                  color: 'white',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.2s',
-                  flexShrink: 0
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#002884';
-                  e.currentTarget.style.transform = 'scale(1.1)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#0040D0';
-                  e.currentTarget.style.transform = 'scale(1)';
-                }}
-              >
-                <Download size={18} />
-              </button>
+      <div className="page-content" style={{ maxWidth: '1200px', margin: '24px auto 0 auto', width: '100%', padding: '0 20px', flex: 1 }}>
+          {/* Documents Grid */}
+          {filteredDocuments.length === 0 ? (
+            <div style={{ 
+              display: 'flex', background: 'white', borderRadius: '16px', border: '1px solid #e5e7eb',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '60px 20px',
+              textAlign: 'center'
+            }}>
+              <FileText size={56} color="#d1d5db" strokeWidth={1.5} style={{ marginBottom: '20px' }} />
+              <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#1f2937', margin: '0 0 8px 0' }}>
+                No documents found
+              </h2>
+              <p style={{ color: '#6b7280', margin: 0, fontSize: '14px' }}>
+                No documents available for this level and filter.
+              </p>
             </div>
-          ))}
-        </div>
-      )}
+          ) : (
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+              gap: '20px'
+            }}>
+              {filteredDocuments.map((doc) => (
+                <div 
+                  key={doc.id}
+                  style={{
+                    background: 'white',
+                    borderRadius: '16px',
+                    padding: '20px',
+                    border: '1px solid #f3f4f6',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '16px',
+                    transition: 'all 0.2s ease',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-4px)';
+                    e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.08)';
+                    e.currentTarget.style.borderColor = '#e6f0ff';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.04)';
+                    e.currentTarget.style.borderColor = '#f3f4f6';
+                  }}
+                >
+                  {/* Icon */}
+                  <div style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '12px',
+                    background: '#f5f3ff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#0040D0',
+                    flexShrink: 0
+                  }}>
+                    {getFileIcon(doc.filename)}
+                  </div>
+
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <h3 style={{
+                      fontSize: '15px',
+                      fontWeight: '700',
+                      color: '#1f2937',
+                      margin: '0 0 8px 0',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {doc.filename}
+                    </h3>
+                    
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                      <span style={{
+                        fontSize: '11px',
+                        fontWeight: '600',
+                        padding: '3px 8px',
+                        borderRadius: '6px',
+                        background: '#f3f4f6',
+                        color: '#6b7280'
+                      }}>
+                        {doc.filename.split('.').pop().toUpperCase()}
+                      </span>
+                    </div>
+
+                    <div style={{ fontSize: '12px', color: '#9ca3af' }}>
+                      {new Date(doc.uploadDate).toLocaleDateString('en-US', { 
+                        month: 'short', 
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Download Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDownload(doc);
+                    }}
+                    style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '10px',
+                      background: '#0040D0',
+                      border: 'none',
+                      color: 'white',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      transition: 'all 0.2s',
+                      flexShrink: 0
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#002884';
+                      e.currentTarget.style.transform = 'scale(1.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = '#0040D0';
+                      e.currentTarget.style.transform = 'scale(1)';
+                    }}
+                  >
+                    <Download size={18} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+      </div>
     </div>
   );
 };
 
 export default LibraryDocuments;
+             

@@ -328,7 +328,7 @@ const ConversationPage = () => {
     }
   };
 
-  if (loading) return <div className="conv-loading">Loading...</div>;
+  
   if (error) {
     return (
       <div className="join-group-container">
@@ -349,7 +349,7 @@ const ConversationPage = () => {
           type="button"
           onClick={handleJoinGroup}
           disabled={joinLoading}
-          className="btn-primary join-btn"
+          className="btn-create"
         >
           {joinLoading ? 'Attempting...' : 'Join group'}
         </button>
@@ -360,7 +360,7 @@ const ConversationPage = () => {
             e.stopPropagation();
             navigate(-1);
           }}
-          className="btn-secondary back-btn"
+          className="btn-create secondary"
         >
           Cancel
         </button>
@@ -531,10 +531,8 @@ const ConversationPage = () => {
                  
                  if (otherMembers.length > 0) {
                     const msgTime = new Date(msg.sentAt || msg.createdAt).getTime();
-                    // Le message est lu si TOUS les autres membres ont un lastReadAt postérieur à la date du message
-                    // On ignore ceux qui ont quitté le groupe (leftAt) pour la logique de lecture si nécessaire, 
-                    // mais ici on veut savoir si les membres actuels l'ont lu.
-                    isRead = otherMembers.every(m => m.lastReadAt && new Date(m.lastReadAt).getTime() >= msgTime);
+                    // Le message est considéré comme "lu" si AU MOINS UN autre membre l'a lu (lastReadAt >= msgTime)
+                    isRead = otherMembers.some(m => m.lastReadAt && new Date(m.lastReadAt).getTime() >= msgTime);
                  }
               }
 
@@ -573,9 +571,9 @@ const ConversationPage = () => {
                         </span>
                         {isOwn && (
                            isRead ? (
-                             <CheckCheck size={14} color="rgba(255, 255, 255, 0.8)" style={{ marginLeft: '4px' }} />
+                             <CheckCheck size={16} color="#E7A33E" style={{ marginLeft: '4px' }} />
                            ) : (
-                             <Check size={14} color="rgba(255, 255, 255, 0.8)" style={{ marginLeft: '4px' }} />
+                             <CheckCheck size={16} color="rgba(255, 255, 255, 0.5)" style={{ marginLeft: '4px' }} />
                            )
                         )}
                         {!isImageMessage(msg.content) && (

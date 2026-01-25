@@ -1,28 +1,35 @@
 .homepage-container {
     width: 100%;
-    max-width: 1300px; /* Élargi pour plus d'espace */
-    margin: 0 auto;
-    padding: 0 20px;
     min-height: 100vh;
     box-sizing: border-box;
-    background: #f5f5f5;
+    background: #F3F2EF;
     transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Quand sidebar est collapsed, élargir le contenu */
 .sidebar-container.collapsed ~ div .homepage-container {
-    max-width: 2000px;
-    padding: 0 30px;
+    /* No longer needed */
 }
 
-.homepage-header {
+.page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24px;
-    background: transparent;
+    background: #ffffff;
+    border-bottom: 1px solid rgba(0, 64, 208, 0.06);
+    padding: 1rem 30px;
     gap: 20px;
-    padding-top: 10px;
+    flex-shrink: 0;
+}
+
+.page-content {
+    flex: 1;
+    max-width: 1300px;
+    width: 100%;
+    margin: 24px auto 0 auto;
+    padding: 0 20px;
 }
 
 .search-container {
@@ -128,12 +135,6 @@
     box-shadow: 0 4px 12px rgba(0, 64, 208, 0.3);
 }
 
-.posts-feed {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-}
-
 .loading-feed, .empty-feed {
     text-align: center;
     padding: 40px;
@@ -147,7 +148,7 @@
         padding: 0 16px;
     }
     
-    .homepage-header {
+    .page-header {
         flex-direction: column;
         align-items: stretch;
         gap: 15px;

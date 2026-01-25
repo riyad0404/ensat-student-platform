@@ -247,7 +247,7 @@
 /* Posts Section */
 .posts-section {
     background: transparent;
-    padding: 15px 30px 25px 30px; /* Réduit padding-top de 25px à 15px */
+    padding: 0;
     border-radius: 0;
     box-shadow: none;
     margin-top: 0;

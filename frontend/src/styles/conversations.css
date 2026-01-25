@@ -1,7 +1,7 @@
 
 .chatbot-style.conversation-page-container {
   height: 100vh;
-  background: #f9f8fa; /* Remis comme chatbot */
+  background: #F3F2EF; /* Remis comme chatbot */
   position: relative;
   overflow: hidden;
   display: flex;
@@ -149,7 +149,7 @@
   padding: 1rem; /* Padding vertical réduit */
   overflow-y: auto;
   width: 100%;
-  background: #f9f8fa; /* Fond gris clair comme chatbot */
+  background: #F3F2EF; /* Fond gris clair comme chatbot */
 }
 
 .message-date-separator {
@@ -325,7 +325,7 @@
   background: #ffffff;
   padding: 0.75rem 1rem; /* Encore plus réduit */
   padding-right: 6rem;
-  box-shadow: none;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.03);
   z-index: 10;
 }
 
@@ -336,12 +336,12 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  background-color: #f3f4f6; /* Fond gris pour l'input */
-  border-radius: 24px; /* Forme pilule */
+  background-color: #ffffff;
+  border-radius: 1.25rem;
   padding: 0.75rem 1rem;
-  border: 1px solid transparent;
+  border: 2px solid rgba(0, 64, 208, 0.12);
   transition: all 0.3s;
-  box-shadow: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .input-wrapper:focus-within {
@@ -674,12 +674,13 @@
 
 /* Page Containers for Groups and Messages */
 .groups-page-container,
-.messages-page-container {
-  padding: 30px;
-  max-width: 1200px;
-  margin: 0 auto;
+.messages-page-container,
+.bookmarks-page-container,
+.library-page-container {
   min-height: 100vh;
-  background-color: #ffffff;
+  background: #F3F2EF;
+  display: flex;
+  flex-direction: column;
   transition: all 0.3s ease;
 }
 
@@ -687,8 +688,7 @@
 .sidebar-container.collapsed ~ div .groups-page-container,
 .sidebar-container.collapsed ~ div .messages-page-container {
   max-width: 100%; /* Prend toute la largeur disponible */
-  padding: 30px 50px; /* Ajuste le padding */
-  margin: 0; /* Enlève le centrage automatique pour coller au flux */
+  /* No longer needed */
 }
 
 @media (max-width: 768px) {
@@ -712,4 +712,24 @@
 .messages-page-container h1 {
   color: #333333;
   background: none;
-  -webkit-text-fill-color: initial;}
+  -webkit-text-fill-color: initial;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #ffffff;
+    border-bottom: 1px solid rgba(0, 64, 208, 0.06);
+    padding: 1rem 30px;
+    gap: 20px;
+    flex-shrink: 0;
+}
+
+.page-content {
+    flex: 1;
+    max-width: 1200px; /* Matching the old max-width */
+    width: 100%;
+    margin: 24px auto 0 auto;
+    padding: 0 20px;
+}

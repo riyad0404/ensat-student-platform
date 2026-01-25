@@ -11,7 +11,7 @@ import {
   deletePost,
   updatePost
 } from "../api/postAPI";
-import { MoreVertical, Edit2, Trash2, Bookmark, BookmarkMinus } from 'lucide-react';
+import { MoreVertical, Edit2, Trash2, Bookmark, BookmarkMinus, Paperclip, Send, Eye, EyeOff } from 'lucide-react';
 
 import "../styles/PostCard.css";
 
@@ -339,6 +339,25 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
   // Gestion de l'avatar auteur
   const authorAvatarUrl = getProfileImage(post.auteur);
 
+  // Fonction pour formater la date (ex: 12h, 1 j, 1 mois)
+  const formatTimeAgo = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now - date) / 1000);
+
+    if (diffInSeconds < 60) return "Just now";
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) return `${diffInMinutes} min`;
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours} h`;
+    const diffInDays = Math.floor(diffInHours / 24);
+    if (diffInDays < 30) return `${diffInDays} j`;
+    const diffInMonths = Math.floor(diffInDays / 30);
+    if (diffInMonths < 12) return `${diffInMonths} mois`;
+    return `${Math.floor(diffInDays / 365)} an(s)`;
+  };
+
   return (
     <div className="post-card">
       <div className="post-header">
@@ -358,9 +377,17 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
 
           <div className="author-info">
             <h3 className="author-name">
-              {isPostAnon ? "Anonymous User" : `${post.auteur?.nom || ''} ${post.auteur?.prenom || ''}`}
+              {isAuthor ? "Me" : (isPostAnon ? "Student" : `${post.auteur?.nom || ''} ${post.auteur?.prenom || ''}`)}
             </h3>
-            <p className="author-role">{isPostAnon ? "Student" : post.auteur?.niveau}</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#6b7280' }}>
+              {!isAuthor && !isPostAnon && (
+                <>
+                  <span className="author-role">{post.auteur?.niveau}</span>
+                  <span>•</span>
+                </>
+              )}
+              <span className="post-date">{formatTimeAgo(post.createdAt || post.dateCreation)}</span>
+            </div>
           </div>
         </div>
         {showOptions && (
@@ -475,7 +502,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
           onClick={handleBookmark}
           title={isBookmarked ? "Retirer des favoris" : "Ajouter aux favoris"}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill={isBookmarked ? "#FF6B00" : "none"} stroke={isBookmarked ? "#FF6B00" : "currentColor"} strokeWidth="2">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill={isBookmarked ? "#E7A33E" : "none"} stroke={isBookmarked ? "#E7A33E" : "currentColor"} strokeWidth="2">
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
           </svg>
           <span>{isBookmarked ? 'Saved' : 'Save'}</span>
@@ -498,18 +525,6 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
               }}
               className="comment-input"
             />
-            <button 
-              type="button" 
-              onClick={() => setIsCommentAnon(!isCommentAnon)}
-              className={`comment-icon-btn anon-toggle ${isCommentAnon ? 'active' : ''}`}
-              title={isCommentAnon ? "Disable anonymous" : "Comment anonymously"}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={isCommentAnon ? "white" : "#0040D0"} strokeWidth="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-              {isCommentAnon && <span className="anon-indicator">Anonymous</span>}
-            </button>
             <label className="comment-icon-btn attach-label">
               <input 
                 type="file" 
@@ -517,10 +532,19 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
                 style={{display: 'none'}}
                 accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.jpg,.jpeg,.png"
               />
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0040D0" strokeWidth="2">
-                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
-              </svg>
+              <Paperclip size={20} color="#6b7280" />
             </label>
+            <button 
+              type="button" 
+              onClick={() => setIsCommentAnon(!isCommentAnon)}
+              className={`comment-icon-btn anon-toggle ${isCommentAnon ? 'active' : ''}`}
+              title={isCommentAnon ? "Disable anonymous" : "Comment anonymously"}
+            >
+              {isCommentAnon ? 
+                <EyeOff size={20} color="#0040D0" /> : 
+                <Eye size={20} color="#6b7280" />
+              }
+            </button>
             <button 
               type="button" 
               onClick={handleCommentSubmit}
@@ -528,24 +552,9 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
               disabled={(!commentText.trim() && !commentFile) || loading}
             >
               {loading ? (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0040D0" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" opacity="0.3"/>
-                  <path d="M12 2 A10 10 0 0 1 22 12" strokeLinecap="round">
-                    <animateTransform
-                      attributeName="transform"
-                      type="rotate"
-                      from="0 12 12"
-                      to="360 12 12"
-                      dur="1s"
-                      repeatCount="indefinite"
-                    />
-                  </path>
-                </svg>
+                <div className="spinner" style={{width: '20px', height: '20px', border: '2px solid #0040D0', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite'}}></div>
               ) : (
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0040D0" strokeWidth="2">
-                  <line x1="22" y1="2" x2="11" y2="13"></line>
-                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                </svg>
+                <Send size={20} color={(!commentText.trim() && !commentFile) ? "#9ca3af" : "#0040D0"} />
               )}
             </button>
           </div>

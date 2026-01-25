@@ -50,13 +50,7 @@ const Bookmarks = () => {
 
   if (loading) {
     return (
-      <div style={{ 
-        padding: '30px', 
-        maxWidth: '1400px', 
-        margin: '0 auto', 
-        minHeight: '100vh',
-        background: '#ffffff'
-      }}>
+      <div className="bookmarks-page-container">
         <h1 style={{ 
           fontSize: '28px', 
           fontWeight: '800', 
@@ -71,30 +65,16 @@ const Bookmarks = () => {
   }
 
   return (
-    <div style={{ 
-      padding: '30px', 
-      maxWidth: '1400px', 
-      margin: '0 auto', 
-      minHeight: '100vh',
-      background: '#ffffff'
-    }}>
+    <div className="bookmarks-page-container">
       {/* Header */}
-      <div style={{ 
-        marginBottom: '40px', 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
-        flexWrap: 'wrap', 
-        gap: '20px' 
-      }}>
-        <div>
-          <h1 style={{ 
-            fontSize: '28px', 
-            fontWeight: '800', 
-            marginBottom: '8px', 
-            marginTop: 0,
-            color: '#333333'
-          }}>Saved Posts</h1>
+      <div className="page-header">
+        <h1 style={{ 
+          fontSize: '24px', 
+          fontWeight: '800', 
+          margin: 0,
+          color: '#333333'
+        }}>Saved Posts</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <p style={{ color: '#6b7280', margin: 0 }}>
             {bookmarks.length} {bookmarks.length === 1 ? 'post' : 'posts'} saved
           </p>
@@ -124,52 +104,55 @@ const Bookmarks = () => {
         )}
       </div>
 
-      {/* Posts Grid - Style Instagram avec taille uniforme */}
-      {bookmarks.length === 0 ? (
-        <div style={{ 
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '100px 20px',
-          textAlign: 'center',
-          background: 'white',
-          borderRadius: '20px',
-          border: '1px solid #e5e7eb'
-        }}>
-          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5">
-            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-          </svg>
-          <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937', margin: '24px 0 12px 0' }}>
-            No saved posts yet
-          </h2>
-          <p style={{ color: '#6b7280', margin: 0, fontSize: '16px' }}>
-            Posts you bookmark will appear here
-          </p>
-        </div>
-      ) : (
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fill, minmax(500px, 1fr))',
-          gap: '24px',
-          paddingBottom: '40px'
-        }}>
-          {bookmarks.map((post) => (
-            <div key={post.idpost} style={{ 
-              width: '100%',
-              minHeight: '400px'
-            }}>
-              <PostCard 
-                post={post}
-                onPostDeleted={() => removeFromBookmarks(post.idpost)}
-                onPostUpdated={loadBookmarks}
-              />
-            </div>
-          ))}
-        </div>
-      )}
+      <div className="page-content">
+        {/* Posts Grid - Style Instagram avec taille uniforme */}
+        {bookmarks.length === 0 ? (
+          <div style={{ 
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '100px 20px',
+            textAlign: 'center',
+            background: 'white',
+            borderRadius: '20px',
+            border: '1px solid #e5e7eb'
+          }}>
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937', margin: '24px 0 12px 0' }}>
+              No saved posts yet
+            </h2>
+            <p style={{ color: '#6b7280', margin: 0, fontSize: '16px' }}>
+              Posts you bookmark will appear here
+            </p>
+          </div>
+        ) : (
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fill, minmax(500px, 1fr))',
+            gap: '24px',
+            paddingBottom: '40px'
+          }}>
+            {bookmarks.map((post) => (
+              <div key={post.idpost} style={{ 
+                width: '100%',
+                minHeight: '400px'
+              }}>
+                <PostCard 
+                  post={post}
+                  onPostDeleted={() => removeFromBookmarks(post.idpost)}
+                  onPostUpdated={loadBookmarks}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
 
 export default Bookmarks;
+     
