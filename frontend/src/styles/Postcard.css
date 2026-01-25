@@ -568,3 +568,53 @@
   color: #374151;
   word-wrap: break-word;
 }
+
+/* --- MODALE DE SUPPRESSION --- */
+.delete-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-modal-content {
+  background: white;
+  width: 90%;
+  max-width: 350px;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  text-align: center;
+}
+
+.delete-modal-content h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.delete-modal-content p {
+  color: #667781;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.delete-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.delete-modal-actions button {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 500;
+  cursor: pointer;
+}

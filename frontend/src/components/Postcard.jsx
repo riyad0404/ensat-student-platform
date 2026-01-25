@@ -13,7 +13,7 @@ import {
 } from "../api/postAPI";
 import { MoreVertical, Edit2, Trash2, Bookmark, BookmarkMinus, Paperclip, Send, Eye, EyeOff } from 'lucide-react';
 
-import "../styles/PostCard.css";
+import "../styles/Postcard.css";
 
 const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEdit, showOptions = false }) => {
   const navigate = useNavigate();
