@@ -1,3 +1,10 @@
+import { Conversation, ConversationMember, Message, User } from '../models/associations.js';
+import { Notification } from '../models/notification.js';
+import { Op } from 'sequelize';
+import sequelize from '../database.js';
+import { io } from '../server.js';
+import { createNotification, NOTIF_TYPES } from '../services/notificationservice.js';
+
 /**
  * 9) DELETE /api/conversations/:id
  * OWNER can delete the conversation (hard delete)
@@ -54,10 +61,6 @@ export const transferOwnership = async (req, res) => {
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
-import { Conversation, ConversationMember, Message, User } from '../models/associations.js';
-import { Op } from 'sequelize';
-import sequelize from '../database.js';
-import { io } from '../server.js';
 
 /**
  * Small helper: checks if a user is an active member of a conversation
