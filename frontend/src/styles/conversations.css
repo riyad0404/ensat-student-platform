@@ -149,7 +149,7 @@
   padding: 1rem; /* Padding vertical réduit */
   overflow-y: auto;
   width: 100%;
-  background: #F3F2EF; /* Fond gris clair comme chatbot */
+  background: #f4f6fa; /* Fond gris clair comme chatbot */
 }
 
 .message-date-separator {

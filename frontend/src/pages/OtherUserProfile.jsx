@@ -164,7 +164,7 @@ const OtherUserProfile = () => {
     };
 
     return (
-        <div className="profile-container" style={{ backgroundColor: '#F3F2EF', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <div className="profile-container" style={{ backgroundColor: '#f4f6fa', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             {/* Header */}
             <div className="page-header">
                 <div className="search-container" style={{ position: 'relative', flex: 1 }}>

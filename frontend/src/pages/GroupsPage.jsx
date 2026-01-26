@@ -135,7 +135,7 @@ const GroupsPage = () => {
   };
 
   return (
-    <div className="groups-page-container">
+    <div className="groups-page-container" style={{ background: '#f4f6fa' }}>
       {/* Header Moderne */}
       <div className="page-header">
         <div>

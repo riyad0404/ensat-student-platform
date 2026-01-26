@@ -2,23 +2,36 @@ import { createNotification, NOTIF_TYPES } from "../services/notificationservice
 import { Post } from "../models/post.js";
 import { Comment } from "../models/comment.js";
 import { Notification } from "../models/notification.js";
-// Helper pour récupérer l'iduser depuis body (Postman) ou req.user si JWT
-const getUserId = (req) => req.body.iduser || req.user?.iduser;
+
+// ======================
+// Helpers
+// ======================
+const getUserId = (req) => req.user?.iduser;
+
+const getSenderFromReq = (req) => ({
+  iduser: req.user.iduser,
+  nom: req.user.nom,
+  prenom: req.user.prenom,
+  photo: req.user.photo ?? null,
+});
 
 // ======================
 // Notifications pour Posts
 // ======================
 
-// Like un post
-// Like ou Love un post (modification minime)
+// Like / Love un post
 export const likePost = async (req, res) => {
   try {
     const iduser = getUserId(req);
-    const { idpost } = req.params;
-    const { typeReaction } = req.body; // <-- ajout pour récupérer LIKE ou LOVE
+    const sender = getSenderFromReq(req);
 
-    if (!typeReaction || !["LIKE", "LOVE"].includes(typeReaction)) {
-      return res.status(400).json({ message: "typeReaction doit être LIKE ou LOVE" });
+    const { idpost } = req.params;
+    const { typeReaction } = req.body;
+
+    if (!["LIKE", "LOVE"].includes(typeReaction)) {
+      return res
+        .status(400)
+        .json({ message: "typeReaction doit être LIKE ou LOVE" });
     }
 
     const post = await Post.findByPk(idpost);
@@ -28,15 +41,15 @@ export const likePost = async (req, res) => {
       toUserId: post.iduser,
       fromUserId: iduser,
       type: NOTIF_TYPES.REACTION_PUB,
-      message: `Votre post a reçu une réaction : ${typeReaction}`, // message dynamique
-      metadata: { postId: post.idpost, typeReaction }, // metadata inclut typeReaction
+      message: `${sender.prenom} ${sender.nom} a réagi à votre post (${typeReaction})`,
+      metadata: {
+        postId: post.idpost,
+        typeReaction,
+        sender,
+      },
     });
 
-   if (notif) {
-  res.json(notif);  // Si la notification est bien créée, renvoie-la.
-} else {
-  res.status(400).json({ message: "La notification n'a pas pu être créée." }); // Si la notification n'est pas créée, retourne une erreur.
-}
+    res.json(notif);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -46,6 +59,8 @@ export const likePost = async (req, res) => {
 export const commentPost = async (req, res) => {
   try {
     const iduser = getUserId(req);
+    const sender = getSenderFromReq(req);
+
     const { idpost } = req.params;
     const { idcomment } = req.body;
 
@@ -56,10 +71,17 @@ export const commentPost = async (req, res) => {
       toUserId: post.iduser,
       fromUserId: iduser,
       type: NOTIF_TYPES.COMMENT_PUB,
-      message: `Votre post a reçu un commentaire`,
-      metadata: { postId: post.idpost, idcomment },
+      message: `${sender.prenom} ${sender.nom} a commenté votre post`,
+      metadata: {
+        postId: post.idpost,
+        idcomment,
+        sender,
+      },
     });
-
+    console.log({
+  toUserId: post.iduser,
+  fromUserId: req.user.iduser
+});
     res.json(notif);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -70,18 +92,25 @@ export const commentPost = async (req, res) => {
 export const replyComment = async (req, res) => {
   try {
     const iduser = getUserId(req);
+    const sender = getSenderFromReq(req);
+
     const { idcomment } = req.params;
     const { replyId } = req.body;
 
     const comment = await Comment.findByPk(idcomment);
-    if (!comment) return res.status(404).json({ message: "Commentaire non trouvé" });
+    if (!comment)
+      return res.status(404).json({ message: "Commentaire non trouvé" });
 
     const notif = await createNotification({
       toUserId: comment.iduser,
       fromUserId: iduser,
       type: NOTIF_TYPES.REPLY_COMMENT,
-      message: `Quelqu'un a répondu à votre commentaire`,
-      metadata: { idcomment: comment.idcomment, replyId },
+      message: `${sender.prenom} ${sender.nom} a répondu à votre commentaire`,
+      metadata: {
+        idcomment: comment.idcomment,
+        replyId,
+        sender,
+      },
     });
 
     res.json(notif);
@@ -96,14 +125,19 @@ export const replyComment = async (req, res) => {
 export const messagePrivate = async (req, res) => {
   try {
     const iduser = getUserId(req);
+    const sender = getSenderFromReq(req);
+
     const { recipientId, conversationId } = req.body;
 
     const notif = await createNotification({
       toUserId: recipientId,
       fromUserId: iduser,
       type: NOTIF_TYPES.MESSAGE,
-      message: `Vous avez reçu un message`,
-      metadata: { conversationId },
+      message: `Nouveau message de ${sender.prenom} ${sender.nom}`,
+      metadata: {
+        conversationId,
+        sender,
+      },
     });
 
     res.json(notif);
@@ -118,6 +152,8 @@ export const messagePrivate = async (req, res) => {
 export const groupInvite = async (req, res) => {
   try {
     const iduser = getUserId(req);
+    const sender = getSenderFromReq(req);
+
     const { recipientId } = req.body;
     const { idgroup } = req.params;
 
@@ -125,8 +161,11 @@ export const groupInvite = async (req, res) => {
       toUserId: recipientId,
       fromUserId: iduser,
       type: NOTIF_TYPES.GROUP_INVITE,
-      message: `Vous avez été invité à un groupe`,
-      metadata: { groupId: idgroup },
+      message: `${sender.prenom} ${sender.nom} vous a invité dans un groupe`,
+      metadata: {
+        groupId: idgroup,
+        sender,
+      },
     });
 
     res.json(notif);
@@ -138,6 +177,8 @@ export const groupInvite = async (req, res) => {
 export const inviteAccepted = async (req, res) => {
   try {
     const iduser = getUserId(req);
+    const sender = getSenderFromReq(req);
+
     const { recipientId } = req.body;
     const { idgroup } = req.params;
 
@@ -145,8 +186,11 @@ export const inviteAccepted = async (req, res) => {
       toUserId: recipientId,
       fromUserId: iduser,
       type: NOTIF_TYPES.GROUP_INVITE_ACCEPTED,
-      message: `Votre invitation a été acceptée`,
-      metadata: { groupId: idgroup },
+      message: `${sender.prenom} ${sender.nom} a accepté votre invitation`,
+      metadata: {
+        groupId: idgroup,
+        sender,
+      },
     });
 
     res.json(notif);
@@ -158,6 +202,8 @@ export const inviteAccepted = async (req, res) => {
 export const inviteDeclined = async (req, res) => {
   try {
     const iduser = getUserId(req);
+    const sender = getSenderFromReq(req);
+
     const { recipientId } = req.body;
     const { idgroup } = req.params;
 
@@ -165,8 +211,11 @@ export const inviteDeclined = async (req, res) => {
       toUserId: recipientId,
       fromUserId: iduser,
       type: NOTIF_TYPES.GROUP_INVITE_DECLINED,
-      message: `Votre invitation a été refusée`,
-      metadata: { groupId: idgroup },
+      message: `${sender.prenom} ${sender.nom} a refusé votre invitation`,
+      metadata: {
+        groupId: idgroup,
+        sender,
+      },
     });
 
     res.json(notif);
@@ -176,11 +225,11 @@ export const inviteDeclined = async (req, res) => {
 };
 
 // ======================
-// Récupérer et gérer les notifications
+// Récupération / lecture
 // ======================
 export const getNotifications = async (req, res) => {
   try {
-    const iduser = req.user.iduser; // récupéré depuis le cookie
+    const iduser = getUserId(req);
 
     const notifications = await Notification.findAll({
       where: { idDestinataire: iduser },
@@ -193,15 +242,14 @@ export const getNotifications = async (req, res) => {
   }
 };
 
-
-
 export const markAsRead = async (req, res) => {
   try {
     const iduser = getUserId(req);
     const { idNotif } = req.params;
 
-    const notif = await createNotification.Notification.findByPk(idNotif);
-    if (!notif) return res.status(404).json({ message: "Notification non trouvée" });
+    const notif = await Notification.findByPk(idNotif);
+    if (!notif)
+      return res.status(404).json({ message: "Notification non trouvée" });
 
     if (notif.idDestinataire !== iduser) {
       return res.status(403).json({ message: "Accès refusé" });
@@ -209,19 +257,25 @@ export const markAsRead = async (req, res) => {
 
     notif.isRead = true;
     await notif.save();
+
     res.json(notif);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
-// Like ou Love un commentaire
+
+// ======================
+// Réaction à un commentaire
+// ======================
 export const reactToComment = async (req, res) => {
   try {
     const iduser = getUserId(req);
-    const { idcomment } = req.params;
-    const { typeReaction } = req.body; // LIKE ou LOVE
+    const sender = getSenderFromReq(req);
 
-    if (!typeReaction || !["LIKE", "LOVE"].includes(typeReaction)) {
+    const { idcomment } = req.params;
+    const { typeReaction } = req.body;
+
+    if (!["LIKE", "LOVE"].includes(typeReaction)) {
       return res
         .status(400)
         .json({ message: "typeReaction doit être LIKE ou LOVE" });
@@ -232,23 +286,18 @@ export const reactToComment = async (req, res) => {
       return res.status(404).json({ message: "Commentaire non trouvé" });
 
     const notif = await createNotification({
-      toUserId: comment.iduser,        // propriétaire du commentaire
-      fromUserId: iduser,              // celui qui réagit
+      toUserId: comment.iduser,
+      fromUserId: iduser,
       type: NOTIF_TYPES.REACTION_COMMENT,
-      message: `Votre commentaire a reçu une réaction : ${typeReaction}`,
+      message: `${sender.prenom} ${sender.nom} a réagi à votre commentaire (${typeReaction})`,
       metadata: {
         idcomment: comment.idcomment,
         typeReaction,
+        sender,
       },
     });
 
-    if (notif) {
-      res.json(notif);
-    } else {
-      res
-        .status(400)
-        .json({ message: "La notification n'a pas pu être créée" });
-    }
+    res.json(notif);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

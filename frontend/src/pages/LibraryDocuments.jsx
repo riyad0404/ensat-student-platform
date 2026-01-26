@@ -67,7 +67,7 @@ const LibraryDocuments = () => {
       
       const response = await fetch(downloadUrl);
       
-      if (!response.ok) throw new Error('Erreur de téléchargement');
+      if (!response.ok) throw new Error('Download error');
       
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -79,7 +79,7 @@ const LibraryDocuments = () => {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(link);
     } catch (error) {
-      console.error('Erreur téléchargement:', error);
+      console.error('Download error:', error);
     }
   };
 
@@ -110,7 +110,7 @@ const LibraryDocuments = () => {
 
   if (loading) {
     return (
-      <div className="library-page-container" style={{ minHeight: '100vh', background: '#F3F2EF', display: 'flex', flexDirection: 'column' }}>
+      <div className="library-page-container" style={{ minHeight: '100vh', background: '#f4f6fa', display: 'flex', flexDirection: 'column' }}>
         <h1 style={{ 
           fontSize: '28px', 
           fontWeight: '800', 
@@ -119,7 +119,6 @@ const LibraryDocuments = () => {
         }}>Documents {niveau?.toUpperCase()}</h1>
         
         <div style={{ display: 'flex', justifyContent: 'center', padding: '100px 0' }}>
-          <div style={{ fontSize: '18px', color: '#666' }}>Loading documents...</div>
         </div>
       </div>
     );
@@ -127,7 +126,7 @@ const LibraryDocuments = () => {
 
   if (error) {
     return (
-      <div className="library-page-container" style={{ minHeight: '100vh', background: '#F3F2EF', display: 'flex', flexDirection: 'column' }}>
+      <div className="library-page-container" style={{ minHeight: '100vh', background: '#f4f6fa', display: 'flex', flexDirection: 'column' }}>
         <h1 style={{ 
           fontSize: '28px', 
           fontWeight: '800', 
@@ -158,7 +157,7 @@ const LibraryDocuments = () => {
   }
 
   return (
-    <div className="library-page-container" style={{ minHeight: '100vh', background: '#F3F2EF', display: 'flex', flexDirection: 'column' }}>
+    <div className="library-page-container" style={{ minHeight: '100vh', background: '#f4f6fa', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
       <div className="page-header">
         <h1 style={{ 

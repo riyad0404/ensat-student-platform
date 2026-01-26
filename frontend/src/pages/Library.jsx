@@ -136,7 +136,7 @@ const Library = () => {
   };
 
   return (
-    <div className="library-page-container">
+    <div className="library-page-container" style={{ background: '#f4f6fa' }}>
       {/* Header - Même style que Groups et Bookmarks */}
       <div className="page-header">
         <h1 style={{ 

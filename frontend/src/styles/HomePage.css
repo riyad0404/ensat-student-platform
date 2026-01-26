@@ -2,7 +2,7 @@
     width: 100%;
     min-height: 100vh;
     box-sizing: border-box;
-    background: #F3F2EF;
+    background: #f4f6fa;
     transition: all 0.3s ease;
     display: flex;
     flex-direction: column;

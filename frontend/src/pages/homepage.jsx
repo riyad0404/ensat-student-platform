@@ -240,6 +240,7 @@ const HomePage = () => {
                 post={post} 
                 onPostDeleted={fetchPosts}
                 onPostUpdated={fetchPosts}
+                showOptions={true}
               />
             ))
           )}

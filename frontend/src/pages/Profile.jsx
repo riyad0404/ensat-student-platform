@@ -365,7 +365,16 @@ const Profile = () => {
     const profileImageUrl = getProfileImage();
 
     return (
-                <div className="profile-container" style={{ backgroundColor: '#F3F2EF', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+                <div className="profile-container" style={{ backgroundColor: '#f4f6fa', minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundImage: "radial-gradient(circle at 20% 50%, rgba(0, 64, 208, 0.03) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(0, 64, 208, 0.02) 0%, transparent 50%)",
+                        pointerEvents: "none",
+                    }} />
                     {/* Header */}
                     <div className="page-header">
                         <div className="search-container" style={{ position: 'relative', flex: 1 }}>

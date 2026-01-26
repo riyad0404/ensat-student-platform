@@ -84,7 +84,7 @@ const MessagesPage = () => {
   };
 
   return (
-    <div className="messages-page-container">
+    <div className="messages-page-container" style={{ background: '#f4f6fa' }}>
       {/* Header Moderne */}
       <div className="page-header">
         <div>

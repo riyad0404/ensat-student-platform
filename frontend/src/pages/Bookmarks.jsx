@@ -50,7 +50,7 @@ const Bookmarks = () => {
 
   if (loading) {
     return (
-      <div className="bookmarks-page-container">
+      <div className="bookmarks-page-container" style={{ background: '#f4f6fa' }}>
         <h1 style={{ 
           fontSize: '28px', 
           fontWeight: '800', 
@@ -65,7 +65,7 @@ const Bookmarks = () => {
   }
 
   return (
-    <div className="bookmarks-page-container">
+    <div className="bookmarks-page-container" style={{ background: '#f4f6fa' }}>
       {/* Header */}
       <div className="page-header">
         <h1 style={{ 

@@ -9,17 +9,23 @@ import {
   getMyReactions,
   toggleReaction,
   deletePost,
-  updatePost
+  updatePost,
+  deleteComment,
+  updateComment,
+  toggleCommentReaction,
+  replyToComment
 } from "../api/postAPI";
-import { MoreVertical, Edit2, Trash2, Bookmark, BookmarkMinus, Paperclip, Send, Eye, EyeOff } from 'lucide-react';
+import { MoreVertical, MoreHorizontal, Edit2, Trash2, Bookmark, BookmarkMinus, Paperclip, Send, Eye, EyeOff, Heart, ThumbsUp, MessageSquare, CornerDownRight, X, Download } from 'lucide-react';
 
-import "../styles/Postcard.css";
+import "../styles/postcard.css";
 
 const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEdit, showOptions = false }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isLiked, setIsLiked] = useState(false);
+  const [isLoved, setIsLoved] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
+  const [loveCount, setLoveCount] = useState(0);
   const [commentText, setCommentText] = useState("");
   const [isCommentAnon, setIsCommentAnon] = useState(false);
   const [commentFile, setCommentFile] = useState(null);
@@ -30,6 +36,15 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
   const [loading, setLoading] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [editingCommentId, setEditingMessageId] = useState(null);
+  const [editCommentText, setEditCommentText] = useState("");
+  const [replyingToComment, setReplyingToComment] = useState(null); // Pour la réponse globale
+  const [activeCommentMenuId, setActiveCommentMenuId] = useState(null);
+  const [showReactionSelector, setShowReactionSelector] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState(null);
+  const [editingLoading, setEditingLoading] = useState(false);
+  const reactionTimeoutRef = useRef(null);
+  const commentInputRef = useRef(null); // Ref pour l'input principal
 
   // Helper pour l'image de profil - Version Améliorée
   const getProfileImage = (userObj) => {
@@ -91,6 +106,19 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
     (post.auteur && String(currentUserId) === String(post.auteur.id))
   );
 
+  const handleProfileClick = (e, targetUser, isAnon, isMe) => {
+    e.stopPropagation();
+    // Si c'est anonyme et ce n'est pas moi, pas de redirection
+    if (isAnon && !isMe) return;
+    
+    if (isMe) {
+      navigate('/profile');
+    } else {
+      const targetId = targetUser?.iduser || targetUser?.id;
+      if (targetId) navigate(`/profile/${targetId}`);
+    }
+  };
+
   const loadPostData = async () => {
     if (!post?.idpost) return;
     try {
@@ -101,7 +129,9 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
       ]);
       
       setLikeCount(reactions?.likes || reactions?.LIKE || 0);
+      setLoveCount(reactions?.loves || reactions?.LOVE || 0);
       setIsLiked(myStatus?.hasLike || myStatus?.typeReaction === 'LIKE');
+      setIsLoved(myStatus?.hasLove || myStatus?.typeReaction === 'LOVE');
       
       let loadedComments = Array.isArray(postComments) ? postComments : [];
 
@@ -141,6 +171,9 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
           }
       }
       // ---------------------------------------------------------------
+
+      // Tri par date (plus récent en premier)
+      loadedComments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
       setComments(loadedComments);
       setCommentCount(loadedComments.length);
@@ -199,6 +232,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
       formData.append('idpost', post.idpost);
       formData.append('contenu', commentText.trim() || '');
       formData.append('isAnonymat', isCommentAnon);
+      if (replyingToComment) formData.append('idparent', replyingToComment.idcomment);
       
       if (commentFile) {
         formData.append('file', commentFile);
@@ -224,6 +258,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
       setCommentFile(null);
       setCommentNiveau("");
       setIsCommentAnon(false);
+      setReplyingToComment(null); // Reset reply state
       setShowComments(true);
     } catch (error) {
       console.error('❌ Erreur lors de l\'envoi:', error);
@@ -234,27 +269,56 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
     }
   };
 
-  const handleLike = async () => {
+  // Gestion du survol pour les réactions avec délai (pour éviter la fermeture immédiate)
+  const handleReactionMouseEnter = () => {
+    if (reactionTimeoutRef.current) clearTimeout(reactionTimeoutRef.current);
+    setShowReactionSelector(true);
+  };
+
+  const handleReactionMouseLeave = () => {
+    reactionTimeoutRef.current = setTimeout(() => {
+      setShowReactionSelector(false);
+    }, 300); // 300ms de délai pour laisser le temps d'aller sur le menu
+  };
+
+  const handleReaction = async (type) => {
     try {
-      const newStatus = !isLiked;
-      setIsLiked(newStatus);
-      setLikeCount(prev => newStatus ? prev + 1 : prev - 1);
-      await toggleReaction(post.idpost, 'LIKE');
+      // Optimistic update
+      const wasLiked = isLiked;
+      const wasLoved = isLoved;
+
+      // Reset local state first
+      setIsLiked(false);
+      setIsLoved(false);
       
-      // 🔔 Notification : Informer l'auteur du post (si ce n'est pas moi et que c'est un like)
-      if (newStatus && !isAuthor) {
+      // Adjust counts based on previous state
+      if (wasLiked) setLikeCount(c => Math.max(0, c - 1));
+      if (wasLoved) setLoveCount(c => Math.max(0, c - 1));
+
+      // Apply new state if it's not a toggle off (clicking the same reaction again)
+      // Note: If clicking "Like" button when already Liked, we toggle off. 
+      // If selecting from menu, we always set.
+      if ((type === 'LIKE' && !wasLiked) || (type === 'LOVE' && !wasLoved)) {
+        if (type === 'LIKE') { setIsLiked(true); setLikeCount(c => c + 1); }
+        if (type === 'LOVE') { setIsLoved(true); setLoveCount(c => c + 1); }
+      }
+
+      await toggleReaction(post.idpost, type);
+      
+      // 🔔 Notification (si ce n'est pas moi et que c'est une réaction positive)
+      if (!isAuthor && ((type === 'LIKE' && !isLiked) || (type === 'LOVE' && !isLoved))) {
         try {
-          await notificationAPI.notifyLike(post.idpost, 'LIKE');
+          await notificationAPI.notifyLike(post.idpost, type);
         } catch (err) {
-          console.error("Failed to send like notification", err);
+          console.error("Failed to send reaction notification", err);
         }
       }
 
-      // Recharger pour confirmer l'état serveur
-      loadPostData();
     } catch (error) {
       console.error("Erreur reaction:", error);
+      loadPostData(); // Revert on error
     }
+    setShowReactionSelector(false);
   };
 
   // ✅ Fonction pour télécharger un document (CORRIGÉE)
@@ -271,8 +335,8 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
       window.URL.revokeObjectURL(url);
       window.document.body.removeChild(link);
     } catch (error) {
-      console.error('Erreur téléchargement:', error);
-      alert('Erreur lors du téléchargement');
+      console.error('Download error:', error);
+      alert('Error downloading file');
     }
   };
 
@@ -334,6 +398,61 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
     }
   };
 
+  const handleCommentAction = async (action, commentId, data = null) => {
+    console.log(`Action: ${action}, Comment ID: ${commentId}, Data:`, data);
+    try {
+      if (action === 'delete') {
+        setCommentToDelete(commentId);
+      } else if (action === 'edit') {
+         setEditingLoading(true);
+        await updateComment(commentId, { contenu: data, idpost: post.idpost });
+        setEditingMessageId(null);
+        setEditCommentText("");
+        await loadPostData();
+      } else if (action === 'like') {
+        await toggleCommentReaction(commentId, 'LIKE');
+        loadPostData();
+      }
+    } catch (error) {
+      console.error(`Error ${action} comment:`, error);
+    
+    } finally {
+      if (action === 'edit') setEditingLoading(false);
+    }
+  };
+
+  const confirmDeleteComment = async () => {
+    if (!commentToDelete) return;
+    try {
+      await deleteComment(commentToDelete);
+      loadPostData();
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+    } finally {
+      setCommentToDelete(null);
+    }
+  };
+
+  const startEditComment = (comment) => {
+    setEditingMessageId(comment.idcomment);
+    setEditCommentText(comment.contenu);
+    setReplyingToComment(null);
+  };
+
+  const startReplyComment = (commentId) => {
+    const comment = comments.find(c => c.idcomment === commentId);
+    setReplyingToComment(comment);
+    // Focus sur l'input principal
+    if (commentInputRef.current) {
+      commentInputRef.current.focus();
+    }
+  };
+
+  const cancelCommentAction = () => {
+    setEditingMessageId(null);
+    setEditCommentText("");
+  };
+
   const postDoc = post.documents?.[0] || post.document || null;
 
   // Gestion de l'avatar auteur
@@ -348,14 +467,167 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
 
     if (diffInSeconds < 60) return "Just now";
     const diffInMinutes = Math.floor(diffInSeconds / 60);
-    if (diffInMinutes < 60) return `${diffInMinutes} min`;
+    if (diffInMinutes < 60) return `${diffInMinutes}min`;
     const diffInHours = Math.floor(diffInMinutes / 60);
-    if (diffInHours < 24) return `${diffInHours} h`;
+    if (diffInHours < 24) return `${diffInHours}h`;
     const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 30) return `${diffInDays} j`;
+    if (diffInDays < 30) return `${diffInDays}j`;
     const diffInMonths = Math.floor(diffInDays / 30);
-    if (diffInMonths < 12) return `${diffInMonths} mois`;
-    return `${Math.floor(diffInDays / 365)} an(s)`;
+    if (diffInMonths < 12) return `${diffInMonths}mois`;
+    return `${Math.floor(diffInDays / 365)}an`;
+  };
+
+  // Format date compact pour les commentaires (comme demandé)
+  const formatCommentDate = (dateString) => {
+    if (!dateString) return "";
+    return formatTimeAgo(dateString);
+  };
+
+  // Fonction récursive pour afficher les commentaires et leurs réponses
+  const renderCommentItem = (c) => {
+    if (!c) return null;
+    const cAnon = c.isAnonymat === true || c.isAnonymat === 'true' || c.isAnonymat === 1;
+    
+    // Logique d'auteur (identique à avant)
+    const candidates = [c.auteur, c.author, c.Author, c.user, c.User, c.sender, c.student, c.Student, c.utilisateur, c.account];
+    let commentAuthor = candidates.find(cand => cand && typeof cand === 'object' && !Array.isArray(cand));
+    if (!commentAuthor) commentAuthor = c;
+    
+    const authorId = commentAuthor.iduser || commentAuthor.id || commentAuthor.userId || c.iduser;
+    if (effectiveUser && authorId && String(authorId) === String(effectiveUser.iduser || effectiveUser.id)) {
+        commentAuthor = { ...commentAuthor, ...effectiveUser };
+    } else if (post.auteur && authorId && String(authorId) === String(post.auteur.iduser || post.auteur.id)) {
+        commentAuthor = { ...commentAuthor, ...post.auteur };
+    }
+    
+    const userNom = commentAuthor?.nom || commentAuthor?.Nom || commentAuthor?.lastName || "";
+    const userPrenom = commentAuthor?.prenom || commentAuthor?.Prenom || commentAuthor?.firstName || "";
+    const fullName = `${userPrenom} ${userNom}`.trim();
+    const avatarUrl = getProfileImage({ ...commentAuthor, iduser: authorId });
+    const displayName = cAnon ? "Anonymous" : (fullName || commentAuthor?.username || "User");
+    
+    const isCommentOwner = effectiveUser && (
+      String(c.iduser) === String(effectiveUser.iduser || effectiveUser.id) ||
+      (c.auteur && String(c.auteur.iduser) === String(effectiveUser.iduser || effectiveUser.id))
+    );
+
+    const isEditing = editingCommentId === c.idcomment;
+    const commentDoc = c.documents?.[0] || c.document;
+
+    const isImage = commentDoc && (commentDoc.type === 'IMAGE' || commentDoc.url?.match(/\.(jpg|jpeg|png|gif|webp)$/i));
+
+    // Trouver les réponses à ce commentaire
+    const replies = comments.filter(reply => reply.idparent === c.idcomment);
+
+    return (
+      <div key={c.idcomment} className="comment-tree-item">
+        <div className={`comment-item-row ${cAnon ? 'anonymous' : ''}`}>
+          <div className="comment-avatar-small" style={{ width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
+            {!cAnon && avatarUrl ? (
+              <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='flex'}} />
+            ) : null}
+            <div style={{ display: (!cAnon && avatarUrl) ? 'none' : 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', background: '#e5e7eb' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </div>
+          </div>
+          <div className="comment-content-wrapper">
+            <div className="comment-header-line">
+              <span 
+                className="comment-author-name"
+                onClick={(e) => handleProfileClick(e, commentAuthor, cAnon, isCommentOwner)}
+                style={{ cursor: (cAnon && !isCommentOwner) ? 'default' : 'pointer' }}
+              >
+                {displayName}
+              </span>
+              <div className="comment-header-right">
+                <span className="comment-date">{formatCommentDate(c.createdAt || c.dateCreation)}</span>
+                {isCommentOwner && (
+                  <div className="comment-menu-container">
+                    <button className="comment-menu-btn" onClick={(e) => { e.stopPropagation(); setActiveCommentMenuId(activeCommentMenuId === c.idcomment ? null : c.idcomment); }}>
+                      <MoreHorizontal size={16} />
+                    </button>
+                    {activeCommentMenuId === c.idcomment && (
+                      <div className="comment-menu-dropdown">
+                        <button className="comment-menu-item" onClick={() => { startEditComment(c); setActiveCommentMenuId(null); }}><Edit2 size={14} /> Edit</button>
+                        <button className="comment-menu-item delete" onClick={() => { handleCommentAction('delete', c.idcomment); setActiveCommentMenuId(null); }}><Trash2 size={14} /> Delete</button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {isEditing ? (
+              <div className="edit-comment-box">
+                <input 
+                  type="text" 
+                  value={editCommentText} 
+                  onChange={(e) => setEditCommentText(e.target.value)}
+                  className="edit-comment-input"
+                  autoFocus
+                />
+                <div className="edit-comment-actions">
+                 <button 
+                    type="button"
+                    onClick={(e) => { 
+                      e.preventDefault(); 
+                      e.stopPropagation(); 
+                      handleCommentAction('edit', c.idcomment, editCommentText); 
+                    }} 
+                    className="save-btn-small"
+                    disabled={editingLoading}
+                  >
+                    {editingLoading ? 'Saving...' : 'Save'}
+                  </button>
+                  <button onClick={cancelCommentAction} className="cancel-btn-small" disabled={editingLoading}>Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <p className="comment-text">{c.contenu}</p>
+            )}
+            
+            {commentDoc && (
+              <div className="comment-document">
+                {isImage ? (
+                  <div className="comment-image-container">
+                    <img src={commentDoc.url} alt={commentDoc.filename} className="comment-image" />
+                    <button onClick={() => handleDownload(commentDoc)} className="download-btn-small image-download-btn-small" title="Download image">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="comment-file-wrapper">
+                    <a href={commentDoc.url} target="_blank" rel="noopener noreferrer" className="comment-file-link">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                      <span className="file-name-link">{commentDoc.filename}</span>
+                    </a>
+                    <button onClick={() => handleDownload(commentDoc)} className="download-btn-small" title="Download">
+                      <Download size={16} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="comment-actions">
+              <button className={`comment-action-btn like-btn ${c.isLiked ? 'active' : ''}`} onClick={() => handleCommentAction('like', c.idcomment)}>
+                Like {c.likes > 0 && `(${c.likes})`}
+              </button>
+              <button className="comment-action-btn" onClick={() => startReplyComment(c.idcomment)}>
+                Reply
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        {/* Rendu récursif des réponses */}
+        {replies.length > 0 && (
+          <div className="comment-replies">
+            {replies.map(reply => renderCommentItem(reply))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -376,50 +648,55 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
           </div>
 
           <div className="author-info">
-            <h3 className="author-name">
+            <h3 
+              className="author-name"
+              onClick={(e) => handleProfileClick(e, post.auteur, isPostAnon, isAuthor)}
+              style={{ cursor: (isPostAnon && !isAuthor) ? 'default' : 'pointer' }}
+            >
               {isAuthor ? "Me" : (isPostAnon ? "Student" : `${post.auteur?.nom || ''} ${post.auteur?.prenom || ''}`)}
             </h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: '#6b7280' }}>
+            <div style={{ fontSize: '13px', color: '#6b7280' }}>
               {!isAuthor && !isPostAnon && (
-                <>
-                  <span className="author-role">{post.auteur?.niveau}</span>
-                  <span>•</span>
-                </>
+                <span className="author-role">{post.auteur?.niveau}</span>
               )}
-              <span className="post-date">{formatTimeAgo(post.createdAt || post.dateCreation)}</span>
             </div>
           </div>
         </div>
-        {showOptions && (
-          <div className="post-menu" ref={menuRef}>
-            <button 
-              className="menu-btn" 
-              onClick={() => setShowMenu(!showMenu)}
-              title="Options"
-            >
-              <MoreVertical size={20} />
-            </button>
-            {showMenu && (
-              <div className="menu-dropdown">
-                {isAuthor && (
-                  <>
-                    <button className="menu-item" onClick={() => { setShowMenu(false); if(onEdit) onEdit(post); }}>
-                      <Edit2 size={16} /> Edit
+        
+        <div className="post-header-right">
+          <span className="post-date">{formatTimeAgo(post.createdAt || post.dateCreation)}</span>
+          
+          {showOptions && isAuthor && (
+            <div className="post-menu" ref={menuRef}>
+              <button 
+                className="menu-btn" 
+                onClick={() => setShowMenu(!showMenu)}
+                title="Options"
+              >
+                <MoreVertical size={20} />
+              </button>
+              {showMenu && (
+                <div className="menu-dropdown">
+                  {isAuthor && (
+                    <>
+                      <button className="menu-item" onClick={() => { setShowMenu(false); if(onEdit) onEdit(post); }}>
+                        <Edit2 size={16} /> Edit
+                      </button>
+                      <button className="menu-item delete-item" onClick={handleDelete}>
+                        <Trash2 size={16} /> Delete
+                      </button>
+                    </>
+                  )}
+                  {isBookmark && (
+                    <button className="menu-item delete-item" onClick={handleDeletePost}>
+                      <BookmarkMinus size={16} /> Remove bookmark
                     </button>
-                    <button className="menu-item delete-item" onClick={handleDelete}>
-                      <Trash2 size={16} /> Delete
-                    </button>
-                  </>
-                )}
-                {isBookmark && (
-                  <button className="menu-item delete-item" onClick={handleDeletePost}>
-                    <BookmarkMinus size={16} /> Remove bookmark
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        )}
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="post-content">
@@ -437,7 +714,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
                 <button 
                   onClick={() => handleDownload(postDoc)}
                   className="download-btn image-download-btn"
-                  title="Télécharger l'image"
+                  title="Download image"
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -467,7 +744,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
                   <button 
                     onClick={() => handleDownload(postDoc)}
                     className="download-btn"
-                    title="Télécharger"
+                    title="Download"
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -482,39 +759,87 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
         )}
       </div>
 
+      {/* SECTION STATS & ACTIONS (LinkedIn Style) */}
       <div className="post-stats">
-        <button className={`stat-btn ${isLiked ? 'liked' : ''}`} onClick={handleLike}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill={isLiked ? "#ec4899" : "none"} stroke={isLiked ? "#ec4899" : "currentColor"} strokeWidth="2">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
-          <span>{likeCount} Likes</span>
-        </button>
+        {/* 1. Affichage des compteurs (si > 0) */}
+        {(likeCount > 0 || loveCount > 0) && (
+          <div className="reaction-summary">
+            <div className="reaction-icons-stack">
+              {likeCount > 0 && <div className="reaction-icon-bubble like"><ThumbsUp size={10} fill="white" color="white" /></div>}
+              {loveCount > 0 && <div className="reaction-icon-bubble love"><Heart size={10} fill="white" color="white" /></div>}
+            </div>
+            <span className="reaction-count-text">{likeCount + loveCount}</span>
+          </div>
+        )}
 
-        <button className="stat-btn" onClick={() => setShowComments(!showComments)}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-          </svg>
-          <span>{commentCount} Comments</span>
-        </button>
+        <div className="post-actions-bar">
+          {/* Bouton Like avec survol */}
+          <div 
+            className="reaction-button-wrapper"
+            onMouseEnter={handleReactionMouseEnter}
+            onMouseLeave={handleReactionMouseLeave}
+          >
+            {showReactionSelector && (
+              <div className="reaction-selector">
+                <button onClick={() => handleReaction('LIKE')} className="reaction-option" title="Like">
+                  <div className="reaction-icon-bubble like large"><ThumbsUp size={20} fill="white" color="white"/></div>
+                </button>
+                <button onClick={() => handleReaction('LOVE')} className="reaction-option" title="Love">
+                  <div className="reaction-icon-bubble love large"><Heart size={20} fill="white" color="white"/></div>
+                </button>
+              </div>
+            )}
+            
+            <button 
+              className={`action-btn ${isLiked ? 'liked' : isLoved ? 'loved' : ''}`} 
+              onClick={() => handleReaction(isLiked ? 'LIKE' : isLoved ? 'LOVE' : 'LIKE')}
+            >
+              {isLoved ? <Heart size={20} fill="#e11d48" color="#e11d48" /> : <ThumbsUp size={20} fill={isLiked ? "#0040D0" : "none"} color={isLiked ? "#0040D0" : "currentColor"} />}
+              <span>{isLoved ? 'Love' : 'Like'}</span>
+            </button>
+          </div>
 
-        <button 
-          className={`stat-btn ${isBookmarked ? 'bookmarked' : ''}`} 
-          onClick={handleBookmark}
-          title={isBookmarked ? "Retirer des favoris" : "Ajouter aux favoris"}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill={isBookmarked ? "#E7A33E" : "none"} stroke={isBookmarked ? "#E7A33E" : "currentColor"} strokeWidth="2">
-            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-          </svg>
-          <span>{isBookmarked ? 'Saved' : 'Save'}</span>
-        </button>
+          <button className="action-btn" onClick={() => setShowComments(!showComments)}>
+            <MessageSquare size={20} />
+            <span>Comment ({commentCount})</span>
+          </button>
+
+          <button 
+            className={`action-btn ${isBookmarked ? 'bookmarked' : ''}`} 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleBookmark();
+            }}
+          >
+            <Bookmark size={20} fill={isBookmarked ? "#E7A33E" : "none"} color={isBookmarked ? "#E7A33E" : "currentColor"} />
+            <span>{isBookmarked ? 'Saved' : 'Save'}</span>
+          </button>
+        </div>
       </div>
 
       <div className="comment-section">
         <div className="comment-form-container">
+          {replyingToComment && (
+            <div className="replying-indicator">
+              <span>Replying to <strong>{replyingToComment.auteur?.prenom || "User"}</strong></span>
+              <button onClick={() => setReplyingToComment(null)} className="cancel-reply-indicator">
+                <X size={14} />
+              </button>
+            </div>
+          )}
           <div className="comment-input-wrapper">
+            <div className="current-user-avatar-small">
+               {getProfileImage(effectiveUser) ? (
+                 <img src={getProfileImage(effectiveUser)} alt="" />
+               ) : (
+                 <DefaultAvatar />
+               )}
+            </div>
             <input
+              ref={commentInputRef}
               type="text"
-              placeholder="Write a comment..."
+              placeholder={replyingToComment ? "Write a reply..." : "Add a comment..."}
               value={commentText}
               onChange={(e) => setCommentText(e.target.value)}
               onKeyPress={(e) => {
@@ -624,111 +949,9 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
 
         {showComments && (
           <div className="comments-list">
-            {comments.map((c, index) => {
-              if (!c) return null; // Sécurité anti-crash si un commentaire est null
-              const cAnon = c.isAnonymat === true || c.isAnonymat === 'true' || c.isAnonymat === 1;
-              
-              // 1. Identifier l'objet auteur (Stratégie agressive)
-              // On cherche d'abord dans les sous-objets, mais on ignore les IDs (nombres/strings)
-              const candidates = [c.auteur, c.author, c.Author, c.user, c.User, c.sender, c.student, c.Student, c.utilisateur, c.account];
-              let commentAuthor = candidates.find(cand => cand && typeof cand === 'object' && !Array.isArray(cand));
-              
-              // Si aucun sous-objet valide, on utilise l'objet commentaire lui-même (cas de jointure plate)
-              if (!commentAuthor) commentAuthor = c;
-              
-              // 2. Fallback intelligent : Si pas de nom, on regarde si c'est l'utilisateur connecté ou l'auteur du post
-              // Cela corrige le cas où le backend renvoie juste l'ID sans les détails
-              const authorId = commentAuthor.iduser || commentAuthor.id || commentAuthor.userId || c.iduser;
-              
-              // Vérifier si c'est le current user
-              if (currentUser && authorId && String(authorId) === String(currentUser.iduser || currentUser.id)) {
-                 // On fusionne pour garder les propriétés existantes mais combler les manques avec currentUser
-                 commentAuthor = { ...commentAuthor, ...currentUser };
-              }
-              // Vérifier si c'est l'auteur du post (dont on a déjà les infos)
-              else if (post.auteur && authorId && String(authorId) === String(post.auteur.iduser || post.auteur.id)) {
-                 commentAuthor = { ...commentAuthor, ...post.auteur };
-              }
-              
-              // Récupération des champs avec support de la casse (Nom/nom) et des variantes (lastname/nom)
-              const userNom = commentAuthor?.nom || commentAuthor?.Nom || commentAuthor?.lastName || commentAuthor?.lastname || commentAuthor?.last_name || commentAuthor?.name || commentAuthor?.Name || "";
-              const userPrenom = commentAuthor?.prenom || commentAuthor?.Prenom || commentAuthor?.firstName || commentAuthor?.firstname || commentAuthor?.first_name || "";
-              
-              const fullName = `${userPrenom} ${userNom}`.trim();
-              
-              // Passer l'objet complet pour l'ID et la photo (avec ID forcé)
-              const avatarUrl = getProfileImage({ ...commentAuthor, iduser: authorId });
-              
-              // Si pas anonyme et pas de nom complet trouvé, on affiche "Utilisateur" par défaut
-              // On vérifie aussi username/pseudo/userName
-              const displayName = cAnon ? "Anonymous" : (fullName || commentAuthor?.username || commentAuthor?.userName || commentAuthor?.pseudo || commentAuthor?.email?.split('@')[0] || "User");
-
-              const commentDoc = c.documents?.[0] || c.document;
-              return (
-                <div key={c.idcomment || index} className={`comment-item-row ${cAnon ? 'anonymous' : ''}`}>
-                  <div className="comment-avatar-small" style={{ width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
-                    {!cAnon && avatarUrl ? (
-                      <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='flex'}} />
-                    ) : null}
-                    <div style={{ display: (!cAnon && avatarUrl) ? 'none' : 'flex', width: '100%', height: '100%', alignItems: 'center', justifyContent: 'center', background: '#e5e7eb' }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                    </div>
-                  </div>
-                  <div className="comment-bubble">
-                    <p className="comment-author-name">{displayName}</p>
-                    <p className="comment-text">{c.contenu}</p>
-                    
-                    {commentDoc && (
-                      <div className="comment-document"> {/* This is the container for the image or file */}
-                        {commentDoc.type === 'IMAGE' ? (
-                          <div className="comment-image-container"> {/* New container for relative positioning */}
-                            <img 
-                              src={commentDoc.url} 
-                              alt={commentDoc.filename}
-                              className="comment-image"
-                            />
-                            <button 
-                              onClick={() => handleDownload(commentDoc)}
-                              className="download-btn-small image-download-btn-small"
-                              title="Télécharger l'image"
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="comment-file-wrapper">
-                            <a 
-                              href={commentDoc.url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="comment-file-link"
-                            >
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-                                <polyline points="13 2 13 9 20 9"></polyline>
-                              </svg>
-                              <span className="file-name-link">{commentDoc.filename}</span>
-                              {commentDoc.niveau && <span className="file-niveau-badge">{commentDoc.niveau}</span>}
-                            </a>
-                            <button 
-                              onClick={() => handleDownload(commentDoc)}
-                              className="download-btn-small"
-                              title="Télécharger"
-                            >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                <polyline points="7 10 12 15 17 10"></polyline>
-                                <line x1="12" y1="15" x2="12" y2="3"></line>
-                              </svg>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+            {comments
+              .filter(c => !c.idparent) // Seulement les commentaires racines
+              .map(c => renderCommentItem(c))}
           </div>
         )}
       </div>
@@ -742,6 +965,20 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
             <div className="delete-modal-actions">
               <button className="cancel-btn" onClick={() => setShowDeleteModal(false)} style={{background: 'none', border: '1px solid #ddd', color: '#111b21'}}>Cancel</button>
               <button className="confirm-btn" onClick={confirmDelete} style={{background: '#ea0038', border: 'none', color: 'white'}}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Comment Confirmation Modal */}
+      {commentToDelete && (
+        <div className="delete-modal-overlay">
+          <div className="delete-modal-content">
+            <h3>Delete Comment?</h3>
+            <p>Are you sure you want to delete this comment?</p>
+            <div className="delete-modal-actions">
+              <button className="cancel-btn" onClick={() => setCommentToDelete(null)} style={{background: 'none', border: '1px solid #ddd', color: '#111b21'}}>Cancel</button>
+              <button className="confirm-btn" onClick={confirmDeleteComment} style={{background: '#ea0038', border: 'none', color: 'white'}}>Delete</button>
             </div>
           </div>
         </div>
