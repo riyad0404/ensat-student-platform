@@ -2,12 +2,21 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import '../styles/profile.css';
 import { useNavigate } from 'react-router-dom';
+import PostCard from '../components/Postcard';
+import { getAllPosts } from '../api/postAPI';
+import CreatePostModal from '../components/CreatePostModal';
+import { Pencil, Trash2, Camera, Upload, Search } from 'lucide-react';
+import defaultBanner from '../assets/Blue Monotone Gradient Professional Company LinkedIn Banner.png';
+import conversationAPI from '../api/conversationAPI';
 
 const Profile = () => {
     const { user, updateProfile } = useAuth();
     const navigate = useNavigate();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingPost, setEditingPost] = useState(null);
     
     const [localProfileImage, setLocalProfileImage] = useState(null);
+    const [userPosts, setUserPosts] = useState([]);
     const [bannerImage, setBannerImage] = useState('');
     const [showBannerMenu, setShowBannerMenu] = useState(false);
     const [showAvatarMenu, setShowAvatarMenu] = useState(false);
@@ -15,19 +24,56 @@ const Profile = () => {
     const [imagePreview, setImagePreview] = useState(null);
     const [showImageModal, setShowImageModal] = useState(false);
     const [showNotification, setShowNotification] = useState({ show: false, message: '', type: '' });
+    const [showDeleteAvatarModal, setShowDeleteAvatarModal] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false); // État pour sidebar
+    const [searchTerm, setSearchTerm] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [searchLoading, setSearchLoading] = useState(false);
     
     const bannerFileInputRef = useRef(null);
     const avatarFileInputRef = useRef(null);
+    const currentUserId = user?.iduser || user?.id;
     
+    const fetchUserPosts = async () => {
+        if (!user?.iduser && !user?.id) return;
+        try {
+            const data = await getAllPosts();
+            const allPosts = Array.isArray(data) ? data : (data?.posts || []);
+            const currentUserId = user.iduser || user.id;
+
+            // Filtrer les posts de l'utilisateur connecté
+            const myPosts = allPosts.filter(p => {
+                const authorId = p.iduser || p.auteur?.iduser || p.auteur?.id;
+                return String(authorId) === String(currentUserId);
+            });
+
+            myPosts.sort((a, b) => new Date(b.createdAt || b.dateCreation) - new Date(a.createdAt || a.dateCreation));
+            setUserPosts(myPosts);
+        } catch (error) {
+            console.error("Error fetching user posts:", error);
+            setUserPosts([]);
+        }
+    };
+
     useEffect(() => {
         if (user?.iduser) {
             const savedImage = localStorage.getItem(`profile_image_${user.iduser}`);
             if (savedImage) {
                 setLocalProfileImage(savedImage);
             }
+            fetchUserPosts();
         }
     }, [user]);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+          if (!event.target.closest('.search-container')) {
+            setSearchResults([]);
+          }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
     
     if (!user) {
         return <div>Loading...</div>;
@@ -35,19 +81,6 @@ const Profile = () => {
     
     const fullName = `${user.prenom || ''} ${user.nom || ''}`.trim();
     const program = user.niveau;
-    
-    const posts = [
-        {
-            id: 1,
-            username: 'X_AE_A-13',
-            role: 'Product Designer, slothUI',
-            content: 'Habitant morbi tristique senectus et netus et. Suspendisse sed nisi lacus sed viverra. Dolor morbi non arcu risus quis varius.',
-            tags: ['#amazing', '#great', '#lifetime', '#uiux', '#machinelearning'],
-            likes: 12,
-            comments: 25,
-            shares: 187
-        }
-    ];
 
     const convertToBase64 = (file) => {
         return new Promise((resolve, reject) => {
@@ -165,11 +198,11 @@ const Profile = () => {
         }
     };
 
+    const confirmRemoveAvatar = () => {
+        setShowDeleteAvatarModal(true);
+    };
+
     const handleRemoveAvatar = async () => {
-        // Custom confirmation dialog
-        const confirmDelete = window.confirm('Are you sure you want to delete your profile picture?');
-        if (!confirmDelete) return;
-        
         setLoading(true);
         
         try {
@@ -195,6 +228,7 @@ const Profile = () => {
         } finally {
             setLoading(false);
             setShowAvatarMenu(false);
+            setShowDeleteAvatarModal(false);
         }
     };
 
@@ -236,13 +270,15 @@ const Profile = () => {
     };
 
     const bannerStyle = bannerImage ? {
-        background: `url(${bannerImage})`,
+        backgroundImage: `url(${bannerImage})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
     } : {
-        background: "url('https://cdn.pixabay.com/photo/2015/07/17/22/43/student-849825_1280.jpg')",
+        backgroundImage: `url(${defaultBanner})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
     };
 
     const handleClickOutside = (e) => {
@@ -261,11 +297,152 @@ const Profile = () => {
         };
     }, []);
 
+    const handleEditPost = (post) => {
+        setEditingPost(post);
+        setIsModalOpen(true);
+    };
+
+    const handlePostSaved = (savedPost) => {
+        // Mise à jour immédiate de l'interface (Optimistic UI)
+        if (savedPost && savedPost.idpost) {
+            setUserPosts(prev => {
+                const exists = prev.find(p => p.idpost === savedPost.idpost);
+                if (exists) {
+                    return prev.map(p => p.idpost === savedPost.idpost ? { ...p, ...savedPost } : p);
+                }
+                return [savedPost, ...prev];
+            });
+        }
+        // Rafraîchissement des données serveur pour être sûr
+        fetchUserPosts();
+    };
+
+    const handleSearch = async (e) => {
+        const term = e.target.value;
+        setSearchTerm(term);
+        if (term.length > 1) {
+          setSearchLoading(true);
+          try {
+            const promises = [];
+            const lowerTerm = term.toLowerCase();
+    
+            // 1. Recherche Utilisateurs
+            if (conversationAPI && typeof conversationAPI.searchUsers === 'function') {
+              promises.push(
+                conversationAPI.searchUsers(term)
+                  .then(res => ({ type: 'users', data: res }))
+                  .catch(err => {
+                    console.error("Error searching users:", err);
+                    return { type: 'users', data: [] };
+                  })
+              );
+            }
+    
+            const results = await Promise.all(promises);
+            
+            let users = [];
+    
+            results.forEach(res => {
+              if (res.type === 'users') {
+                const raw = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+                users = raw.filter(u => String(u.iduser) !== String(currentUserId))
+                           .map(u => ({ ...u, resultType: 'user' }));
+              }
+            });
+    
+            setSearchResults([...users]);
+          } catch (error) {
+            console.error("A general error occurred during search:", error);
+            setSearchResults([]);
+          } finally {
+            setSearchLoading(false);
+          }
+        } else {
+          setSearchResults([]);
+        }
+    };
+
     const profileImageUrl = getProfileImage();
 
     return (
-        
-                <div className="profile-container">
+                <div className="profile-container" style={{ backgroundColor: '#f4f6fa', minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundImage: "radial-gradient(circle at 20% 50%, rgba(0, 64, 208, 0.03) 0%, transparent 50%), radial-gradient(circle at 80% 80%, rgba(0, 64, 208, 0.02) 0%, transparent 50%)",
+                        pointerEvents: "none",
+                    }} />
+                    {/* Header */}
+                    <div className="page-header">
+                        <div className="search-container" style={{ position: 'relative', flex: 1 }}>
+                        <Search size={20} color="#9ca3af" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', zIndex: 1 }} />
+                        <input 
+                            type="text" 
+                            placeholder="Search for students..." 
+                            value={searchTerm}
+                            onChange={handleSearch}
+                            onFocus={handleSearch}
+                            className="search-input"
+                            style={{ paddingLeft: '45px', width: '100%' }}
+                        />
+                        {searchTerm.length > 1 && (
+                            <div className="search-results">
+                            {searchLoading ? (
+                                <div className="search-loading">Searching...</div>
+                            ) : searchResults.length > 0 ? (
+                                searchResults.map(item => {
+                                if (item.resultType === 'user') {
+                                    let avatarSrc = null;
+                                    if (item.iduser) {
+                                    avatarSrc = localStorage.getItem(`profile_image_${item.iduser}`);
+                                    }
+                                    if (!avatarSrc && item.photo) {
+                                    if (item.photo.startsWith('http') || item.photo.startsWith('data:')) {
+                                        avatarSrc = item.photo;
+                                    } else {
+                                        avatarSrc = `http://localhost:5000${item.photo.startsWith('/') ? '' : '/'}${item.photo}`;
+                                    }
+                                    }
+                                    return (
+                                    <div 
+                                        key={`user-${item.iduser}`} 
+                                        className="search-result-item"
+                                        onClick={() => {
+                                        navigate(`/profile/${item.iduser}`);
+                                        setSearchResults([]);
+                                        setSearchTerm('');
+                                        }}
+                                    >
+                                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
+                                        {avatarSrc ? (
+                                            <img src={avatarSrc} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        ) : (
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" strokeWidth="2">
+                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                            <circle cx="12" cy="7" r="4"></circle>
+                                            </svg>
+                                        )}
+                                        </div>
+                                        <div>
+                                        <div style={{ fontWeight: '500', color: '#1f2937' }}>{item.prenom || item.firstname} {item.nom || item.lastname}</div>
+                                        <div style={{ fontSize: '12px', color: '#6b7280' }}>{item.niveau || item.level}</div>
+                                        </div>
+                                    </div>
+                                    );
+                                }
+                                return null;
+                                })
+                            ) : (
+                                <div className="no-results">No results found for "{searchTerm}"</div>
+                            )}
+                            </div>
+                        )}
+                        </div>
+                    </div>
+
                     {/* Custom Notification */}
                     {showNotification.show && (
                         <div style={{
@@ -285,37 +462,9 @@ const Profile = () => {
                             gap: '10px',
                             maxWidth: '400px'
                         }}>
-                            {showNotification.type === 'success' ? '✅' : 
-                             showNotification.type === 'error' ? '❌' : 'ℹ️'}
+                            {showNotification.type === 'success' ? '' : 
+                             showNotification.type === 'error' ? '' : 'ℹ️'}
                             {showNotification.message}
-                        </div>
-                    )}
-
-                    {/* Loading indicator */}
-                    {loading && (
-                        <div style={{
-                            position: 'fixed',
-                            top: '20px',
-                            right: '20px',
-                            background: '#E334FE',
-                            color: 'white',
-                            padding: '10px 20px',
-                            borderRadius: '8px',
-                            zIndex: 2000,
-                            boxShadow: '0 4px 12px rgba(227, 52, 254, 0.3)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '10px'
-                        }}>
-                            <div style={{
-                                width: '16px',
-                                height: '16px',
-                                border: '2px solid rgba(255,255,255,0.3)',
-                                borderTop: '2px solid white',
-                                borderRadius: '50%',
-                                animation: 'spin 1s linear infinite'
-                            }}></div>
-                            Saving...
                         </div>
                     )}
 
@@ -377,8 +526,11 @@ const Profile = () => {
                         </div>
                     )}
                     
-                    {/* Large banner */}
-                    <div className="profile-banner" style={bannerStyle}>
+                    <div className="page-content" style={{ maxWidth: '1200px', margin: '10px auto', width: '100%', padding: '0 20px' }}>
+                    
+                    {/* Section 1: User Info Card */}
+                    <div style={{ background: 'white', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e0e0e0', marginBottom: '15px', position: 'relative' }}>
+                        <div className="profile-banner" style={bannerStyle}>
                         <button 
                             className="banner-camera-icon"
                             onClick={(e) => {
@@ -394,13 +546,15 @@ const Profile = () => {
                         <div className={`dropdown-menu ${showBannerMenu ? 'show' : ''}`} 
                              style={{ bottom: '70px', right: '20px' }}>
                             <div className="dropdown-item" onClick={() => !loading && bannerFileInputRef.current.click()}>
-                                <span style={{ marginRight: '10px' }}>📤</span>
-                                Edit banner
+                                <span style={{ marginRight: '10px', display: 'flex', alignItems: 'center' }}><Upload size={18} /></span>
+                                {bannerImage ? 'Change banner' : 'Add banner'}
                             </div>
-                            <div className="dropdown-item delete" onClick={handleRemoveBanner}>
-                                <span style={{ marginRight: '10px' }}>🗑️</span>
-                                Remove banner
-                            </div>
+                            {bannerImage && (
+                                <div className="dropdown-item delete" onClick={handleRemoveBanner}>
+                                    <span style={{ marginRight: '10px', display: 'flex', alignItems: 'center' }}><Trash2 size={18} /></span>
+                                    Remove banner
+                                </div>
+                            )}
                         </div>
                         
                         <input
@@ -411,12 +565,16 @@ const Profile = () => {
                             disabled={loading}
                             style={{display: 'none'}}
                         />
-                    </div>
+                        </div>
                     
-                    {/* Main content */}
-                    <div className="profile-content">
+                        {/* Avatar & Info Wrapper */}
+                        <div style={{ position: 'relative' }}>
                         {/* Avatar */}
-                        <div className="profile-avatar-container">
+                        <div className="profile-avatar-container" 
+                             onMouseEnter={(e) => e.currentTarget.querySelector('.avatar-camera-icon').style.opacity = '1'}
+                             onMouseLeave={(e) => {
+                                 if (!showAvatarMenu) e.currentTarget.querySelector('.avatar-camera-icon').style.opacity = '0';
+                             }}>
                             <div className="profile-avatar">
                                 {profileImageUrl ? (
                                     <div 
@@ -494,6 +652,7 @@ const Profile = () => {
                                         setShowAvatarMenu(!showAvatarMenu);
                                     }}
                                     disabled={loading}
+                                    style={{ opacity: showAvatarMenu ? 1 : 0, transition: 'opacity 0.2s' }}
                                 >
                                     📷
                                 </button>
@@ -512,9 +671,9 @@ const Profile = () => {
                                         </div>
                                     )}
                                     {profileImageUrl && (
-                                        <div className="dropdown-item delete" onClick={handleRemoveAvatar}>
-                                            <span style={{ marginRight: '10px' }}>🗑️</span>
-                                            Remove photo
+                                        <div className="dropdown-item delete" onClick={confirmRemoveAvatar}>
+                                            <span style={{ marginRight: '10px', display: 'flex', alignItems: 'center' }}><Trash2 size={18} /></span>
+                                            Remove Photo
                                         </div>
                                     )}
                                 </div>
@@ -548,48 +707,77 @@ const Profile = () => {
                                 </button>
                             </div>
                         </div>
-
-                        {/* Posts */}
-                        <div className="posts-section">
-                            <div className="posts-title">Posts</div>
-                            {posts.map(post => (
-                                <div key={post.id} className="post">
-                                    <div className="post-header">
-                                        <div className="post-avatar">
-                                            {post.username.substring(0, 2)}
-                                        </div>
-                                        <div className="post-user">
-                                            <h4>{post.username}</h4>
-                                            <p>{post.role}</p>
-                                        </div>
-                                    </div>
-                                    
-                                    <p className="post-content">{post.content}</p>
-                                    
-                                    <div className="post-tags">
-                                        {post.tags.map((tag, i) => (
-                                            <span key={i} className="tag">{tag}</span>
-                                        ))}
-                                    </div>
-                                    
-                                    <div className="post-stats">
-                                        <div className="stat">
-                                            <span>❤️</span>
-                                            <span>{post.likes} Likes</span>
-                                        </div>
-                                        <div className="stat">
-                                            <span>💬</span>
-                                            <span>{post.comments} Comments</span>
-                                        </div>
-                                        <div className="stat">
-                                            <span>↪️</span>
-                                            <span>{post.shares} Share</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+                        
+                        <div style={{ padding: '0 20px 15px 20px', marginTop: '10px' }}>
+                            <h3 style={{ fontSize: '18px', fontWeight: '700', color: '#333', margin: '5px 0 0 0' }}>Posts</h3>
+                            <div style={{ height: '1px', background: '#f0f0f0', marginTop: '10px' }}></div>
+                            {userPosts.length === 0 && (
+                                <p style={{textAlign: 'center', color: '#666', padding: '20px'}}>You have no posts yet.</p>
+                            )}
+                        </div>
                         </div>
                     </div>
+
+                    {/* Section 2: Posts */}
+                    <div className="posts-section-wrapper" style={{ width: '100%' }}>
+                        <div className="posts-section" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            {userPosts.length > 0 ? (
+                                userPosts.map(post => (
+                                    <PostCard 
+                                        key={post.idpost} 
+                                        post={post}
+                                        onPostDeleted={() => setUserPosts(prev => prev.filter(p => p.idpost !== post.idpost))}
+                                        onEdit={handleEditPost}
+                                        showOptions={true}
+                                    />
+                                ))
+                            ) : null}
+                        </div>
+                    </div>
+                    </div>
+
+                    {/* Modal pour créer/éditer un post */}
+                    {isModalOpen && (
+                        <CreatePostModal 
+                            isOpen={isModalOpen} 
+                            onClose={() => { setIsModalOpen(false); setEditingPost(null); }}
+                            onPostCreated={handlePostSaved}
+                            postToEdit={editingPost}
+                        />
+                    )}
+
+                    {/* Delete Avatar Confirmation Modal */}
+                    {showDeleteAvatarModal && (
+                        <div style={{
+                            position: 'fixed',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background: 'rgba(0,0,0,0.5)',
+                            zIndex: 3000,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            <div style={{
+                                background: 'white',
+                                width: '90%',
+                                maxWidth: '350px',
+                                borderRadius: '12px',
+                                padding: '24px',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                                textAlign: 'center'
+                            }}>
+                                <h3 style={{ margin: '0 0 10px 0', fontSize: '1.125rem', fontWeight: '700', color: '#111827' }}>Delete Profile Picture?</h3>
+                                <p style={{ color: '#667781', marginBottom: '20px', fontSize: '14px' }}>Are you sure you want to delete your profile picture?</p>
+                                <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                                    <button onClick={() => setShowDeleteAvatarModal(false)} style={{ padding: '8px 16px', borderRadius: '20px', fontWeight: '500', cursor: 'pointer', background: 'none', border: '1px solid #ddd', color: '#111b21' }}>Cancel</button>
+                                    <button onClick={handleRemoveAvatar} style={{ padding: '8px 16px', borderRadius: '20px', fontWeight: '500', cursor: 'pointer', background: '#ea0038', border: 'none', color: 'white' }}>Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* CSS Styles */}
                     <style jsx="true">{`

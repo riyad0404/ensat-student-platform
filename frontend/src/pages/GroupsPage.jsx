@@ -68,6 +68,14 @@ const GroupsPage = () => {
 
       if (Array.isArray(allConvs)) {
         const groupList = allConvs.filter(c => c.type === 'GROUP');
+        
+        // Trier par date de mise à jour (le plus récent en haut)
+        groupList.sort((a, b) => {
+            const dateA = new Date(a.lastMessage?.sentAt || a.updatedAt || 0);
+            const dateB = new Date(b.lastMessage?.sentAt || b.updatedAt || 0);
+            return dateB - dateA;
+        });
+        
         setGroups(groupList);
       } else {
         setGroups([]);
@@ -127,183 +135,202 @@ const GroupsPage = () => {
   };
 
   return (
-    <div className="groups-page" style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto', minHeight: '100vh' }}>
+    <div className="groups-page-container" style={{ background: '#f4f6fa' }}>
       {/* Header Moderne */}
-      <div style={{ marginBottom: '30px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+      <div className="page-header">
         <div>
           <h1 style={{ 
-            fontSize: '28px', 
+            fontSize: '24px', 
             fontWeight: '800', 
-            marginBottom: '8px', 
-            marginTop: 0,
-            background: 'linear-gradient(90deg, #E334FE, #A6048E)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            display: 'inline-block'
+            margin: 0,
+            color: '#333333'
           }}>Work Groups</h1>
-          <p style={{ color: '#6b7280', margin: 0 }}>Join groups and collaborate with your peers.</p>
         </div>
+
+        {/* Search Bar */}
+        <div style={{ position: 'relative', flex: 1, maxWidth: '400px', margin: '0 20px' }}>
+          <Search size={20} color="#9ca3af" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
+          <input 
+            type="text" 
+            placeholder="Search for a group..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            style={{ 
+              width: '100%', 
+              padding: '12px 20px 12px 45px',
+              borderRadius: '25px', 
+              border: '1px solid #e5e7eb', 
+              fontSize: '15px',
+              outline: 'none',
+              background: 'white',
+              transition: 'all 0.2s'
+            }}
+            onFocus={(e) => { e.target.style.borderColor = '#0040D0'; e.target.style.background = 'white'; }}
+            onBlur={(e) => { e.target.style.borderColor = '#e5e7eb'; e.target.style.background = 'white'; }}
+          />
+        </div>
+
         <button 
           onClick={() => setShowModal(true)}
           style={{ 
-            background: '#7c3aed', 
+             background: 'linear-gradient(135deg, #0040D0 0%, #0055FF 100%)', 
             color: 'white', 
             border: 'none', 
             padding: '12px 24px', 
-            borderRadius: '12px', 
+            borderRadius: '25px', 
             fontWeight: '600', 
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            boxShadow: '0 4px 12px rgba(124, 58, 237, 0.2)',
-            transition: 'transform 0.2s'
+            fontSize: '14px',
+            transition: 'transform 0.2s, box-shadow 0.2s'
           }}
-          onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 64, 208, 0.3)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
         >
-          <Plus size={20} /> New Group
+          + New Group
         </button>
       </div>
 
-      {/* Search Bar */}
-      <div style={{ marginBottom: '30px', position: 'relative' }}>
-        <Search size={20} color="#9ca3af" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)' }} />
-        <input 
-          type="text" 
-          placeholder="Search for a group..." 
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          style={{ 
-            width: '100%', 
-            padding: '14px 14px 14px 50px', 
-            borderRadius: '16px', 
-            border: '1px solid #e5e7eb', 
-            fontSize: '16px',
-            outline: 'none',
-            background: 'white',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-            transition: 'border-color 0.2s'
-          }}
-          onFocus={(e) => e.target.style.borderColor = '#7c3aed'}
-          onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
-        />
-      </div>
+      <div className="page-content">
+        {/* List Layout */}
+        <div style={{ 
+          background: 'white',
+          borderRadius: '16px',
+          border: '1px solid #e5e7eb',
+          overflow: 'hidden',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+        }}>
+         
+          {error && <div style={{ padding: '20px', textAlign: 'center', color: 'red' }}>{error}</div>}
 
-      {/* Grid Layout */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
-        gap: '24px',
-        paddingBottom: '40px'
-      }}>
-        {loading && <div style={{ padding: '20px', textAlign: 'center', color: '#666' }}>Loading...</div>}
-        {error && <div style={{ padding: '20px', textAlign: 'center', color: 'red' }}>{error}</div>}
+          {!error && filteredGroups.map((group, index) => {
+            const groupName = getGroupName(group);
+            const groupId = getGroupId(group);
+            
+            // Logique de notification (Non lu)
+            const lastMsg = group.lastMessage;
+            const isOwnMessage = lastMsg?.senderId && String(lastMsg.senderId) === String(currentUserId);
+            let hasUnread = false;
 
-        {!loading && !error && filteredGroups.map((group, index) => {
-          const groupName = getGroupName(group);
-          const groupId = getGroupId(group);
-          
-          // Logique de notification (Non lu)
-          const lastMsg = group.lastMessage;
-          const isOwnMessage = lastMsg?.senderId && String(lastMsg.senderId) === String(currentUserId);
-          let hasUnread = false;
-
-          // On ne montre JAMAIS de notification si le dernier message vient de nous
-          if (!isOwnMessage) {
-            if (group.unreadCount !== undefined) {
-               hasUnread = group.unreadCount > 0;
-            } else {
-               const lastRead = localStorage.getItem(`lastRead_${groupId}`);
-               const lastMsgDate = lastMsg?.sentAt || lastMsg?.createdAt || group.updatedAt;
-               const isLastReadValid = lastRead && !isNaN(new Date(lastRead).getTime());
-  
-               hasUnread = lastMsgDate && (!isLastReadValid || new Date(lastMsgDate) > new Date(lastRead));
+            // On ne montre JAMAIS de notification si le dernier message vient de nous
+            if (!isOwnMessage) {
+              if (group.unreadCount !== undefined) {
+                 hasUnread = group.unreadCount > 0;
+              } else {
+                 const lastRead = localStorage.getItem(`lastRead_${groupId}`);
+                 const lastMsgDate = lastMsg?.sentAt || lastMsg?.createdAt || group.updatedAt;
+                 const isLastReadValid = lastRead && !isNaN(new Date(lastRead).getTime());
+    
+                 hasUnread = lastMsgDate && (!isLastReadValid || new Date(lastMsgDate) > new Date(lastRead));
+              }
             }
-          }
+            
+            const lastMsgDate = lastMsg?.sentAt || lastMsg?.createdAt || group.updatedAt;
+            let dateDisplay = '';
+            if (lastMsgDate) {
+                const msgDate = new Date(lastMsgDate);
+                const now = new Date();
+                const isToday = msgDate.toDateString() === now.toDateString();
+                const yesterday = new Date(now);
+                yesterday.setDate(now.getDate() - 1);
+                const isYesterday = msgDate.toDateString() === yesterday.toDateString();
 
-          return (
-          <div 
-            key={groupId || index} 
-            onClick={() => groupId ? navigate(`/conversations/${groupId}`) : console.error("ID manquant pour le groupe", group)}
-             style={{ 
-               background: 'white',
-               borderRadius: '20px',
-               padding: '24px',
-               cursor: 'pointer',
-               border: '1px solid #f3f4f6',
-               boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05)',
-               transition: 'all 0.2s ease',
-               display: 'flex',
-               flexDirection: 'column',
-               position: 'relative'
-             }}
-             onMouseEnter={(e) => {
-               e.currentTarget.style.transform = 'translateY(-4px)';
-               e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)';
-             }}
-             onMouseLeave={(e) => {
-               e.currentTarget.style.transform = 'translateY(0)';
-               e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.05)';
-             }}
-           >
-             {hasUnread && (
-               <div style={{ position: 'absolute', top: '15px', right: '15px', minWidth: '20px', height: '20px', background: '#25D366', borderRadius: '50%', border: '2px solid white', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '11px', fontWeight: 'bold' }}>
-                 1
+                if (isToday) dateDisplay = msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                else if (isYesterday) dateDisplay = 'Hier';
+                else dateDisplay = msgDate.toLocaleDateString('fr-FR');
+            }
+
+            return (
+            <div 
+              key={groupId || index} 
+              onClick={() => groupId ? navigate(`/conversations/${groupId}`, { state: { type: 'group' } }) : console.error("ID manquant pour le groupe", group)}
+               style={{ 
+                 display: 'flex',
+                 alignItems: 'center',
+                 padding: '12px 20px',
+                 cursor: 'pointer',
+                 borderBottom: index !== filteredGroups.length - 1 ? '1px solid #f3f4f6' : 'none',
+                 transition: 'background-color 0.2s ease',
+                 backgroundColor: 'white'
+               }}
+               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
+             >
+               {/* Avatar */}
+               <div style={{ marginRight: '20px', position: 'relative', flexShrink: 0 }}>
+                 <div style={{ 
+                   width: '52px', height: '52px', borderRadius: '50%', 
+                   background: '#E6F0FF', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                   color: '#0040D0'
+                 }}>
+                   <Users size={26} />
+                 </div>
                </div>
-             )}
- 
-             <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-               <div style={{ 
-                 width: '56px', height: '56px', borderRadius: '16px', 
-                 background: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                 color: '#7c3aed', marginRight: '16px'
-               }}>
-                 <Users size={28} />
-               </div>
+
+               {/* Content */}
                <div style={{ flex: 1, minWidth: 0 }}>
-                 <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '700', color: '#1f2937', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                   {groupName}
-                 </h3>
-                 <span style={{ fontSize: '14px', color: '#6b7280' }}>
-                   {(group.members || []).filter(m => !m.leftAt).length} members
-                 </span>
+                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '4px' }}>
+                   <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#1f2937', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                     {groupName}
+                   </h3>
+                   <span style={{ fontSize: '12px', color: hasUnread ? '#25D366' : '#6b7280', whiteSpace: 'nowrap' }}>
+                     {dateDisplay}
+                   </span>
+                 </div>
+               
+               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                 <p style={{ 
+                   margin: 0, fontSize: '14px', color: hasUnread ? '#111827' : '#6b7280', 
+                   fontWeight: hasUnread ? '600' : '400', 
+                   whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                   maxWidth: '70%'
+                 }}>
+                {(() => {
+                  if (group.lastMessage) {
+                     const senderId = group.lastMessage.senderId;
+                     const isMe = String(senderId) === String(currentUserId);
+                     let senderName = "Unknown";
+                     if (isMe) {
+                       senderName = "You";
+                     } else {
+                       const sender = group.members?.find(m => String(m.iduser) === String(senderId));
+                       if (sender) senderName = sender.prenom || sender.nom || "User";
+                     }
+                     return <span style={{color: hasUnread ? '#25D366' : '#6b7280'}}>{senderName}: {group.lastMessage.content}</span>;
+                  }
+                  return <span style={{color: '#9ca3af'}}>{group.description || "No description available."}</span>;
+                })()}
+               </p>
+               {hasUnread && (
+                 <div style={{ 
+                   minWidth: '20px', height: '20px', borderRadius: '10px', 
+                   background: '#25D366', color: 'white', fontSize: '11px', 
+                   fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                   padding: '0 6px', marginLeft: '10px'
+                 }}>
+                   {group.unreadCount > 0 ? group.unreadCount : '1'}
+                 </div>
+               )}
+               </div>
                </div>
              </div>
-             
-             <p style={{ 
-               color: hasUnread ? '#111' : '#4b5563', 
-               fontSize: '14px', lineHeight: '1.5', margin: 0, 
-               display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-               flex: 1,
-               fontWeight: hasUnread ? '600' : '400'
-             }}>
-              {(() => {
-                if (group.lastMessage) {
-                   const senderId = group.lastMessage.senderId;
-                   const isMe = String(senderId) === String(currentUserId);
-                   let senderName = "Unknown";
-                   if (isMe) {
-                     senderName = "You";
-                   } else {
-                     const sender = group.members?.find(m => String(m.iduser) === String(senderId));
-                     if (sender) senderName = sender.prenom || sender.nom || "User";
-                   }
-                   return <>{senderName}: {group.lastMessage.content}</>;
-                }
-                return group.description || "No description available.";
-              })()}
-             </p>
-          </div>
-          );
-        })}
-        
-        {!loading && filteredGroups.length === 0 && (
-          <div style={{ padding: '40px', textAlign: 'center', color: '#8696a0' }}>
-            No groups found.
-          </div>
-        )}
+            );
+          })}
+          
+          {!loading && filteredGroups.length === 0 && (
+            <div style={{ padding: '60px', textAlign: 'center', color: '#9ca3af' }}>
+              No groups found.
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Create Group Modal */}
@@ -316,47 +343,52 @@ const GroupsPage = () => {
           <div style={{
             background: 'white', width: '90%', maxWidth: '500px',
             borderRadius: '16px', padding: '32px',
-            boxShadow: '0 10px 25px rgba(227, 52, 254, 0.15)', border: '1px solid rgba(227, 52, 254, 0.1)'
+            boxShadow: '0 10px 25px rgba(0, 64, 208, 0.15)', border: '1px solid rgba(0, 64, 208, 0.1)'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <h3 style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#111827' }}>Create New Group</h3>
+              <h3 style={{ 
+                margin: 0, 
+                fontSize: '22px', 
+                fontWeight: '700',
+                color: '#333333'
+              }}>Create New Group</h3>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
-                <X size={24} color="#6b7280" />
+                <X size={24} color="#0040D0" />
               </button>
             </div>
 
             <form onSubmit={handleCreateGroup}>
               <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>Group Name</label>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '13px', color: '#060606', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Group Name</label>
                 <input
                   type="text"
                   placeholder="Group Name"
                   value={newGroup.name}
                   onChange={(e) => setNewGroup({...newGroup, name: e.target.value, nom: e.target.value})}
                   style={{ 
-                    width: '100%', padding: '12px 16px', border: '1px solid #e5e7eb', 
-                    borderRadius: '8px', outline: 'none', fontSize: '15px',
-                    background: '#f9fafb', transition: 'border-color 0.2s'
+                    width: '100%', height: '44px', padding: '0 16px', border: '1.5px solid #e0e0e0', 
+                    borderRadius: '6px', outline: 'none', fontSize: '14px',
+                    background: '#ffffff', transition: 'all 0.2s ease', color: '#333'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#E334FE'}
-                  onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
+                  onFocus={(e) => { e.target.style.borderColor = '#0040D0'; e.target.style.boxShadow = '0 0 0 2px rgba(0, 64, 208, 0.1)'; }}
+                  onBlur={(e) => { e.target.style.borderColor = '#e0e0e0'; e.target.style.boxShadow = 'none'; }}
                   required
                 />
               </div>
 
               <div style={{ marginBottom: '32px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500', color: '#374151' }}>Description</label>
+                <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '13px', color: '#060606', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Description</label>
                 <textarea
                   placeholder="Description (Optional)"
                   value={newGroup.description}
                   onChange={(e) => setNewGroup({...newGroup, description: e.target.value})}
                   style={{ 
-                    width: '100%', padding: '12px 16px', border: '1px solid #e5e7eb', 
-                    borderRadius: '8px', outline: 'none', fontSize: '15px',
-                    background: '#f9fafb', minHeight: '80px', resize: 'vertical', transition: 'border-color 0.2s'
+                    width: '100%', padding: '12px 16px', border: '1.5px solid #e0e0e0', 
+                    borderRadius: '6px', outline: 'none', fontSize: '14px',
+                    background: '#ffffff', minHeight: '100px', resize: 'vertical', transition: 'all 0.2s ease', color: '#333'
                   }}
-                  onFocus={(e) => e.target.style.borderColor = '#E334FE'}
-                  onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
+                  onFocus={(e) => { e.target.style.borderColor = '#0040D0'; e.target.style.boxShadow = '0 0 0 2px rgba(0, 64, 208, 0.1)'; }}
+                  onBlur={(e) => { e.target.style.borderColor = '#e0e0e0'; e.target.style.boxShadow = 'none'; }}
                 ></textarea>
               </div>
 
@@ -364,14 +396,27 @@ const GroupsPage = () => {
                 <button 
                   type="button" 
                   onClick={() => setShowModal(false)}
-                  className="group-modal-btn cancel"
+                  style={{
+                    height: '44px', borderRadius: '25px', background: 'transparent',
+                    border: '2px solid #E7A33E', color: '#E7A33E', fontWeight: '700',
+                    fontSize: '14px', padding: '0 30px', cursor: 'pointer', transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => { e.target.style.background = 'linear-gradient(90deg, #E7A33E, #FF6B00)'; e.target.style.color = 'white'; e.target.style.borderColor = 'transparent'; }}
+                  onMouseLeave={(e) => { e.target.style.background = 'transparent'; e.target.style.color = '#E7A33E'; e.target.style.borderColor = '#E7A33E'; }}
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit" 
                   disabled={creating}
-                  className="group-modal-btn create"
+                  style={{
+                    height: '44px', borderRadius: '25px', background: 'linear-gradient(90deg, #4a82fc, #0040D0)', 
+                    color: 'white', fontWeight: '700', fontSize: '14px', border: 'none', 
+                    padding: '0 30px', cursor: 'pointer', transition: 'all 0.3s ease',
+                    opacity: creating ? 0.7 : 1
+                  }}
+                  onMouseEnter={(e) => !creating && (e.target.style.transform = 'translateY(-1px)')}
+                  onMouseLeave={(e) => !creating && (e.target.style.transform = 'translateY(0)')}
                 >
                   {creating ? 'Creating...' : 'Create'}
                 </button>
