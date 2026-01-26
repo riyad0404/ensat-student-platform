@@ -8,6 +8,101 @@ import { User } from "../models/user.js";
 
 const UPLOAD_DIR =
   process.env.UPLOAD_DIR || path.join(process.cwd(), "uploads");
+  // Like / Love / Remove reaction
+export const reactComment = async (req, res) => {
+  try {
+    const iduser = req.user.iduser;
+    const idcomment = Number(req.params.idcomment);
+    const { type } = req.body; // "LIKE" ou "LOVE"
+
+    if (!["LIKE", "LOVE"].includes(type)) {
+      return res.status(400).json({ message: "Type invalide" });
+    }
+
+    const comment = await Comment.findByPk(idcomment);
+    if (!comment) {
+      return res.status(404).json({ message: "Commentaire introuvable" });
+    }
+
+    const reactedBy = comment.reactedBy || [];
+
+    // trouver l'utilisateur
+    const existing = reactedBy.find((r) => r.iduser === iduser);
+
+    // si pas encore existant, on le crée
+    if (!existing) {
+      const newEntry = {
+        iduser,
+        like: type === "LIKE",
+        love: type === "LOVE",
+      };
+
+      comment.reactedBy = [...reactedBy, newEntry];
+      if (type === "LIKE") comment.likesCount++;
+      if (type === "LOVE") comment.lovesCount++;
+
+      await comment.save();
+      return res.status(200).json({ message: "Réaction ajoutée" });
+    }
+
+    // si existant -> on recrée le tableau (important)
+    let newReactedBy = reactedBy.map((r) => {
+      if (r.iduser !== iduser) return r;
+      return { ...r }; // clone
+    });
+
+    // on récupère la version clonée
+    const userEntry = newReactedBy.find((r) => r.iduser === iduser);
+
+    // ====== LIKE ======
+    if (type === "LIKE") {
+      // si déjà like => retirer
+      if (userEntry.like) {
+        userEntry.like = false;
+        comment.likesCount = Math.max(0, comment.likesCount - 1);
+
+        comment.reactedBy = newReactedBy;
+        await comment.save();
+        return res.status(200).json({ message: "Like supprimé" });
+      }
+
+      // sinon ajouter like
+      userEntry.like = true;
+      comment.likesCount++;
+
+      comment.reactedBy = newReactedBy;
+      await comment.save();
+      return res.status(200).json({ message: "Like ajouté" });
+    }
+
+    // ====== LOVE ======
+    if (type === "LOVE") {
+      // si déjà love => retirer
+      if (userEntry.love) {
+        userEntry.love = false;
+        comment.lovesCount = Math.max(0, comment.lovesCount - 1);
+
+        comment.reactedBy = newReactedBy;
+        await comment.save();
+        return res.status(200).json({ message: "Love supprimé" });
+      }
+
+      // sinon ajouter love
+      userEntry.love = true;
+      comment.lovesCount++;
+
+      comment.reactedBy = newReactedBy;
+      await comment.save();
+      return res.status(200).json({ message: "Love ajouté" });
+    }
+
+  } catch (error) {
+    console.error("reactComment:", error);
+    return res.status(500).json({ message: "Erreur réaction", error: error.message });
+  }
+};
+
+
 
 // =========================
 // CREATE COMMENT
@@ -299,7 +394,26 @@ export const getCommentsByPost = async (req, res) => {
       });
     });
 
-    return res.status(200).json(comments);
+    const iduser = req.user.iduser;
+
+const final = comments.map((c) => {
+  const json = c.toJSON();
+
+const existing = (json.reactedBy || []).find((r) => r.iduser === iduser);
+
+return {
+  ...json,
+  isLiked: existing?.like === true,
+  isLoved: existing?.love === true,
+  likesCount: json.likesCount,
+  lovesCount: json.lovesCount,
+};
+
+
+});
+
+return res.status(200).json(final);
+
   } catch (error) {
     console.error("❌ getCommentsByPost ERROR:", error);
     return res.status(500).json({ 
