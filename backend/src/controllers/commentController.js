@@ -109,8 +109,34 @@ export const reactComment = async (req, res) => {
 // =========================
 export const createComment = async (req, res) => {
   try {
-    const { idpost, contenu, isAnonymat, idparent } = req.body; // Ajout de idparent
-    const iduser = req.user.iduser;
+    // ===============================
+// Normalisation frontend (NE RIEN CASSER)
+// ===============================
+const iduser = req.user.iduser;
+
+// Compatibilité frontend / backend
+const idpost =
+  req.body.idpost ??
+  req.body.postId ??
+  null;
+
+const contenu =
+  req.body.contenu ??
+  req.body.content ??
+  '';
+
+const idparent =
+  req.body.idparent ??
+  req.body.parentId ??
+  null;
+
+const isAnonymat =
+  req.body.isAnonymat === true ||
+  req.body.isAnonymat === 'true' ||
+  req.body.isAnonymous === true ||
+  req.body.isAnonymous === 'true';
+
+
 
     console.log('📦 req.files:', req.files ? `OUI - ${req.files.length} fichier(s)` : 'NON');
     console.log('📝 req.body:', req.body);
@@ -132,7 +158,7 @@ export const createComment = async (req, res) => {
     const newComment = await Comment.create({
       contenu: contenu?.trim() || '',
       typeContenu,
-      isAnonymat: isAnonymat === 'true' || isAnonymat === true,
+     isAnonymat,
       iduser,
       idpost: parseInt(idpost),
       idparent: idparent || null, // Ajout de idparent
@@ -268,8 +294,25 @@ export const createComment = async (req, res) => {
 // =========================
 export const replyComment = async (req, res) => {
   try {
-    const { contenu, isAnonymat } = req.body;
     const iduser = req.user.iduser;
+
+const contenu =
+  req.body.contenu ??
+  req.body.content ??
+  '';
+
+const isAnonymat =
+  req.body.isAnonymat === true ||
+  req.body.isAnonymat === 'true' ||
+  req.body.isAnonymous === true ||
+  req.body.isAnonymous === 'true';
+    // ⛔ Empêcher une réponse vide
+    if (!contenu?.trim()) {
+      return res.status(400).json({
+        message: "La réponse ne peut pas être vide"
+      });
+    }
+
     const idcomment = req.params.idcomment; // L'ID du commentaire parent
 
     // Vérifier si le commentaire parent existe
@@ -282,7 +325,7 @@ export const replyComment = async (req, res) => {
     const newComment = await Comment.create({
       contenu: contenu?.trim() || '',
       typeContenu: "TEXTE",
-      isAnonymat: isAnonymat === 'true' || isAnonymat === true,
+      isAnonymat,
       iduser,
       idpost: parentComment.idpost, // On associe la réponse au même post
       idparent: idcomment, // Le commentaire parent est associé ici
@@ -403,11 +446,20 @@ const existing = (json.reactedBy || []).find((r) => r.iduser === iduser);
 
 return {
   ...json,
+
+  // 👇 compatibilité FRONTEND
+  likes: json.likesCount ?? 0,
+  loves: json.lovesCount ?? 0,
+
+  // 👇 flags utilisateur connecté
   isLiked: existing?.like === true,
   isLoved: existing?.love === true,
+
+  // 👇 on garde aussi l’ancien format (sécurité)
   likesCount: json.likesCount,
   lovesCount: json.lovesCount,
 };
+
 
 
 });
@@ -468,20 +520,26 @@ export const updateComment = async (req, res) => {
     }
 
     // Valeurs finales
-    const newContenu =
-      req.body.contenu !== undefined
-        ? String(req.body.contenu).trim()
-        : comment.contenu;
+  const newContenu =
+  req.body.contenu !== undefined
+    ? String(req.body.contenu).trim()
+    : req.body.content !== undefined
+      ? String(req.body.content).trim()
+      : comment.contenu;
+
 
     const newLien =
       req.body.lien !== undefined
         ? String(req.body.lien).trim()
         : comment.lien;
 
-    const newIsAnonymat =
-      req.body.isAnonymat !== undefined
-        ? req.body.isAnonymat === true || req.body.isAnonymat === "true"
-        : comment.isAnonymat;
+   const newIsAnonymat =
+  req.body.isAnonymat !== undefined
+    ? req.body.isAnonymat === true || req.body.isAnonymat === "true"
+    : req.body.isAnonymous !== undefined
+      ? req.body.isAnonymous === true || req.body.isAnonymous === "true"
+      : comment.isAnonymat;
+
 
     // Vérifier fichiers existants
     const docsCount = await Document.count({
