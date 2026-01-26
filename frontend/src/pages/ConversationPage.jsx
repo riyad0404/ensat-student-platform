@@ -328,52 +328,18 @@ const ConversationPage = () => {
     }
   };
 
-  if (loading) return <div className="conv-loading">Loading...</div>;
-  if (error) {
-    return (
-      <div className="join-group-container">
-        <div className="join-group-card">
-          <div className="join-group-icon">
-            <Users size={24} color="white" />
-          </div>
-          <h2 className="join-group-title">Join this group?</h2>
-          <p className="join-group-subtitle">You must be a member to see messages in this group.</p>
-        
-        {joinError && (
-            <div className="join-group-error">
-            <strong>Error:</strong> {joinError}
-          </div>
-        )}
+  // Fallback conversation object if loading or error (to render header)
+  const displayConversation = conversation || { 
+    title: "Group Chat", type: 'GROUP', members: [], otherUser: {} 
+  };
+  
+  // Don't return early on error, instead render the error inside the layout
+  // if (!conversation) return <div className="conv-empty"></div>;
 
-        <button 
-          type="button"
-          onClick={handleJoinGroup}
-          disabled={joinLoading}
-          className="btn-primary join-btn"
-        >
-          {joinLoading ? 'Attempting...' : 'Join group'}
-        </button>
-        <button 
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            navigate(-1);
-          }}
-          className="btn-secondary back-btn"
-        >
-          Cancel
-        </button>
-        </div>
-      </div>
-    );
-  }
-  if (!conversation) return <div className="conv-empty">Conversation not found</div>;
-
-  const isGroup = conversation.type === 'GROUP';
-  const currentMember = conversation.members?.find(m => String(m.iduser) === String(currentUserId));
+  const isGroup = displayConversation.type === 'GROUP';
+  const currentMember = displayConversation.members?.find(m => String(m.iduser) === String(currentUserId));
   const isOwner = currentMember?.role === 'OWNER';
-  const getConvName = () => conversation.name || conversation.nom || conversation.title || conversation.sujet || "Conversation";
+  const getConvName = () => displayConversation.name || displayConversation.nom || displayConversation.title || displayConversation.sujet || "Conversation";
 
   const isImageMessage = (content) => {
     return content && (content.match(/\.(jpeg|jpg|gif|png|webp)$/i) || content.startsWith('data:image'));
@@ -381,7 +347,7 @@ const ConversationPage = () => {
 
   // Helper pour récupérer l'image d'un membre (expéditeur message)
   const getSenderImage = (senderId) => {
-    const member = conversation.members?.find(m => String(m.iduser) === String(senderId));
+    const member = displayConversation.members?.find(m => String(m.iduser) === String(senderId));
     let img = localStorage.getItem(`profile_image_${senderId}`);
     if (!img && member?.photo && (member.photo.startsWith('data:') || member.photo.startsWith('http') || member.photo.startsWith('/'))) {
         img = member.photo;
@@ -391,7 +357,7 @@ const ConversationPage = () => {
   };
 
   // Récupérer l'image de l'autre utilisateur (Direct Chat)
-  const otherUser = conversation.otherUser;
+  const otherUser = displayConversation.otherUser;
   let otherUserImage = null;
   if (otherUser?.iduser) {
       otherUserImage = localStorage.getItem(`profile_image_${otherUser.iduser}`);
@@ -401,7 +367,7 @@ const ConversationPage = () => {
   }
 
   // Image à afficher dans le header (Groupe ou Direct)
-  const headerImage = isGroup ? (conversation.icon || conversation.photo) : otherUserImage;
+  const headerImage = isGroup ? (displayConversation.icon || displayConversation.photo) : otherUserImage;
 
   const renderMessageContent = (content) => {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -454,7 +420,7 @@ const ConversationPage = () => {
   };
 
   return (
-    <div className="conversation-page-container chatbot-style">
+    <div className="conversation-page-container chatbot-style" style={{ background: '#ffffff' }}>
       <div className="conversation-background-pattern" />
       
       {showCopyNotification && (
@@ -469,8 +435,8 @@ const ConversationPage = () => {
           <div className="conversation-header-content">
             <div 
               className="conversation-logo" 
-              onClick={() => !isGroup && conversation.otherUser?.iduser && navigate(`/profile/${conversation.otherUser.iduser}`)}
-              style={{ cursor: !isGroup && conversation.otherUser?.iduser ? 'pointer' : 'default' }}
+              onClick={() => !isGroup && displayConversation.otherUser?.iduser && navigate(`/profile/${displayConversation.otherUser.iduser}`)}
+              style={{ cursor: !isGroup && displayConversation.otherUser?.iduser ? 'pointer' : 'default' }}
             >
               <button onClick={() => navigate(-1)} className="conversation-header-back-btn">
                 <ArrowLeft size={20} color="#6b7280" /> {/* Gris */}
@@ -492,13 +458,13 @@ const ConversationPage = () => {
                     {typingUsers.length > 0
                       ? <span className="typing">{typingUsers.map(u => u.name).join(', ')} is typing...</span>
                       : isGroup
-                        ? `${conversation.members?.filter(m => !m.leftAt).length || 0} members`
+                        ? `${displayConversation.members?.filter(m => !m.leftAt).length || 0} members`
                         : isOnline
                           ? <span className="online">Online</span>
                           : (
                             <>
                               {lastSeen && `Last seen at ${lastSeen.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • `}
-                              {conversation.otherUser?.niveau || "Student"}
+                              {displayConversation.otherUser?.niveau || "Student"}
                             </>
                           )}
                   </p>
@@ -516,6 +482,45 @@ const ConversationPage = () => {
 
         <div className="messages-container" ref={messagesContainerRef}>
           <div>
+            {/* Affichage de l'erreur / Join Group comme un message système */}
+            {error && (
+              <div className="join-group-inline-container" style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
+                <div className="join-group-card" style={{ maxWidth: '400px', width: '100%', padding: '24px', borderRadius: '16px', background: 'white', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', textAlign: 'center', border: '1px solid #e5e7eb' }}>
+                  <div className="join-group-icon" style={{ margin: '0 auto 16px auto' }}>
+                    <Users size={24} color="white" />
+                  </div>
+                  <h2 className="join-group-title" style={{ fontSize: '18px', marginBottom: '8px' }}>Join this group?</h2>
+                  <p className="join-group-subtitle" style={{ fontSize: '14px', marginBottom: '20px' }}>You must be a member to see messages in this group.</p>
+                
+                  {joinError && (
+                      <div className="join-group-error" style={{ fontSize: '13px', marginBottom: '16px' }}>
+                      <strong>Error:</strong> {joinError}
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                    <button 
+                      type="button"
+                      onClick={handleJoinGroup}
+                      disabled={joinLoading}
+                      className="btn-create"
+                      style={{ width: 'auto', padding: '10px 20px', fontSize: '14px', height: 'auto' }}
+                    >
+                      {joinLoading ? 'Joining...' : 'Join group'}
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => navigate(-1)}
+                      className="btn-create secondary"
+                      style={{ width: 'auto', padding: '10px 20px', fontSize: '14px', height: 'auto', marginTop: '8px' }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {messages.map((msg, index) => {
               const isOwn = String(msg.senderId) === String(currentUserId);
               const currentDate = new Date(msg.sentAt || msg.createdAt).toDateString();
@@ -525,16 +530,14 @@ const ConversationPage = () => {
               // Logique améliorée pour le statut de lecture
               let isRead = false;
               if (msg.readBy && msg.readBy.length > 0) isRead = true;
-              else if (conversation?.members) {
+              else if (displayConversation?.members) {
                  // Filtrer les autres membres actifs (qui n'ont pas quitté) et qui ne sont pas moi
-                 const otherMembers = conversation.members.filter(m => String(m.iduser) !== String(currentUserId));
+                 const otherMembers = displayConversation.members.filter(m => String(m.iduser) !== String(currentUserId));
                  
                  if (otherMembers.length > 0) {
                     const msgTime = new Date(msg.sentAt || msg.createdAt).getTime();
-                    // Le message est lu si TOUS les autres membres ont un lastReadAt postérieur à la date du message
-                    // On ignore ceux qui ont quitté le groupe (leftAt) pour la logique de lecture si nécessaire, 
-                    // mais ici on veut savoir si les membres actuels l'ont lu.
-                    isRead = otherMembers.every(m => m.lastReadAt && new Date(m.lastReadAt).getTime() >= msgTime);
+                    // Le message est considéré comme "lu" si AU MOINS UN autre membre l'a lu (lastReadAt >= msgTime)
+                    isRead = otherMembers.some(m => m.lastReadAt && new Date(m.lastReadAt).getTime() >= msgTime);
                  }
               }
 
@@ -573,9 +576,9 @@ const ConversationPage = () => {
                         </span>
                         {isOwn && (
                            isRead ? (
-                             <CheckCheck size={14} color="rgba(255, 255, 255, 0.8)" style={{ marginLeft: '4px' }} />
+                             <CheckCheck size={16} color="#E7A33E" style={{ marginLeft: '4px' }} />
                            ) : (
-                             <Check size={14} color="rgba(255, 255, 255, 0.8)" style={{ marginLeft: '4px' }} />
+                             <CheckCheck size={16} color="rgba(255, 255, 255, 0.5)" style={{ marginLeft: '4px' }} />
                            )
                         )}
                         {!isImageMessage(msg.content) && (
@@ -607,6 +610,7 @@ const ConversationPage = () => {
           </div>
         </div>
 
+        {!error && (
         <div className="input-area">
           <div className="input-content">
             <div className="input-wrapper">
@@ -630,13 +634,14 @@ const ConversationPage = () => {
             </div>
           </div>
         </div>
+        )}
       </div>
 
       <div className={`sidebar-wrapper ${showGroupInfo ? 'show' : ''}`}>
         <ConversationSidebar
           show={showGroupInfo}
           onClose={() => setShowGroupInfo(false)}
-          conversation={conversation}
+          conversation={displayConversation}
           isGroup={isGroup}
           isOwner={isOwner}
           currentUserId={currentUserId}

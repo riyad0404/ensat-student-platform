@@ -132,8 +132,8 @@ const HomePage = () => {
 
   return (
     <div className="homepage-container">
-      <div className="homepage-header">
-        <div className="search-container" style={{ position: 'relative' }}>
+      <div className="page-header">
+        <div className="search-container" style={{ position: 'relative', flex: 1 }}>
           <Search size={20} color="#9ca3af" style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', zIndex: 1 }} />
           <input 
             type="text" 
@@ -221,7 +221,7 @@ const HomePage = () => {
         
         <div className="header-actions">
           <button className="icon-btn">
-            <Bell size={24} color="#9d14b8" />
+            <Bell size={24} color="#E7A33E" />
           </button>
           <button className="create-post-btn" onClick={() => setIsModalOpen(true)}>
             + Create Post
@@ -229,22 +229,25 @@ const HomePage = () => {
         </div>
       </div>
       
-      <div className="posts-feed">
-        {loading ? (
-          <div className="loading-feed">Loading posts...</div>
-        ) : (
-          posts.map(post => (
-            <PostCard 
-              key={post.idpost} 
-              post={post} 
-              onPostDeleted={fetchPosts}
-              onPostUpdated={fetchPosts}
-            />
-          ))
-        )}
-        {!loading && posts.length === 0 && (
-          <div className="empty-feed">No posts yet. Be the first to publish!</div>
-        )}
+      <div className="page-content">
+        <div className="posts-feed" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {loading ? (
+            <div className="loading-feed">Loading posts...</div>
+          ) : (
+            posts.map(post => (
+              <PostCard 
+                key={post.idpost} 
+                post={post} 
+                onPostDeleted={fetchPosts}
+                onPostUpdated={fetchPosts}
+                showOptions={true}
+              />
+            ))
+          )}
+          {!loading && posts.length === 0 && (
+            <div className="empty-feed">No posts yet. Be the first to publish!</div>
+          )}
+        </div>
       </div>
 
       <CreatePostModal 
