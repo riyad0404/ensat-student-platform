@@ -8,6 +8,7 @@ import {
   createComment,
   getCommentsByPost,
   getMyComments,
+  reactComment,
   replyComment,
   getCommentById,
   updateComment,
@@ -29,5 +30,6 @@ router.patch("/:idcomment", authMiddleware, updateComment);
 router.delete("/:idcomment", authMiddleware, deleteComment);
 // Exemple de route pour répondre à un commentaire
 router.post("/comment/reply/:idcomment", authMiddleware, replyComment);
+router.post('/:idcomment/react', authMiddleware, reactComment);
 
 export default router;
