@@ -1,4 +1,10 @@
-import { Conversation, ConversationMember, User, Message } from '../models/associations.js';
+import { Conversation, ConversationMember, Message, User } from '../models/associations.js';
+import { Op } from 'sequelize';
+import { io } from "../server.js";
+import sequelize from '../database.js';
+import { Notification } from '../models/notification.js';
+import { createNotification, NOTIF_TYPES } from "../services/notificationservice.js";
+ 
 /**
  * GET /api/conversations/groups/available
  * List all GROUP conversations the user is NOT a member of
@@ -37,12 +43,6 @@ export const getAvailableGroups = async (req, res) => {
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
-/**
- * 9) DELETE /api/conversations/:id
- * OWNER can delete the conversation (hard delete)
- */
-import { createNotification, NOTIF_TYPES } from "../services/notificationservice.js"; // Assure-toi que ce chemin est correct
-
 export const deleteConversation = async (req, res) => {
   try {
     const myUserId = req.user.iduser;
@@ -95,9 +95,6 @@ export const transferOwnership = async (req, res) => {
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
-import { Op } from 'sequelize';
-import sequelize from '../database.js';
-import { io } from '../server.js';
 
 /**
  * Small helper: checks if a user is an active member of a conversation
@@ -388,65 +385,55 @@ export const sendMessage = async (req, res) => {
     const idconversation = Number(req.params.id);
     const { content } = req.body;
 
-    if (!content || typeof content !== 'string' || content.trim().length === 0) {
+    if (!content || !content.trim()) {
       return res.status(400).json({ message: 'Message content is required' });
     }
 
     const member = await requireMembership(idconversation, myUserId);
-    if (!member) return res.status(403).json({ message: 'Not a member of this conversation' });
+    if (!member) {
+      return res.status(403).json({ message: 'Not a member of this conversation' });
+    }
 
-    // Vérifier si la conversation existe avant de continuer
     const conv = await Conversation.findByPk(idconversation);
     if (!conv) {
       return res.status(404).json({ message: 'Conversation not found' });
     }
-
-    // Créer le message
+   
     const msg = await Message.create({
       idconversation,
       senderId: myUserId,
       content: content.trim(),
       sentAt: new Date(),
     });
+ io.to(String(idconversation)).emit("receive_message", msg);
+io.emit("notification", {
+  type: "NEW_MESSAGE",
+  conversationId: idconversation,
+});
 
-    // Mettre à jour la conversation
-    await Conversation.update(
-      { updatedAt: new Date() },
-      { where: { idconversation } }
-    );
+    const sender = await User.findByPk(myUserId, {
+      attributes: ['prenom', 'nom'],
+    });
 
-    // Récupérer tous les membres de la conversation sauf l'expéditeur
     const members = await ConversationMember.findAll({
-      where: { idconversation, leftAt: null }, // Membres actifs
+      where: { idconversation, leftAt: null },
       attributes: ['iduser'],
     });
 
-    // Créer des notifications pour chaque membre sauf l'expéditeur
-    for (const member of members) {
-  if (member.iduser !== myUserId) {
-    // Récupérer l'expéditeur pour chaque message
-    const sender = await User.findByPk(myUserId, {
-      attributes: ['prenom', 'nom'],  // Assure-toi d'inclure les informations nécessaires
-    });
-
-    if (!sender) {
-      return res.status(404).json({ message: "Sender not found" });
+    for (const m of members) {
+      if (m.iduser !== myUserId) {
+        await createNotification({
+          toUserId: m.iduser,
+          fromUserId: myUserId,
+          type: NOTIF_TYPES.MESSAGE,
+          message: `New message from ${sender.prenom} ${sender.nom}`,
+          metadata: {
+            conversationId: idconversation,
+            senderName: `${sender.prenom} ${sender.nom}`,
+          },
+        });
+      }
     }
-
-    // Créer la notification pour ce membre
-    await createNotification({
-      toUserId: member.iduser,
-      fromUserId: myUserId,
-      type: NOTIF_TYPES.MESSAGE,
-      message: `Nouveau message dans ${conv.type === 'GROUP' ? (conv.name || 'le groupe') : 'la conversation'}`,
-      metadata: {
-        conversationId: idconversation,
-        messageId: msg.idmessage,
-        senderName: `${sender.prenom} ${sender.nom}`,  // Ajout du nom de l'expéditeur
-      },
-    });
-  }
-}
 
     return res.status(201).json(msg);
   } catch (error) {
@@ -489,89 +476,93 @@ export const leaveConversation = async (req, res) => {
  * Owner adds a user to a GROUP conversation
  * Body: { userId }
  */
+/**
+ * 7) POST /api/conversations/:id/members
+ * Owner accepts JOIN REQUEST and adds user
+ * Body: { userId }
+ */
+
 export const addMember = async (req, res) => {
   try {
     const myUserId = req.user.iduser;
     const idconversation = Number(req.params.id);
     const { userId } = req.body;
 
-    if (!userId) return res.status(400).json({ message: 'userId is required' });
-
-    // Must be owner
     const owner = await requireOwner(idconversation, myUserId);
-    if (!owner) return res.status(403).json({ message: 'Only owner can add members' });
-
-    const conv = await Conversation.findByPk(idconversation);
-    if (!conv) return res.status(404).json({ message: 'Conversation not found' });
-
-    if (conv.type !== 'GROUP') {
-      return res.status(400).json({ message: 'Cannot add members to a DIRECT conversation' });
+    if (!owner) {
+      return res.status(403).json({ message: 'Only owner can add members' });
     }
 
-    // 1) Check if there is an active membership
-    const active = await ConversationMember.findOne({
-      where: { idconversation, iduser: Number(userId), leftAt: null },
-    });
+    const conv = await Conversation.findByPk(idconversation);
+    if (!conv) {
+      return res.status(404).json({ message: 'Conversation not found' });
+    }
 
+    if (conv.type !== 'GROUP') {
+      return res.status(400).json({ message: 'Cannot add members to non-group conversation' });
+    }
+
+    const active = await ConversationMember.findOne({
+      where: { idconversation, iduser: userId, leftAt: null },
+    });
     if (active) {
       return res.status(200).json({ message: 'User already a member' });
     }
 
-    // 2) Check if there is an old membership (leftAt not null)
+    const pendingRequest = await Notification.findOne({
+      where: {
+        type: NOTIF_TYPES.JOIN_REQUEST,
+        idSourceUser: userId,
+        idDestinataire: myUserId,
+        'metadata.groupId': idconversation,
+        isRead: false,
+      },
+    });
+
     const old = await ConversationMember.findOne({
-      where: { idconversation, iduser: Number(userId) }, // no leftAt condition
+      where: { idconversation, iduser: userId },
     });
 
     if (old) {
       old.leftAt = null;
       old.joinedAt = new Date();
       await old.save();
-
-      return res.status(200).json({ message: 'User re-added successfully' });
-    }
-
-    // 3) Otherwise create brand new membership
-    await ConversationMember.create({
-      idconversation,
-      iduser: Number(userId),
-      role: 'MEMBER',
-      joinedAt: new Date(),
-    });
-
-    // **Ajout de la notification de demande de rejoindre (JOIN_REQUEST)**
-    // Création de la notification pour la demande d'adhésion
-    const user = await User.findByPk(userId, {
-      attributes: ['nom', 'prenom'],
-    });
-
-    if (user) {
-      const requestingUserName = `${user.prenom} ${user.nom}`;
-
-      // On envoie la notification de type JOIN_REQUEST
-      await createNotification({
-        toUserId: myUserId, // L'admin du groupe qui recevra la demande
-        fromUserId: userId, // L'utilisateur qui demande à rejoindre
-        type: NOTIF_TYPES.JOIN_REQUEST, // Type de notification
-        message: `${requestingUserName} wants to join ${conv.name || 'the group'}`, // Message dynamique
-        metadata: {
-          groupId: conv.idconversation,
-          groupName: conv.name || 'Group',
-          requestingUserName, // Nom de l'utilisateur demandant à rejoindre
-        },
+    } else {
+      await ConversationMember.create({
+        idconversation,
+        iduser: userId,
+        role: 'MEMBER',
+        joinedAt: new Date(),
       });
     }
 
-    // **Ajout de la notification de groupe (GROUP_ADD)**
-    await createNotification({
-      toUserId: userId, // L'utilisateur ajouté
-      fromUserId: myUserId, // L'utilisateur qui ajoute
-      type: NOTIF_TYPES.GROUP_ADD, // Type de notification
-      message: `Vous avez été ajouté au groupe ${conv.name || 'Groupe'}`, // Message dynamique
-      metadata: {
-        groupId: conv.idconversation,
-        groupName: conv.name || 'Groupe',
-      },
-    });
+    // 🔔 NOTIFICATIONS
+    if (pendingRequest) {
+      pendingRequest.isRead = true;
+      await pendingRequest.save();
+
+      await createNotification({
+        toUserId: userId,
+        fromUserId: myUserId,
+        type: NOTIF_TYPES.JOIN_ACCEPTED,
+        message: `You have been accepted into ${conv.name}`,
+        metadata: {
+          groupId: idconversation,
+          groupName: conv.name,
+        },
+      });
+    } else {
+      await createNotification({
+        toUserId: userId,
+        fromUserId: myUserId,
+        type: NOTIF_TYPES.GROUP_ADD,
+        message: `You have been added to the group ${conv.name}`,
+        metadata: {
+          groupId: idconversation,
+          groupName: conv.name,
+        },
+      });
+    }
 
     return res.status(201).json({ message: 'Member added successfully' });
   } catch (error) {
@@ -579,6 +570,7 @@ export const addMember = async (req, res) => {
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
 
 
 /**
@@ -823,6 +815,10 @@ export const unhideConversation = async (req, res) => {
  * Allow any authenticated user to join a group conversation
  * (could be extended with invitation tokens if needed)
  */
+/**
+ * 15) POST /api/conversations/:id/join
+ * Send JOIN REQUEST to group owner
+ */
 export const joinConversation = async (req, res) => {
   try {
     const myUserId = req.user.iduser;
@@ -830,55 +826,56 @@ export const joinConversation = async (req, res) => {
 
     const conv = await Conversation.findByPk(idconversation);
     if (!conv) return res.status(404).json({ message: 'Conversation not found' });
-
-    // Only allow joining GROUP conversations
     if (conv.type !== 'GROUP') {
       return res.status(400).json({ message: 'Can only join GROUP conversations' });
     }
 
-    // Check if already an active member
-    const activeMember = await ConversationMember.findOne({
+    const active = await ConversationMember.findOne({
       where: { idconversation, iduser: myUserId, leftAt: null },
     });
-
-    if (activeMember) {
-      return res.status(200).json({ message: 'Already a member of this conversation' });
+    if (active) {
+      return res.status(200).json({ message: 'Already a member' });
     }
 
-    // Check if there's an old membership (user left before)
-    const oldMember = await ConversationMember.findOne({
-      where: { idconversation, iduser: myUserId },
+    const owner = await ConversationMember.findOne({
+      where: { idconversation, role: 'OWNER', leftAt: null },
     });
-
-    if (oldMember) {
-      // Re-join: restore membership
-      oldMember.leftAt = null;
-      oldMember.joinedAt = new Date();
-      await oldMember.save();
-      return res.status(200).json({ message: 'Rejoined conversation successfully' });
+    if (!owner) {
+      return res.status(500).json({ message: 'Group owner not found' });
     }
 
-    // Create new membership
-    await ConversationMember.create({
-      idconversation,
-      iduser: myUserId,
-      role: 'MEMBER',
-      joinedAt: new Date(),
+    const requester = await User.findByPk(myUserId, {
+      attributes: ['prenom', 'nom'],
     });
 
-    // **Ajout de la notification**
-    await createNotification({
-      toUserId: myUserId, // L'utilisateur qui rejoint
-      fromUserId: null, // Aucun utilisateur spécifique ici
-      type: NOTIF_TYPES.JOIN_ACCEPTED, // Type de notification
-      message: `Vous avez été accepté dans le groupe ${conv.name || 'Groupe'}`, // Message dynamique
-      metadata: {
-        groupId: conv.idconversation,
-        groupName: conv.name || 'Groupe',
+    const existingRequest = await Notification.findOne({
+      where: {
+        type: NOTIF_TYPES.JOIN_REQUEST,
+        idSourceUser: myUserId,
+        idDestinataire: owner.iduser,
+        'metadata.groupId': idconversation,
+        isRead: false,
       },
     });
 
-    return res.status(201).json({ message: 'Joined conversation successfully' });
+    if (existingRequest) {
+      return res.status(200).json({ message: 'Join request already sent' });
+    }
+
+    // 🔔 JOIN_REQUEST (frontend-compatible)
+    await createNotification({
+      toUserId: owner.iduser,
+      fromUserId: myUserId,
+      type: NOTIF_TYPES.JOIN_REQUEST,
+      message: `${requester.prenom} ${requester.nom} wants to join ${conv.name}`,
+      metadata: {
+        groupId: idconversation,
+        groupName: conv.name,
+        requestingUserName: `${requester.prenom} ${requester.nom}`,
+      },
+    });
+
+    return res.status(200).json({ message: 'Join request sent successfully' });
   } catch (error) {
     console.error('joinConversation error:', error);
     return res.status(500).json({ message: 'Server error', error: error.message });
