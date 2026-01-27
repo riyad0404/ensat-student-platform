@@ -22,12 +22,36 @@ const EditProfile = () => {
 
 
     const [passwordError, setPasswordError] = useState('');
+    const [passwordStrengthError, setPasswordStrengthError] = useState(''); // Nouvelle erreur pour la force du mdp
     const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
     const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     
+    // Helper pour vérifier si un champ a été modifié par rapport aux données utilisateur
+    const isModified = (field) => {
+        if (!user) return false;
+        switch(field) {
+            case 'firstName': return formData.firstName !== (user.prenom || '');
+            case 'lastName': return formData.lastName !== (user.nom || '');
+            case 'level': return formData.level !== (user.niveau || '');
+            case 'about': return formData.about !== (user.bio || 'Short personal description');
+            case 'email': return formData.email !== (user.email || '');
+            default: return false;
+        }
+    };
+
+    // Fonction de validation locale pour garantir les messages en anglais
+    const checkPasswordStrength = (pwd) => {
+        if (!pwd) return '';
+        if (pwd.length < 8) return 'Password must be at least 8 characters long.';
+        if (!/[A-Z]/.test(pwd)) return 'Password must contain at least one uppercase letter.';
+        if (!/[a-z]/.test(pwd)) return 'Password must contain at least one lowercase letter.';
+        if (!/[0-9]/.test(pwd)) return 'Password must contain at least one number.';
+        return '';
+    };
+
     const handleChange = (e) => {
     const { name, value } = e.target;
     
@@ -47,7 +71,7 @@ const EditProfile = () => {
         // Vérifier seulement quand les deux ont une valeur
         if (newPass && confirmPass) {
             if (newPass !== confirmPass) {
-                setPasswordError('Les mots de passe ne correspondent pas');
+                setPasswordError('Passwords do not match');
             } else {
                 setPasswordError('');
             }
@@ -55,6 +79,12 @@ const EditProfile = () => {
             // Si un des champs est vide, pas d'erreur
             setPasswordError('');
         }
+    }
+
+    // Validation en temps réel de la force du mot de passe
+    if (name === 'newPassword') {
+        const strengthErr = checkPasswordStrength(value);
+        setPasswordStrengthError(strengthErr);
     }
     
     // Effacer le message quand l'utilisateur tape
@@ -89,25 +119,26 @@ const handleSubmit = async (e) => {
     if (wantsToChangePassword) {
         // Si un champ de mot de passe est rempli, tous doivent l'être
         if (!formData.currentPassword || !formData.newPassword || !formData.confirmPassword) {
-            setMessage('Pour changer le mot de passe, remplissez tous les champs de mot de passe');
+            setMessage('To change the password, please fill in all password fields');
             return;
         }
         
         // Vérifier que les nouveaux mots de passe correspondent
         if (formData.newPassword !== formData.confirmPassword) {
-            setPasswordError('Les mots de passe ne correspondent pas');
+            setPasswordError('Passwords do not match');
             return;
         }
         
         // Vérifier que le nouveau mot de passe est différent
         if (formData.currentPassword === formData.newPassword) {
-            setMessage('Le nouveau mot de passe doit être différent de l\'actuel');
+            setMessage('The new password must be different from the current one');
             return;
         }
         
-        // Vérifier la longueur minimale
-        if (formData.newPassword.length < 6) {
-            setMessage('Le mot de passe doit contenir au moins 6 caractères');
+        // Vérifier la force du mot de passe (Longueur, Majuscule, Chiffre...)
+        const passError = passwordStrengthError || checkPasswordStrength(formData.newPassword);
+        if (passError) {
+            setMessage(passError);
             return;
         }
     }
@@ -134,7 +165,7 @@ const handleSubmit = async (e) => {
 
         // Si pas de changements du tout
         if (!hasProfileChanges && !hasPasswordChanges) {
-            setMessage('Aucune modification détectée');
+            setMessage('No changes detected');
             setLoading(false);
             return;
         }
@@ -152,7 +183,7 @@ const handleSubmit = async (e) => {
         console.log('📥 Réponse du serveur:', result);
         
         if (result.success) {
-            setMessage('Profil mis à jour avec succès ! Redirection...');
+            setMessage('Profile updated successfully! Redirecting...');
             
             // Réinitialiser les champs de mot de passe après succès
             setFormData(prev => ({
@@ -168,11 +199,11 @@ const handleSubmit = async (e) => {
             }, 1500);
         } else {
             // Afficher les messages d'erreur spécifiques
-            const errorMsg = result.error || result.message || 'Erreur lors de la mise à jour';
+            const errorMsg = result.error || result.message || 'Error updating profile';
             setMessage(errorMsg);
             
             // Si erreur de mot de passe, réinitialiser le champ currentPassword
-            if (errorMsg.includes('mot de passe') || errorMsg.includes('password')) {
+            if (errorMsg.toLowerCase().includes('password')) {
                 setFormData(prev => ({
                     ...prev,
                     currentPassword: ''
@@ -181,7 +212,7 @@ const handleSubmit = async (e) => {
         }
     } catch (error) {
         console.error('Erreur lors de la mise à jour:', error);
-        setMessage('Erreur de connexion au serveur');
+        setMessage('Server connection error');
     } finally {
         setLoading(false);
     }
@@ -199,7 +230,10 @@ const handleSubmit = async (e) => {
                     
                     {/* Message de statut */}
                     {message && (
-                        <div className={`edit-message ${message.includes('succès') ? 'success' : message.includes('Aucune') ? 'info' : 'error'}`}>
+                        <div className={`edit-message ${
+                            (message.toLowerCase().includes('success') || message.includes('succès')) ? 'success' : 
+                            (message.includes('Aucune') || message.includes('No changes')) ? 'info' : 'error'
+                        }`}>
                             {message}
                         </div>
                     )}
@@ -220,7 +254,7 @@ const handleSubmit = async (e) => {
                                     name="firstName"
                                     value={formData.firstName}
                                     onChange={handleChange}
-                                    className="form-input"
+                                    className={`form-input ${isModified('firstName') ? 'modified' : ''}`}
                                     placeholder="Enter Your first name"
                                     disabled={loading}
                                 />
@@ -234,7 +268,7 @@ const handleSubmit = async (e) => {
                                     name="lastName"
                                     value={formData.lastName}
                                     onChange={handleChange}
-                                    className="form-input"
+                                    className={`form-input ${isModified('lastName') ? 'modified' : ''}`}
                                     placeholder="Enter Your last name"
                                     disabled={loading}
                                 />
@@ -250,7 +284,7 @@ const handleSubmit = async (e) => {
                                 name="level"
                                 value={formData.level}
                                 onChange={handleChange}
-                                className="form-input"
+                                className={`form-input ${isModified('level') ? 'modified' : ''}`}
                                 placeholder="Enter Your level"
                                 disabled={loading}
                             />
@@ -264,7 +298,7 @@ const handleSubmit = async (e) => {
                                 name="about"
                                 value={formData.about}
                                 onChange={handleChange}
-                                className="form-textarea"
+                                className={`form-textarea ${isModified('about') ? 'modified' : ''}`}
                                 rows="3"
                                 placeholder="Short personal description"
                                 disabled={loading}
@@ -280,7 +314,7 @@ const handleSubmit = async (e) => {
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
-                                className="form-input"
+                                className={`form-input ${isModified('email') ? 'modified' : ''}`}
                                 placeholder="Enter Your email"
                                 disabled={loading}
                             />
@@ -318,7 +352,7 @@ const handleSubmit = async (e) => {
                                             zIndex: 10,
                                             transition: 'color 0.2s'
                                         }}
-                                        onMouseEnter={(e) => e.currentTarget.style.color = '#4a90e2'}
+                                        onMouseEnter={(e) => e.currentTarget.style.color = '#E7A33E'}
                                         onMouseLeave={(e) => e.currentTarget.style.color = '#666'}
                                     >
                                         {showCurrentPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
@@ -355,7 +389,7 @@ const handleSubmit = async (e) => {
                                                 zIndex: 10,
                                                 transition: 'color 0.2s'
                                             }}
-                                            onMouseEnter={(e) => e.currentTarget.style.color = '#4a90e2'}
+                                            onMouseEnter={(e) => e.currentTarget.style.color = '#E7A33E'}
                                             onMouseLeave={(e) => e.currentTarget.style.color = '#666'}
                                         >
                                             {showNewPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
@@ -390,7 +424,7 @@ const handleSubmit = async (e) => {
                                                 zIndex: 10,
                                                 transition: 'color 0.2s'
                                             }}
-                                            onMouseEnter={(e) => e.currentTarget.style.color = '#4a90e2'}
+                                            onMouseEnter={(e) => e.currentTarget.style.color = '#E7A33E'}
                                             onMouseLeave={(e) => e.currentTarget.style.color = '#666'}
                                         >
                                             {showConfirmPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
@@ -401,6 +435,9 @@ const handleSubmit = async (e) => {
                             
                             {passwordError && (
                                 <div className="error-message">{passwordError}</div>
+                            )}
+                            {passwordStrengthError && (
+                                <div className="error-message">{passwordStrengthError}</div>
                             )}
                             
                             <div className="password-note">

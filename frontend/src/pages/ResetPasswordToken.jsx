@@ -181,10 +181,10 @@ export default function ResetPasswordToken() {
       
       // Messages d'erreur personnalisés
       if (serverMessage.toLowerCase().includes("expired") || 
-          serverMessage.toLowerCase().includes("expiré")) {
+          serverMessage.toLowerCase().includes("expired")) {
         setError("This reset link has expired. Please request a new one.");
       } else if (serverMessage.toLowerCase().includes("invalid") || 
-                 serverMessage.toLowerCase().includes("invalide")) {
+                 serverMessage.toLowerCase().includes("invalid")) {
         setError("Invalid reset link. Please check the URL.");
       } else if (err.response?.status === 404) {
         setError("User not found. The account may have been deleted.");

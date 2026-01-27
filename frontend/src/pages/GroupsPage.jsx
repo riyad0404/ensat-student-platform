@@ -143,7 +143,12 @@ const GroupsPage = () => {
             fontSize: '24px', 
             fontWeight: '800', 
             margin: 0,
-            color: '#333333'
+            background: 'linear-gradient(135deg, #333333 0%, #E7A33E 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            color: 'transparent',
+            width: 'fit-content'
           }}>Work Groups</h1>
         </div>
 
@@ -199,14 +204,14 @@ const GroupsPage = () => {
         </button>
       </div>
 
-      <div className="page-content">
+      <div className="page-content" style={{ marginTop: '50px' }}>
         {/* List Layout */}
         <div style={{ 
           background: 'white',
           borderRadius: '16px',
           border: '1px solid #e5e7eb',
           overflow: 'hidden',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
         }}>
          
           {error && <div style={{ padding: '20px', textAlign: 'center', color: 'red' }}>{error}</div>}
@@ -235,6 +240,10 @@ const GroupsPage = () => {
             
             const lastMsgDate = lastMsg?.sentAt || lastMsg?.createdAt || group.updatedAt;
             let dateDisplay = '';
+
+            // Couleurs alternées pour les icônes de groupe
+            const isBlue = index % 2 === 0;
+
             if (lastMsgDate) {
                 const msgDate = new Date(lastMsgDate);
                 const now = new Date();
@@ -243,15 +252,15 @@ const GroupsPage = () => {
                 yesterday.setDate(now.getDate() - 1);
                 const isYesterday = msgDate.toDateString() === yesterday.toDateString();
 
-                if (isToday) dateDisplay = msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                else if (isYesterday) dateDisplay = 'Hier';
-                else dateDisplay = msgDate.toLocaleDateString('fr-FR');
+                if (isToday) dateDisplay = msgDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                else if (isYesterday) dateDisplay = 'Yesterday';
+                else dateDisplay = msgDate.toLocaleDateString('en-US');
             }
 
             return (
             <div 
               key={groupId || index} 
-              onClick={() => groupId ? navigate(`/conversations/${groupId}`, { state: { type: 'group' } }) : console.error("ID manquant pour le groupe", group)}
+              onClick={() => groupId ? navigate(`/conversations/${groupId}`, { state: { type: 'group', isBlue } }) : console.error("ID manquant pour le groupe", group)}
                style={{ 
                  display: 'flex',
                  alignItems: 'center',
@@ -268,8 +277,8 @@ const GroupsPage = () => {
                <div style={{ marginRight: '20px', position: 'relative', flexShrink: 0 }}>
                  <div style={{ 
                    width: '52px', height: '52px', borderRadius: '50%', 
-                   background: '#E6F0FF', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                   color: '#0040D0'
+                   background: isBlue ? '#E6F0FF' : '#FFF4E5', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                   color: isBlue ? '#0040D0' : '#E7A33E'
                  }}>
                    <Users size={26} />
                  </div>
@@ -350,7 +359,12 @@ const GroupsPage = () => {
                 margin: 0, 
                 fontSize: '22px', 
                 fontWeight: '700',
-                color: '#333333'
+                background: 'linear-gradient(135deg, #0040D0 0%, #E7A33E 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                color: 'transparent',
+                width: 'fit-content'
               }}>Create New Group</h3>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
                 <X size={24} color="#0040D0" />

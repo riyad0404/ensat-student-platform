@@ -100,7 +100,17 @@ const handleSubmit = async (e) => {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '700', color: '#333333', background: 'none', WebkitTextFillColor: 'initial' }}>{postToEdit ? 'Edit Post' : 'Create a post'}</h2>
+          <h2 style={{ 
+            margin: 0, 
+            fontSize: '22px', 
+            fontWeight: '700', 
+            background: 'linear-gradient(135deg, #0040D0 0%, #E7A33E 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            color: 'transparent',
+            width: 'fit-content'
+          }}>{postToEdit ? 'Edit Post' : 'Create a post'}</h2>
           <button className="close-btn" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '24px', color: '#666' }}>×</button>
         </div>
         

@@ -55,7 +55,12 @@ const Bookmarks = () => {
           fontSize: '28px', 
           fontWeight: '800', 
           marginBottom: '8px',
-          color: '#333333'
+          background: 'linear-gradient(135deg, #333333 0%, #E7A33E 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          color: 'transparent',
+          width: 'fit-content'
         }}>Saved Posts</h1>
         <div style={{ display: 'flex', justifyContent: 'center', padding: '100px 0' }}>
           <div style={{ fontSize: '18px', color: '#666' }}>Loading...</div>
@@ -67,41 +72,57 @@ const Bookmarks = () => {
   return (
     <div className="bookmarks-page-container" style={{ background: '#f4f6fa' }}>
       {/* Header */}
-      <div className="page-header">
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 30px', background: 'white', borderBottom: '1px solid rgba(0, 64, 208, 0.06)' }}>
         <h1 style={{ 
           fontSize: '24px', 
           fontWeight: '800', 
           margin: 0,
-          color: '#333333'
+          background: 'linear-gradient(135deg, #333333 0%, #E7A33E 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          color: 'transparent',
+          width: 'fit-content'
         }}>Saved Posts</h1>
+        
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+          {bookmarks.length > 0 && (
+            <button 
+              onClick={clearAllBookmarks}
+              style={{ 
+                background: '#ef4444', 
+                color: 'white', 
+                border: 'none', 
+                padding: '12px 24px', 
+                borderRadius: '25px', 
+                fontWeight: '600', 
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '14px',
+                boxShadow: '0 4px 12px rgba(239, 68, 68, 0.2)',
+                transition: 'transform 0.2s, box-shadow 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.3)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(239, 68, 68, 0.2)';
+              }}
+            >
+              <Trash2 size={20} /> Clear All
+            </button>
+          )}
+        </div>
+
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
           <p style={{ color: '#6b7280', margin: 0 }}>
             {bookmarks.length} {bookmarks.length === 1 ? 'post' : 'posts'} saved
           </p>
         </div>
-        {bookmarks.length > 0 && (
-          <button 
-            onClick={clearAllBookmarks}
-            style={{ 
-              background: '#0040D0', 
-              color: 'white', 
-              border: 'none', 
-              padding: '12px 24px', 
-              borderRadius: '12px', 
-              fontWeight: '600', 
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              boxShadow: '0 4px 12px rgba(0, 64, 208, 0.2)',
-              transition: 'transform 0.2s'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
-          >
-            <Trash2 size={20} /> Clear All
-          </button>
-        )}
       </div>
 
       <div className="page-content">
@@ -118,7 +139,7 @@ const Bookmarks = () => {
             borderRadius: '20px',
             border: '1px solid #e5e7eb'
           }}>
-            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" strokeWidth="1.5">
+            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="#E7A33E" strokeWidth="1.5">
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
             </svg>
             <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937', margin: '24px 0 12px 0' }}>
@@ -130,22 +151,18 @@ const Bookmarks = () => {
           </div>
         ) : (
           <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fill, minmax(500px, 1fr))',
+            display: 'flex', 
+            flexDirection: 'column',
             gap: '24px',
             paddingBottom: '40px'
           }}>
             {bookmarks.map((post) => (
-              <div key={post.idpost} style={{ 
-                width: '100%',
-                minHeight: '400px'
-              }}>
                 <PostCard 
+                  key={post.idpost}
                   post={post}
                   onPostDeleted={() => removeFromBookmarks(post.idpost)}
                   onPostUpdated={loadBookmarks}
                 />
-              </div>
             ))}
           </div>
         )}

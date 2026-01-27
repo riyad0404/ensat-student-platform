@@ -467,14 +467,14 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
 
     if (diffInSeconds < 60) return "Just now";
     const diffInMinutes = Math.floor(diffInSeconds / 60);
-    if (diffInMinutes < 60) return `${diffInMinutes}min`;
+    if (diffInMinutes < 60) return `${diffInMinutes}m`;
     const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 24) return `${diffInHours}h`;
     const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 30) return `${diffInDays}j`;
+    if (diffInDays < 30) return `${diffInDays}d`;
     const diffInMonths = Math.floor(diffInDays / 30);
-    if (diffInMonths < 12) return `${diffInMonths}mois`;
-    return `${Math.floor(diffInDays / 365)}an`;
+    if (diffInMonths < 12) return `${diffInMonths}mo`;
+    return `${Math.floor(diffInDays / 365)}y`;
   };
 
   // Format date compact pour les commentaires (comme demandé)
@@ -700,8 +700,6 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
       </div>
 
       <div className="post-content">
-        <p className="post-text">{post.contenu}</p>
-        
         {postDoc && (
           <>
             {(postDoc.type === 'IMAGE' || postDoc.url?.match(/\.(jpg|jpeg|png|gif|webp)$/i)) ? (
@@ -757,6 +755,8 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
             )}
           </>
         )}
+
+        <p className="post-text">{post.contenu}</p>
       </div>
 
       {/* SECTION STATS & ACTIONS (LinkedIn Style) */}
@@ -799,7 +799,11 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
             </button>
           </div>
 
-          <button className="action-btn" onClick={() => setShowComments(!showComments)}>
+          <button 
+            className="action-btn" 
+            onClick={() => setShowComments(!showComments)}
+            style={{ color: commentCount > 0 ? '#25D366' : undefined }}
+          >
             <MessageSquare size={20} />
             <span>Comment ({commentCount})</span>
           </button>

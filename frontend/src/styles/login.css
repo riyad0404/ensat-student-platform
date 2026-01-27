@@ -128,8 +128,13 @@ h2 {
 
 .input-group .input-box input:focus {
   outline: none;
-  border-color: #0040D0;
-  box-shadow: 0 0 0 2px rgba(0, 64, 208, 0.1);
+  border-color: #E7A33E;
+  box-shadow: 0 0 0 2px rgba(231, 163, 62, 0.1);
+}
+
+/* Label en orange au focus */
+.input-group:focus-within label {
+  color: #E7A33E !important;
 }
 
 .input-group .input-box .icon {
@@ -163,8 +168,8 @@ h2 {
 
 .login-right select:focus {
   outline: none;
-  border-color: #0040D0;
-  box-shadow: 0 0 0 2px rgba(0, 64, 208, 0.1);
+  border-color: #E7A33E;
+  box-shadow: 0 0 0 2px rgba(231, 163, 62, 0.1);
 }
 
 /* ===========================================

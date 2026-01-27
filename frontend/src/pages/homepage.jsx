@@ -13,6 +13,7 @@ const HomePage = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [postToEdit, setPostToEdit] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searchLoading, setSearchLoading] = useState(false);
@@ -130,6 +131,16 @@ const HomePage = () => {
     fetchPosts(); // Rafraîchir le flux après création
   };
 
+  const handleEditPost = (post) => {
+    setPostToEdit(post);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setPostToEdit(null);
+  };
+
   return (
     <div className="homepage-container">
       <div className="page-header">
@@ -241,6 +252,7 @@ const HomePage = () => {
                 onPostDeleted={fetchPosts}
                 onPostUpdated={fetchPosts}
                 showOptions={true}
+                onEdit={handleEditPost}
               />
             ))
           )}
@@ -252,8 +264,9 @@ const HomePage = () => {
 
       <CreatePostModal 
         isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleCloseModal}
         onPostCreated={handlePostCreated}
+        postToEdit={postToEdit}
       />
     </div>
   );

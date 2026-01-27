@@ -115,7 +115,12 @@ const LibraryDocuments = () => {
           fontSize: '28px', 
           fontWeight: '800', 
           marginBottom: '8px',
-          color: '#333333'
+          background: 'linear-gradient(135deg, #333333 0%, #E7A33E 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          color: 'transparent',
+          width: 'fit-content'
         }}>Documents {niveau?.toUpperCase()}</h1>
         
         <div style={{ display: 'flex', justifyContent: 'center', padding: '100px 0' }}>
@@ -131,7 +136,12 @@ const LibraryDocuments = () => {
           fontSize: '28px', 
           fontWeight: '800', 
           marginBottom: '8px',
-          color: '#333333'
+          background: 'linear-gradient(135deg, #333333 0%, #E7A33E 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          color: 'transparent',
+          width: 'fit-content'
         }}>Documents {niveau?.toUpperCase()}</h1>
         
         <div style={{ textAlign: 'center', padding: '60px 20px' }}>
@@ -164,7 +174,12 @@ const LibraryDocuments = () => {
           fontSize: '24px', 
           fontWeight: '800', 
           margin: 0,
-          color: '#333333'
+          background: 'linear-gradient(135deg, #333333 0%, #E7A33E 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          color: 'transparent',
+          width: 'fit-content'
         }}>Documents {niveau?.toUpperCase()}</h1>
         <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
         {/* Filters */}
@@ -185,7 +200,7 @@ const LibraryDocuments = () => {
               style={{
                 padding: '8px 16px',
                 background: filter === key ? '#0040D0' : '#e5e7eb',
-                color: filter === key ? 'white' : '#374151',
+                color: filter === key ? 'white' : '#4b5563',
                 border: 'none',
                 borderRadius: '8px',
                 fontSize: '14px',
@@ -215,7 +230,7 @@ const LibraryDocuments = () => {
               padding: '60px 20px',
               textAlign: 'center'
             }}>
-              <FileText size={56} color="#d1d5db" strokeWidth={1.5} style={{ marginBottom: '20px' }} />
+              <FileText size={56} color="#E7A33E" strokeWidth={1.5} style={{ marginBottom: '20px' }} />
               <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#1f2937', margin: '0 0 8px 0' }}>
                 No documents found
               </h2>
@@ -237,7 +252,7 @@ const LibraryDocuments = () => {
                     borderRadius: '16px',
                     padding: '20px',
                     border: '1px solid #f3f4f6',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
                     display: 'flex',
                     alignItems: 'flex-start',
                     gap: '16px',
@@ -246,12 +261,12 @@ const LibraryDocuments = () => {
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 0, 0, 0.08)';
-                    e.currentTarget.style.borderColor = '#e6f0ff';
+                    e.currentTarget.style.boxShadow = '0 12px 24px rgba(0, 0, 0, 0.12)';
+                    e.currentTarget.style.borderColor = '#E7A33E';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.04)';
+                    e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
                     e.currentTarget.style.borderColor = '#f3f4f6';
                   }}
                 >
@@ -260,11 +275,11 @@ const LibraryDocuments = () => {
                     width: '48px',
                     height: '48px',
                     borderRadius: '12px',
-                    background: '#f5f3ff',
+                    background: '#FFF4E5',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: '#0040D0',
+                    color: '#E7A33E',
                     flexShrink: 0
                   }}>
                     {getFileIcon(doc.filename)}
@@ -316,7 +331,7 @@ const LibraryDocuments = () => {
                       width: '40px',
                       height: '40px',
                       borderRadius: '10px',
-                      background: '#0040D0',
+                      background: '#E7A33E',
                       border: 'none',
                       color: 'white',
                       cursor: 'pointer',
@@ -327,11 +342,11 @@ const LibraryDocuments = () => {
                       flexShrink: 0
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = '#002884';
+                      e.currentTarget.style.background = '#d97706';
                       e.currentTarget.style.transform = 'scale(1.1)';
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = '#0040D0';
+                      e.currentTarget.style.background = '#E7A33E';
                       e.currentTarget.style.transform = 'scale(1)';
                     }}
                   >

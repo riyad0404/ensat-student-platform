@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Send, Trash2, ArrowLeft, Users, Pencil, CheckCircle, User, X, Check, Copy, CheckCheck } from 'lucide-react';
 import conversationAPI from '../api/conversationAPI';
 import '../styles/conversations.css';
@@ -38,6 +38,7 @@ const ConversationPage = () => {
   const { user } = useAuth();
   const currentUserId = user?.iduser || user?.id;
   const { socket } = useSocket();
+  const location = useLocation();
 
   useEffect(() => {
     // Réinitialiser les états lors du changement de conversation pour éviter les conflits (ex: bouton Cancel)
@@ -339,6 +340,12 @@ const ConversationPage = () => {
   const isGroup = displayConversation.type === 'GROUP';
   const currentMember = displayConversation.members?.find(m => String(m.iduser) === String(currentUserId));
   const isOwner = currentMember?.role === 'OWNER';
+  
+  // Récupérer la couleur passée par GroupsPage, ou calculer une couleur par défaut basée sur l'ID
+  const isBlue = location.state?.isBlue !== undefined 
+      ? location.state.isBlue 
+      : (parseInt(id || '0', 10) % 2 === 0);
+
   const getConvName = () => displayConversation.name || displayConversation.nom || displayConversation.title || displayConversation.sujet || "Conversation";
 
   const isImageMessage = (content) => {
@@ -421,6 +428,13 @@ const ConversationPage = () => {
 
   return (
     <div className="conversation-page-container chatbot-style" style={{ background: '#ffffff' }}>
+      <style>{`
+        .input-wrapper:focus-within {
+          border-color: #E7A33E;
+          box-shadow: 0 0 0 2px rgba(231, 163, 62, 0.1) !important;
+        }
+      `}</style>
+
       <div className="conversation-background-pattern" />
       
       {showCopyNotification && (
@@ -442,11 +456,17 @@ const ConversationPage = () => {
                 <ArrowLeft size={20} color="#6b7280" /> {/* Gris */}
               </button>
               
-              <div className="conversation-header-avatar">
+              <div 
+                className="conversation-header-avatar"
+                style={isGroup && !headerImage ? {
+                  backgroundColor: isBlue ? '#E6F0FF' : '#FFF4E5',
+                  border: 'none'
+                } : {}}
+              >
                 {headerImage ? (
                   <img src={headerImage} alt="Icon" />
                 ) : (
-                  isGroup ? <Users size={20} color="#6b7280" /> : <User size={20} color="#6b7280" />
+                  isGroup ? <Users size={20} color={isBlue ? '#0040D0' : '#E7A33E'} /> : <User size={20} color="#6b7280" />
                 )}
               </div>
 
@@ -572,7 +592,7 @@ const ConversationPage = () => {
                       )}
                       <div className="message-footer">
                         <span className={`message-time ${isOwn ? 'user' : 'other'}`}>
-                          {new Date(msg.sentAt || msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {new Date(msg.sentAt || msg.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                         </span>
                         {isOwn && (
                            isRead ? (

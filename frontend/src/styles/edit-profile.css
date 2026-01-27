@@ -9,7 +9,7 @@
 }
 
 .edit-profile-container {
-    max-width: 800px;
+    max-width: 1000px; /* Carte élargie */
     width: 100%;
     margin: 0 auto;
     padding: 0;
@@ -17,19 +17,24 @@
 
 .edit-profile-card {
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Shadow comme Library */
     padding: 40px;
-    border: 1px solid #e0e0e0;
+    border: 1px solid #e5e7eb;
 }
 
 /* AJOUTEZ ceci pour le titre DANS la carte */
 .edit-profile-title {
     font-size: 1.8rem;
-    color: #333333;
-    font-weight: 600;
+    font-weight: 800;
     margin-bottom: 30px;
     text-align: left;
+    background: linear-gradient(135deg, #0040D0 0%, #E7A33E 100%); /* Dégradé Bleu/Orange */
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+    width: fit-content;
 }
 
 .form-row {
@@ -56,13 +61,14 @@
 
 .form-input, .form-textarea {
     width: 100%;
-    padding: 12px 15px;
-    border: 1px solid #faf8f8;
-    border-radius: 4px;
+    padding: 12px 20px;
+    border: 2px solid rgba(0, 64, 208, 0.12); /* Bordure comme conversation */
+    border-radius: 25px; /* Arrondi comme conversation */
     font-size: 0.95rem;
-    color: #666;
-    background:#f8f9fa;
+    color: #333;
+    background: white;
     font-family: inherit;
+    transition: all 0.3s ease;
 }
 
 .form-input::placeholder,
@@ -73,10 +79,32 @@
 
 .form-input:focus, .form-textarea:focus {
     outline: none;
-    border-color: #faf8f8;
+    border-color: #E7A33E; /* Focus Orange */
+    box-shadow: 0 0 0 3px rgba(231, 163, 62, 0.15);
+}
+
+/* Style pour les champs modifiés (pour différencier) */
+.form-input.modified, .form-textarea.modified {
+    border-color: #E7A33E !important;
+    background-color: #fffbf2; /* Fond très légèrement orange */
+}
+
+/* Couleur du label au focus (Orange) */
+.form-group:focus-within label {
+    color: #E7A33E !important;
+}
+
+/* Force la bordure orange lors de l'autocomplétion (fix pour le bleu par défaut) */
+.form-input:-webkit-autofill,
+.form-input:-webkit-autofill:hover, 
+.form-input:-webkit-autofill:focus, 
+.form-input:-webkit-autofill:active {
+    border-color: #E7A33E !important;
+    -webkit-box-shadow: 0 0 0 30px white inset !important;
 }
 
 .form-textarea {
+    border-radius: 16px; /* Arrondi adapté pour textarea */
     resize: vertical;
     min-height: 80px;
     line-height: 1.5;
@@ -171,8 +199,8 @@
 
 .edit-message.info {
     background: rgba(52, 152, 219, 0.1);
-    border-left: 3px solid #3498db;
-    color: #3498db;
+    border-left: 3px solid #ffffff;
+    color: #ffffff;
 }
 
 /* Animation pour les messages - AJOUTEZ */
@@ -217,19 +245,22 @@ button:disabled {
 /* Section mot de passe - CORRIGÉ */
 .password-section {
     margin-top: 20px;
-    padding: 20px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    border: 1px solid #faf8f8; /* Ajoute une bordure pour mieux voir */
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
 }
 
 /* Titre de la section mot de passe */
 .password-section h3 {
     margin-top: 0;
     margin-bottom: 20px;
-    color: #333;
     font-size: 1.1rem;
     font-weight: 600;
+    background: linear-gradient(135deg, #333333 0%, #E7A33E 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+    width: fit-content;
 }
 
 /* Texte d'information dans la section mot de passe */
@@ -251,8 +282,14 @@ button:disabled {
 
 /* Ajustement spécifique pour les champs de mot de passe */
 .password-section .form-input {
-    background: white; /* Fond blanc pour mieux voir */
-    border-color: #ddd; /* Bordure plus visible */
+    background: white;
+    border-color: rgba(0, 64, 208, 0.12);
+}
+
+/* Force le focus en orange pour les champs mot de passe */
+.password-section .form-input:focus {
+    border-color: #E7A33E !important;
+    box-shadow: 0 0 0 3px rgba(231, 163, 62, 0.15) !important;
 }
 
 /* Note sous la section mot de passe */

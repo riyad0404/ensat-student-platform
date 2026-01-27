@@ -131,6 +131,12 @@ export const searchUsers = async (query) => {
   const response = await axiosInstance.get(`/users/search?q=${query}`);
   return response.data;
 };
+
+export const getAvailableGroups = async () => {
+  const response = await axiosInstance.get('/conversations/groups/available');
+  return response.data;
+};
+
 // Supprimer un commentaire
 export const deleteComment = async (id) => {
   const response = await axiosInstance.delete(`/comments/${id}`);

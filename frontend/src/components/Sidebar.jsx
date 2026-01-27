@@ -81,6 +81,7 @@ const Sidebar = () => {
                     onClick={logout} 
                     className="logout-btn"
                     title={isCollapsed ? "Logout" : ""}
+                    style={{ color: '#ef4444' }}
                 >
                     <span className="material-icons">logout</span>
                     {!isCollapsed && <span className="logout-label">Logout</span>}

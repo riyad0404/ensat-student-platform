@@ -177,10 +177,15 @@ export default function LoginPage() {
         }
 
         // other errors
-        setFormError(
-          result.error ||
-            "Incorrect login credentials. Please check your email and password."
-        );
+        if (result.status === 404) {
+          setFormError("User not found.");
+        } else if (result.status === 401) {
+          setFormError("Incorrect login credentials.");
+        } else {
+          setFormError(
+            result.error || "Incorrect login credentials. Please check your email and password."
+          );
+        }
 
         setFormData((prev) => ({ ...prev, password: "" }));
       }
