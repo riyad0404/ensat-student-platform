@@ -136,14 +136,13 @@ const Library = () => {
   };
 
   return (
-    <div style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto', minHeight: '100vh', background: '#ffffff' }}>
+    <div className="library-page-container" style={{ background: '#f4f6fa' }}>
       {/* Header - Même style que Groups et Bookmarks */}
-      <div style={{ marginBottom: '30px' }}>
+      <div className="page-header">
         <h1 style={{ 
-          fontSize: '28px', 
+          fontSize: '24px', 
           fontWeight: '800', 
-          marginBottom: '8px', 
-          marginTop: 0,
+          margin: 0,
           color: '#333333'
         }}>Library</h1>
         <p style={{ color: '#6b7280', margin: 0 }}>
@@ -151,20 +150,22 @@ const Library = () => {
         </p>
       </div>
 
-      {/* Grid des filières */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
-        gap: '20px',
-        paddingBottom: '40px'
-      }}>
-        {filieres.map((filiere) => (
-          <FiliereCard 
-            key={filiere.id} 
-            filiere={filiere} 
-            onNavigate={handleNiveauClick} 
-          />
-        ))}
+      <div className="page-content">
+        {/* Grid des filières */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
+          gap: '20px',
+          paddingBottom: '40px'
+        }}>
+          {filieres.map((filiere) => (
+            <FiliereCard 
+              key={filiere.id} 
+              filiere={filiere} 
+              onNavigate={handleNiveauClick} 
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

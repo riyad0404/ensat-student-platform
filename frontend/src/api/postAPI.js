@@ -68,7 +68,8 @@ export const createComment = async (idpost, commentPayload) => {
       commentPayload = {
         idpost: parseInt(idpost),
         contenu: commentPayload.contenu.trim(),
-        isAnonymat: commentPayload.isAnonymat === true
+        isAnonymat: commentPayload.isAnonymat === true,
+        idparent: commentPayload.idparent // ✅ Ajout du support pour idparent
       };
     }
 
@@ -128,5 +129,37 @@ export const updatePost = async (idpost, data) => {
 
 export const searchUsers = async (query) => {
   const response = await axiosInstance.get(`/users/search?q=${query}`);
+  return response.data;
+};
+// Supprimer un commentaire
+export const deleteComment = async (id) => {
+  const response = await axiosInstance.delete(`/comments/${id}`);
+  return response.data;
+};
+
+// Modifier un commentaire
+export const updateComment = async (id, data) => {
+  const response = await axiosInstance.patch(`/comments/${id}`, data);
+  return response.data;
+};
+
+export const toggleCommentReaction = async (id, type) => {
+  // Utilisation de la route de réaction générique ou spécifique selon configuration backend
+  const response = await axiosInstance.post(`/reactions/toggle-comment`, { 
+    idcomment: parseInt(id),
+    typeReaction: type 
+  });
+  return response.data;
+};
+
+export const replyToComment = async (id, data) => {
+  // Contournement : Utiliser la route de création standard qui gère idparent
+  // data doit contenir { contenu, idpost }
+  const response = await axiosInstance.post(`/comments`, {
+    idparent: id,
+    idpost: data.idpost,
+    contenu: data.contenu,
+    isAnonymat: false
+  });
   return response.data;
 };

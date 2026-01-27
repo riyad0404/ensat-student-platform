@@ -8,6 +8,8 @@ import {
   createComment,
   getCommentsByPost,
   getMyComments,
+  reactComment,
+  replyComment,
   getCommentById,
   updateComment,
   deleteComment,
@@ -26,5 +28,8 @@ router.get("/:idcomment", authMiddleware, getCommentById);
 router.patch("/:idcomment", authMiddleware, updateComment);
 // DELETE comment + documents + fichiers
 router.delete("/:idcomment", authMiddleware, deleteComment);
+// Exemple de route pour répondre à un commentaire
+router.post("/comment/reply/:idcomment", authMiddleware, replyComment);
+router.post('/:idcomment/react', authMiddleware, reactComment);
 
 export default router;
