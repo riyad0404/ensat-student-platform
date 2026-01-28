@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { conversationAPI } from '../../api/conversationAPI';
 import '../../styles/conversations.css';
+import { Link as LinkIcon, Check } from 'lucide-react';
 
 const GroupMembersManager = ({ conversationId, currentUserId, conversationData }) => {
   const [members, setMembers] = useState([]);
@@ -9,6 +10,7 @@ const GroupMembersManager = ({ conversationId, currentUserId, conversationData }
   const [newMemberId, setNewMemberId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [copySuccess, setCopySuccess] = useState(false);
 
   useEffect(() => {
     if (conversationData?.members) {
@@ -51,23 +53,39 @@ const GroupMembersManager = ({ conversationId, currentUserId, conversationData }
     }
   };
 
-  if (!isOwner) return null; // Ne rien afficher si pas propriétaire
+  const copyInviteLink = () => {
+    const link = `${window.location.origin}/conversations/${conversationId}`;
+    navigator.clipboard.writeText(link);
+    setCopySuccess(true);
+    setTimeout(() => setCopySuccess(false), 2000);
+  };
 
   return (
     <div className="group-members-manager">
       <div className="members-header">
         <h3>Membres du groupe ({members.length})</h3>
-        <button
-          className="add-member-btn"
-          onClick={() => setShowAddForm(!showAddForm)}
-        >
-          {showAddForm ? 'Annuler' : '+ Ajouter'}
-        </button>
+        {isOwner && (
+          <button
+            className="add-member-btn"
+            onClick={() => setShowAddForm(!showAddForm)}
+          >
+            {showAddForm ? 'Annuler' : '+ Ajouter'}
+          </button>
+        )}
       </div>
+
+      <button 
+        className="sidebar-action-btn" 
+        onClick={copyInviteLink}
+        style={{ marginBottom: '20px', width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '12px', border: '1px solid #e5e7eb', borderRadius: '12px', background: 'white', cursor: 'pointer', color: '#0040D0', justifyContent: 'center', fontWeight: '600', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}
+      >
+        {copySuccess ? <Check size={18} color="#10b981" /> : <LinkIcon size={18} />}
+        <span>{copySuccess ? 'Link copied!' : 'Invite to group via link'}</span>
+      </button>
 
       {error && <div className="error-message">{error}</div>}
 
-      {showAddForm && (
+      {isOwner && showAddForm && (
         <form className="add-member-form" onSubmit={handleAddMember}>
           <input
             type="text"
@@ -94,7 +112,7 @@ const GroupMembersManager = ({ conversationId, currentUserId, conversationData }
                 Niveau: {member.niveau}
               </div>
             </div>
-            {member.role !== 'OWNER' && member.iduser !== currentUserId && (
+            {isOwner && member.role !== 'OWNER' && member.iduser !== currentUserId && (
               <button
                 className="remove-member-btn"
                 onClick={() => handleRemoveMember(member.iduser)}

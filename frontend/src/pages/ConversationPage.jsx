@@ -22,11 +22,13 @@ const ConversationPage = () => {
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [joinLoading, setJoinLoading] = useState(false);
   const [joinError, setJoinError] = useState(null);
+  const [joinSuccess, setJoinSuccess] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [messageToDelete, setMessageToDelete] = useState(null);
   const [isFirstLoad, setIsFirstLoad] = useState(true);
   const [showCopyNotification, setShowCopyNotification] = useState(false);
   const prevMessagesLength = useRef(0);
+  const [requestPending, setRequestPending] = useState(false);
   // Nouveaux états pour Typing et Online
   const [typingUsers, setTypingUsers] = useState([]);
   const [isOnline, setIsOnline] = useState(false);
@@ -43,6 +45,8 @@ const ConversationPage = () => {
     // Réinitialiser les états lors du changement de conversation pour éviter les conflits (ex: bouton Cancel)
     setError(null);
     setJoinError(null);
+    setJoinSuccess(null);
+    setRequestPending(false);
     setLoading(true);
     setConversation(null);
     setMessages([]);
@@ -292,10 +296,18 @@ const ConversationPage = () => {
   const handleJoinGroup = async () => {
     setJoinLoading(true);
     setJoinError(null);
+    setJoinSuccess(null);
     try {
-      await axios.post(`http://localhost:5000/api/conversations/${id}/join`, {}, { withCredentials: true });
-      setError(null);
-      fetchData();
+      const res = await axios.post(`http://localhost:5000/api/conversations/${id}/join`, {}, { withCredentials: true });
+      
+      if (res.data.status === 'joined') {
+          setError(null);
+          fetchData();
+      } else if (res.data.status === 'requested' || res.data.status === 'pending') {
+          setJoinSuccess("Request sent to admin. Please wait for approval.");
+          setRequestPending(true);
+          setTimeout(() => setJoinSuccess(null), 5000);
+      }
     } catch (err) {
       console.error("Erreur join group", err);
       let serverMessage = "Unable to join this group. It may be private or deleted.";
@@ -421,6 +433,12 @@ const ConversationPage = () => {
 
   return (
     <div className="conversation-page-container chatbot-style" style={{ background: '#ffffff' }}>
+      <style>{`
+        .input-wrapper:focus-within {
+          border-color: #E7A33E !important;
+          box-shadow: 0 0 0 2px rgba(231, 163, 62, 0.1) !important;
+        }
+      `}</style>
       <div className="conversation-background-pattern" />
       
       {showCopyNotification && (
@@ -484,17 +502,33 @@ const ConversationPage = () => {
           <div>
             {/* Affichage de l'erreur / Join Group comme un message système */}
             {error && (
-              <div className="join-group-inline-container" style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
-                <div className="join-group-card" style={{ maxWidth: '400px', width: '100%', padding: '24px', borderRadius: '16px', background: 'white', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', textAlign: 'center', border: '1px solid #e5e7eb' }}>
-                  <div className="join-group-icon" style={{ margin: '0 auto 16px auto' }}>
-                    <Users size={24} color="white" />
+              <div className="join-group-inline-container" style={{ display: 'flex', justifyContent: 'center', padding: '40px 20px' }}>
+                <div className="join-group-card" style={{ maxWidth: '500px', width: '100%', padding: '30px', borderRadius: '16px', background: '#f8fafc', textAlign: 'center', border: '1px dashed #cbd5e1' }}>
+                  <div className="join-group-icon" style={{ margin: '0 auto 16px auto', width: '50px', height: '50px', borderRadius: '50%', background: '#e0e7ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Users size={24} color="#4f46e5" />
                   </div>
-                  <h2 className="join-group-title" style={{ fontSize: '18px', marginBottom: '8px' }}>Join this group?</h2>
-                  <p className="join-group-subtitle" style={{ fontSize: '14px', marginBottom: '20px' }}>You must be a member to see messages in this group.</p>
+                  <h2 className="join-group-title" style={{ 
+                    fontSize: '22px', 
+                    marginBottom: '8px', 
+                    fontWeight: '700',
+                    background: 'linear-gradient(90deg, #0040D0 0%, #E7A33E 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    color: 'transparent',
+                    width: 'fit-content',
+                    margin: '0 auto 8px auto'
+                  }}>Join this group?</h2>
+                  <p className="join-group-subtitle" style={{ fontSize: '14px', marginBottom: '24px', color: '#64748b' }}>You must be a member to see messages in this group.</p>
                 
                   {joinError && (
                       <div className="join-group-error" style={{ fontSize: '13px', marginBottom: '16px' }}>
                       <strong>Error:</strong> {joinError}
+                    </div>
+                  )}
+                  {joinSuccess && (
+                      <div className="join-group-success" style={{ fontSize: '13px', marginBottom: '16px', background: '#dcfce7', color: '#166534', padding: '12px', borderRadius: '8px', textAlign: 'left', border: '1px solid #bbf7d0' }}>
+                      <strong>Success:</strong> {joinSuccess}
                     </div>
                   )}
 
@@ -502,17 +536,22 @@ const ConversationPage = () => {
                     <button 
                       type="button"
                       onClick={handleJoinGroup}
-                      disabled={joinLoading}
-                      className="btn-create"
-                      style={{ width: 'auto', padding: '10px 20px', fontSize: '14px', height: 'auto' }}
+                      disabled={joinLoading || requestPending}
+                      style={{ 
+                        padding: '10px 24px', borderRadius: '20px', border: 'none', 
+                        background: requestPending ? '#9ca3af' : 'linear-gradient(90deg, #0040D0, #0055FF)', color: 'white', 
+                        cursor: requestPending ? 'default' : 'pointer', fontWeight: '600', fontSize: '14px' 
+                      }}
                     >
-                      {joinLoading ? 'Joining...' : 'Join group'}
+                      {joinLoading ? 'Joining...' : requestPending ? 'Request Pending' : 'Join group'}
                     </button>
                     <button 
                       type="button"
                       onClick={() => navigate(-1)}
-                      className="btn-create secondary"
-                      style={{ width: 'auto', padding: '10px 20px', fontSize: '14px', height: 'auto', marginTop: '8px' }}
+                      style={{ 
+                        padding: '10px 24px', borderRadius: '20px', border: '2px solid #E7A33E', 
+                        background: 'transparent', color: '#E7A33E', cursor: 'pointer', fontWeight: '600', fontSize: '14px' 
+                      }}
                     >
                       Cancel
                     </button>

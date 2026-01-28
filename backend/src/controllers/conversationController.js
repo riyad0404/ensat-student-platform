@@ -837,45 +837,67 @@ export const joinConversation = async (req, res) => {
       return res.status(200).json({ message: 'Already a member' });
     }
 
+    // 1. Check if user has been invited (GROUP_INVITE)
+    // We fetch all invites for this user to ensure we find the correct one for this group
+    const invites = await Notification.findAll({
+      where: {
+        type: NOTIF_TYPES.GROUP_INVITE,
+        idDestinataire: myUserId,
+      }
+    });
+
+    // Find the specific invite for this group
+    const invite = invites.find(n => {
+        const meta = n.metadata || {};
+        return String(meta.groupId) === String(idconversation);
+    });
+
+    // --- SCENARIO 2: INVITE EXISTS -> IMMEDIATE JOIN ---
+    if (invite) {
+        await ConversationMember.create({
+            idconversation,
+            iduser: myUserId,
+            role: 'MEMBER',
+            joinedAt: new Date(),
+        });
+
+        // Mark invite as read/used
+        invite.isRead = true;
+        await invite.save();
+
+        return res.status(200).json({ message: 'Joined group successfully', status: 'joined' });
+    }
+
+    // --- SCENARIO 1: NO INVITE -> JOIN REQUEST ---
     const owner = await ConversationMember.findOne({
       where: { idconversation, role: 'OWNER', leftAt: null },
     });
-    if (!owner) {
-      return res.status(500).json({ message: 'Group owner not found' });
-    }
-
-    const requester = await User.findByPk(myUserId, {
-      attributes: ['prenom', 'nom'],
-    });
+    if (!owner) return res.status(500).json({ message: 'Group owner not found' });
 
     const existingRequest = await Notification.findOne({
       where: {
         type: NOTIF_TYPES.JOIN_REQUEST,
         idSourceUser: myUserId,
         idDestinataire: owner.iduser,
-        'metadata.groupId': idconversation,
         isRead: false,
-      },
+      }
     });
-
-    if (existingRequest) {
-      return res.status(200).json({ message: 'Join request already sent' });
+    
+    // Check metadata for existing request
+    if (existingRequest && (existingRequest.metadata?.groupId == idconversation)) {
+        return res.status(200).json({ message: 'Join request already sent', status: 'pending' });
     }
 
-    // 🔔 JOIN_REQUEST (frontend-compatible)
+    const requester = await User.findByPk(myUserId, { attributes: ['prenom', 'nom'] });
     await createNotification({
       toUserId: owner.iduser,
       fromUserId: myUserId,
       type: NOTIF_TYPES.JOIN_REQUEST,
       message: `${requester.prenom} ${requester.nom} wants to join ${conv.name}`,
-      metadata: {
-        groupId: idconversation,
-        groupName: conv.name,
-        requestingUserName: `${requester.prenom} ${requester.nom}`,
-      },
+      metadata: { groupId: idconversation, groupName: conv.name, requestingUserName: `${requester.prenom} ${requester.nom}` },
     });
 
-    return res.status(200).json({ message: 'Join request sent successfully' });
+    return res.status(200).json({ message: 'Join request sent successfully', status: 'requested' });
   } catch (error) {
     console.error('joinConversation error:', error);
     return res.status(500).json({ message: 'Server error', error: error.message });

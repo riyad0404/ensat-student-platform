@@ -92,8 +92,13 @@ const MessagesPage = () => {
             fontSize: '24px', 
             fontWeight: '800', 
             margin: 0,
-            color: '#333333'
-          }}>Messages</h1>
+            background: 'linear-gradient(135deg, #333333 0%, #E7A33E 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            color: 'transparent',
+            width: 'fit-content'
+          }}>Messaging</h1>
         </div>
 
         {/* Search Bar */}
@@ -150,14 +155,14 @@ const MessagesPage = () => {
         </div>
       </div>
 
-      <div className="page-content">
+      <div className="page-content" style={{ marginTop: '50px' }}>
         {/* List Layout */}
         <div style={{ 
           background: 'white',
           borderRadius: '16px',
           border: '1px solid #e5e7eb',
           overflow: 'hidden',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
         }}>
           {conversations.map((conv, index) => {
             const convId = getConvId(conv);
@@ -203,11 +208,11 @@ const MessagesPage = () => {
             yesterday.setDate(now.getDate() - 1);
             const isYesterday = msgDate.toDateString() === yesterday.toDateString();
             
-            let dateDisplay = msgDate.toLocaleDateString('fr-FR');
+            let dateDisplay = msgDate.toLocaleDateString('en-US');
             if (isToday) {
-                dateDisplay = msgDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                dateDisplay = msgDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             } else if (isYesterday) {
-                dateDisplay = 'Hier';
+                dateDisplay = 'Yesterday';
             }
 
             return (

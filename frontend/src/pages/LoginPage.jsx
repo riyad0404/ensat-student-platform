@@ -7,6 +7,8 @@ import { FiMail, FiEye, FiEyeOff } from "react-icons/fi";
 import loginImg from "../assets/login-illustration.png";
 import Input from "../components/input.jsx";
 import Button from "../components/button.jsx";
+import logoImg from "../assets/logo.jpeg";
+import appNameImg from "../assets/appname.jpeg";
 
 const LOGIN_LOCK_KEY = "auth_login_lock_until";        // timestamp ms
 const LOGIN_LOCK_ACTIVE_KEY = "auth_login_lock_active"; // "1" or "0"
@@ -177,10 +179,15 @@ export default function LoginPage() {
         }
 
         // other errors
-        setFormError(
-          result.error ||
-            "Incorrect login credentials. Please check your email and password."
-        );
+        if (result.status === 404) {
+          setFormError("User not found.");
+        } else if (result.status === 401) {
+          setFormError("Email or password incorrect");
+        } else {
+          setFormError(
+            result.error || "Email or password incorrect"
+          );
+        }
 
         setFormData((prev) => ({ ...prev, password: "" }));
       }
@@ -188,7 +195,7 @@ export default function LoginPage() {
       console.error(err);
 
       if (err.response?.status === 401) {
-        setFormError("Incorrect login credentials.");
+        setFormError("Email or password incorrect");
       } else if (err.response?.status === 404) {
         setFormError("No account found with this email.");
       } else if (err.response?.status >= 500) {
@@ -211,7 +218,10 @@ export default function LoginPage() {
 
         {/* FORM */}
         <div className="login-right">
-          <h2>Welcome Back!</h2>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '20px' }}>
+            <h2>Welcome to</h2>
+            <img src={appNameImg} alt="Docentra" style={{ height: '70px' }} />
+          </div>
           <p className="subtitle">Sign in to continue</p>
 
           {/* ✅ SAME LOGIN DESIGN: red banner stays visible while locked */}

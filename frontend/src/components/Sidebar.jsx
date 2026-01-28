@@ -3,6 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { PanelRight } from 'lucide-react';
 import './../styles/Sidebar.css';
+import logoImg from '../assets/logo.jpeg';
+import appNameImg from '../assets/appname.jpeg';
 
 const Sidebar = () => {
     const location = useLocation();
@@ -48,7 +50,23 @@ const Sidebar = () => {
             {/* Section logo avec bouton */}
             <div className="logo-section">
                 {/* Logo centré */}
-                <div className="logo">{isCollapsed ? 'DC' : 'Docentra'}</div>
+                <div className="logo">
+                    {isCollapsed ? (
+                        <img 
+                            src={logoImg}
+                            alt="" 
+                            className="sidebar-logo-collapsed"
+                            style={{ width: '100px', height: '90px' }}
+                        />
+                    ) : (
+                        <img 
+                            src={appNameImg}
+                            alt="" 
+                            className="sidebar-logo-expanded"
+                            style={{ height: '100px' }}
+                        />
+                    )}
+                </div>
                 
                 {/* Bouton collapse style IA (PanelRight) */}
                 <button 
@@ -81,6 +99,7 @@ const Sidebar = () => {
                     onClick={logout} 
                     className="logout-btn"
                     title={isCollapsed ? "Logout" : ""}
+                    style={{ color: '#ef4444' }}
                 >
                     <span className="material-icons">logout</span>
                     {!isCollapsed && <span className="logout-label">Logout</span>}

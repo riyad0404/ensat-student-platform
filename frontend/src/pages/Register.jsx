@@ -6,6 +6,7 @@ import { FiMail, FiEye, FiEyeOff } from "react-icons/fi";
 import registerImg from "../assets/login-illustration.png";
 import Input from "../components/input.jsx";
 import Button from "../components/button.jsx";
+import logoImg from "../assets/logo.jpeg";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { validatePasswordField, applyPasswordPolicyBackendError } from "../utils/authValidation";
 
@@ -277,6 +278,7 @@ if (!result.success) {
         </div>
 
         <div className="login-right register-page">
+          <img src={logoImg} alt="Logo" className="top-right-logo" />
           <h2>Create an Account</h2>
           <p className="subtitle">Welcome to the community</p>
 

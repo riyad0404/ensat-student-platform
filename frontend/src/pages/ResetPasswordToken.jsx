@@ -7,6 +7,7 @@ import Button from "../components/button.jsx";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import axios from "axios";
 import resetImg from "../assets/login-illustration.png";
+import logoImg from "../assets/logo.jpeg";
 import { validatePasswordField, applyPasswordPolicyBackendError } from "../utils/authValidation";
 
 export default function ResetPasswordToken() {
@@ -181,10 +182,10 @@ export default function ResetPasswordToken() {
       
       // Messages d'erreur personnalisés
       if (serverMessage.toLowerCase().includes("expired") || 
-          serverMessage.toLowerCase().includes("expiré")) {
+          serverMessage.toLowerCase().includes("expired")) {
         setError("This reset link has expired. Please request a new one.");
       } else if (serverMessage.toLowerCase().includes("invalid") || 
-                 serverMessage.toLowerCase().includes("invalide")) {
+                 serverMessage.toLowerCase().includes("invalid")) {
         setError("Invalid reset link. Please check the URL.");
       } else if (err.response?.status === 404) {
         setError("User not found. The account may have been deleted.");
@@ -242,6 +243,7 @@ export default function ResetPasswordToken() {
         </div>
 
         <div className="login-right">
+          <img src={logoImg} alt="Logo" className="top-right-logo" />
           <h2>Reset Password</h2>
           <p className="subtitle">Enter your new password</p>
           

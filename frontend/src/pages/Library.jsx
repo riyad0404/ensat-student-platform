@@ -2,15 +2,15 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen } from 'lucide-react';
 
-const FiliereCard = ({ filiere, onNavigate }) => {
+const FiliereCard = ({ filiere, onNavigate, iconColor, iconBg }) => {
   return (
     <div 
       style={{ 
         background: 'white',
         borderRadius: '16px',
-        padding: '24px',
+        padding: '32px',
         border: '1px solid #e5e7eb',
-        boxShadow: 'none',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
         transition: 'all 0.2s ease',
         display: 'flex',
         flexDirection: 'column',
@@ -18,36 +18,38 @@ const FiliereCard = ({ filiere, onNavigate }) => {
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'translateY(-2px)';
-        e.currentTarget.style.boxShadow = '0 10px 25px -5px rgba(0, 0, 0, 0.1)';
-        e.currentTarget.style.borderColor = '#0040D0';
+        e.currentTarget.style.boxShadow = '0 10px 25px -5px rgba(0, 0, 0, 0.15)';
+        e.currentTarget.style.borderColor = iconColor;
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = 'none';
+        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
         e.currentTarget.style.borderColor = '#e5e7eb';
       }}
     >
       {/* Icône et titre */}
       <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
         <div style={{ 
-          width: '40px', 
-          height: '40px', 
-          borderRadius: '10px', 
-          background: '#f0f5ff', 
+          width: '48px', 
+          height: '48px', 
+          borderRadius: '12px', 
+          background: iconBg, 
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center',
-          color: '#0040D0', 
-          marginRight: '12px',
+          color: iconColor, 
+          marginRight: '16px',
           flexShrink: 0
         }}>
-          <BookOpen size={20} strokeWidth={2.5} />
+          <BookOpen size={24} strokeWidth={2.5} />
         </div>
         <h3 style={{ 
           margin: 0, 
           fontSize: '16px', 
           fontWeight: '700', 
-          color: '#1f2937',
+          background: 'linear-gradient(135deg, #0040D0 0%, #E7A33E 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
           lineHeight: '1.3'
         }}>
           {filiere.nom}
@@ -143,7 +145,12 @@ const Library = () => {
           fontSize: '24px', 
           fontWeight: '800', 
           margin: 0,
-          color: '#333333'
+          background: 'linear-gradient(135deg, #333333 0%, #E7A33E 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          color: 'transparent',
+          width: 'fit-content'
         }}>Library</h1>
         <p style={{ color: '#6b7280', margin: 0 }}>
           Select your study level to access documents
@@ -154,17 +161,22 @@ const Library = () => {
         {/* Grid des filières */}
         <div style={{ 
           display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
-          gap: '20px',
+          gridTemplateColumns: 'repeat(2, 1fr)', 
+          gap: '24px',
           paddingBottom: '40px'
         }}>
-          {filieres.map((filiere) => (
+          {filieres.map((filiere, index) => {
+            // Logique damier pour 2 colonnes : (Ligne + Colonne) % 2
+            const isBlue = (Math.floor(index / 2) + index % 2) % 2 === 0;
+            return (
             <FiliereCard 
               key={filiere.id} 
               filiere={filiere} 
               onNavigate={handleNiveauClick} 
+              iconColor={isBlue ? '#0040D0' : '#E7A33E'}
+              iconBg={isBlue ? '#E6F0FF' : '#FFF4E5'}
             />
-          ))}
+          )})}
         </div>
       </div>
     </div>

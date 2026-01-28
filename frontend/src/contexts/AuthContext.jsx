@@ -126,7 +126,7 @@ export const AuthProvider = ({ children }) => {
         error.message ||
         "Incorrect login credentials. Please check your email and password.";
 
-      return { success: false, error: errorMsg };
+      return { success: false, error: errorMsg, status };
     }
   };
 
