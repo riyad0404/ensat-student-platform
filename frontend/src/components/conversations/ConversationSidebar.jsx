@@ -283,17 +283,19 @@ const ConversationSidebar = ({
           </div>
         )}
 
-        {/* Add Member (Admin only) */}
-        {isGroup && isOwner && (
+        {/* Add Member & Invite Link */}
+        {isGroup && (
           <div style={{ background: 'white', padding: '10px 0', marginBottom: '10px', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
             {!showAddMember ? (
               <>
-                <button onClick={() => setShowAddMember(true)} style={{ width: '100%', padding: '15px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'none', border: 'none', cursor: 'pointer', color: '#111b21', fontSize: '16px', textAlign: 'left' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#00a884', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <UserPlus size={20} color="white" />
-                  </div>
-                  Add participant
-                </button>
+                {isOwner && (
+                  <button onClick={() => setShowAddMember(true)} style={{ width: '100%', padding: '15px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'none', border: 'none', cursor: 'pointer', color: '#111b21', fontSize: '16px', textAlign: 'left' }}>
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#00a884', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <UserPlus size={20} color="white" />
+                    </div>
+                    Add participant
+                  </button>
+                )}
                 <div style={{ position: 'relative' }}>
                   <button onClick={copyGroupLink} style={{ width: '100%', padding: '15px 20px', display: 'flex', alignItems: 'center', gap: '15px', background: 'none', border: 'none', cursor: 'pointer', color: '#111b21', fontSize: '16px', textAlign: 'left' }}>
                     <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#00a884', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

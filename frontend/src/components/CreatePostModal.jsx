@@ -6,6 +6,7 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated, postToEdit }) => {
   const [content, setContent] = useState('');
   const [file, setFile] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
+  const [existingFile, setExistingFile] = useState(null); // Pour gérer le fichier existant en édition
   const [niveau, setNiveau] = useState('GINF1');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -17,13 +18,18 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated, postToEdit }) => {
         setContent(postToEdit.contenu || '');
         setNiveau(postToEdit.niveau || 'GINF1');
         setIsAnonymous(postToEdit.isAnonymat === true || postToEdit.isAnonymat === 'true');
-        // Note: Handling existing files for edit is complex, usually we just let them replace it
+        
+        // Gérer le fichier existant
+        const doc = postToEdit.documents?.[0] || postToEdit.document;
+        setExistingFile(doc || null);
+        
         setFile(null);
         setFilePreview(null);
       } else {
         setContent('');
         setFile(null);
         setFilePreview(null);
+        setExistingFile(null);
         setNiveau('GINF1');
         setIsAnonymous(false);
       }
@@ -37,6 +43,7 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated, postToEdit }) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
       setFile(selectedFile);
+      // Si on ajoute un nouveau fichier, on "cache" l'existant visuellement (il sera remplacé)
       if (selectedFile.type.startsWith('image/')) {
         const reader = new FileReader();
         reader.onloadend = () => setFilePreview(reader.result);
@@ -47,52 +54,60 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated, postToEdit }) => {
     }
   };
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  if (!content.trim() && !file) {
-    setError('Add content or a file');
-    return;
-  }
+    // Validation : il faut au moins du texte OU un fichier (nouveau ou existant)
+    if (!content.trim() && !file && !existingFile) {
+      setError('Add content or a file');
+      return;
+    }
 
-  setLoading(true);
-  setError('');
+    setLoading(true);
+    setError('');
 
-  try {
-    let response;
-    
-    if (postToEdit) {
+    try {
+      let response;
+      const formData = new FormData();
+      formData.append('contenu', content.trim());
+      formData.append('isAnonymat', isAnonymous ? 'true' : 'false');
+      
+      if (postToEdit) {
         // Update logic
-        response = await updatePost(postToEdit.idpost, { contenu: content.trim(), isAnonymat: isAnonymous });
-    } else {
-        // Create logic
-        const formData = new FormData();
-        formData.append('contenu', content.trim());
-        formData.append('isAnonymat', isAnonymous ? 'true' : 'false');
+        if (file) {
+          formData.append('file', file);
+          formData.append('niveau', niveau);
+        }
+        // Si on avait un fichier existant et qu'on l'a supprimé (et pas remplacé par un nouveau)
+        if (postToEdit.documents?.length > 0 && !existingFile && !file) {
+             formData.append('deletePreviousFile', 'true');
+        }
 
+        response = await updatePost(postToEdit.idpost, formData);
+      } else {
+        // Create logic
         if (file) {
           formData.append('file', file);
           formData.append('niveau', niveau);
         }
         response = await createPost(formData);
+      }
+      
+      console.log('🔍 Réponse complète du backend:', response);
+      
+      if (onPostCreated) {
+        onPostCreated(response);
+      }
+      
+      onClose();
+      
+    } catch (err) {
+      console.error('❌ Erreur:', err);
+      setError(err.response?.data?.message || 'Erreur');
+    } finally {
+      setLoading(false);
     }
-    
-    console.log('🔍 Réponse complète du backend:', response);
-    
-    if (onPostCreated) {
-      console.log('📤 Envoi du post à HomePage...');
-      onPostCreated(response);
-    }
-    
-    onClose();
-    
-  } catch (err) {
-    console.error('❌ Erreur:', err);
-    setError(err.response?.data?.message || 'Erreur');
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   if (!isOpen) return null;
 
@@ -126,6 +141,7 @@ const handleSubmit = async (e) => {
               rows={5} 
             />
             
+            {/* Aperçu du NOUVEAU fichier */}
             {filePreview && (
               <div className="file-preview">
                 {file && file.type.startsWith('image/') ? (
@@ -148,12 +164,33 @@ const handleSubmit = async (e) => {
               </div>
             )}
 
+            {/* Aperçu du FICHIER EXISTANT (si pas de nouveau fichier sélectionné) */}
+            {!file && existingFile && (
+               <div className="file-preview existing">
+                  {(existingFile.type === 'IMAGE' || existingFile.url?.match(/\.(jpg|jpeg|png|gif|webp)$/i)) ? (
+                      <img src={existingFile.url} alt="Existing" />
+                  ) : (
+                      <div className="document-preview">
+                        <p>📄 {existingFile.filename}</p>
+                      </div>
+                  )}
+                  <button
+                    type="button"
+                    className="remove-file-btn"
+                    onClick={() => setExistingFile(null)}
+                    title="Remove file"
+                  >
+                    ×
+                  </button>
+               </div>
+            )}
+
             <div className="upload-section">
               <label className="upload-btn">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
                 </svg>
-                <span>Add file</span>
+                <span>{postToEdit && existingFile ? "Change file" : "Add file"}</span>
                 <input
                   type="file"
                   accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt"
@@ -162,7 +199,7 @@ const handleSubmit = async (e) => {
                 />
               </label>
 
-              {file && (
+              {(file || existingFile) && (
                 <select 
                   value={niveau} 
                   onChange={(e) => setNiveau(e.target.value)}
@@ -235,16 +272,16 @@ const handleSubmit = async (e) => {
                 </button>
                 <button 
                   type="submit" 
-                  disabled={loading || (!content.trim() && !file)}
+                  disabled={loading || (!content.trim() && !file && !existingFile)}
                   style={{
                     height: '44px', borderRadius: '25px', background: 'linear-gradient(90deg, #4a82fc, #0040D0)', 
                     color: 'white', fontWeight: '700', fontSize: '14px', border: 'none', 
                     padding: '0 30px', cursor: 'pointer', transition: 'all 0.3s ease',
-                    opacity: (loading || (!content.trim() && !file)) ? 0.7 : 1,
-                    cursor: (loading || (!content.trim() && !file)) ? 'not-allowed' : 'pointer'
+                    opacity: (loading || (!content.trim() && !file && !existingFile)) ? 0.7 : 1,
+                    cursor: (loading || (!content.trim() && !file && !existingFile)) ? 'not-allowed' : 'pointer'
                   }}
-                  onMouseEnter={(e) => !(loading || (!content.trim() && !file)) && (e.target.style.transform = 'translateY(-1px)')}
-                  onMouseLeave={(e) => !(loading || (!content.trim() && !file)) && (e.target.style.transform = 'translateY(0)')}
+                  onMouseEnter={(e) => !(loading || (!content.trim() && !file && !existingFile)) && (e.target.style.transform = 'translateY(-1px)')}
+                  onMouseLeave={(e) => !(loading || (!content.trim() && !file && !existingFile)) && (e.target.style.transform = 'translateY(0)')}
                 >
                   {loading ? (postToEdit ? 'Saving...' : 'Publishing...') : (postToEdit ? 'Save Changes' : 'Publish')}
                 </button>

@@ -65,6 +65,19 @@ html, body {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  position: relative; /* Pour positionner le logo à l'intérieur */
+}
+
+/* Logo en haut à droite */
+.top-right-logo {
+  position: absolute;
+  top: 0%;
+  right: 0%;
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  z-index: 100;
+  border-radius: 12px;
 }
 
 /* ===========================================
@@ -353,6 +366,12 @@ button.btn-create.secondary:hover:not(:disabled) {
   margin-bottom: 10px !important; /* -8px */
 }
 
+/* Réduction de la taille de la carte d'inscription */
+.register-page .login-card {
+  min-height: auto !important;
+  max-width: 850px; /* Plus étroit */
+}
+
 /* Styles de validation */
 .input-error-message {
   color: #ff4757;
@@ -446,6 +465,25 @@ button.btn-create.secondary:hover:not(:disabled) {
   height: 35px !important;
   font-size: 13px !important;
   margin-top: 5px !important; /* ⭐ CORRIGÉ : ajoutez 5px */
+}
+
+/* === COMPACTAGE REGISTER PAGE === */
+
+.login-right.register-page {
+  padding: 20px 30px !important;
+}
+
+.register-page .input-group {
+  margin-bottom: 8px !important;
+}
+
+.register-page .input-box input {
+  height: 38px !important;
+  font-size: 13px !important;
+}
+
+.register-page label {
+  margin-bottom: 3px !important;
 }
 
 /* ===========================================

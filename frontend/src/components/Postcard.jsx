@@ -41,9 +41,12 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
   const [replyingToComment, setReplyingToComment] = useState(null); // Pour la réponse globale
   const [activeCommentMenuId, setActiveCommentMenuId] = useState(null);
   const [showReactionSelector, setShowReactionSelector] = useState(false);
+  const [activeCommentReactionSelector, setActiveCommentReactionSelector] = useState(null);
   const [commentToDelete, setCommentToDelete] = useState(null);
   const [editingLoading, setEditingLoading] = useState(false);
+  const [commentError, setCommentError] = useState("");
   const reactionTimeoutRef = useRef(null);
+  const commentReactionTimeoutRef = useRef(null);
   const commentInputRef = useRef(null); // Ref pour l'input principal
 
   // Helper pour l'image de profil - Version Améliorée
@@ -219,11 +222,8 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
   const handleCommentSubmit = async (e) => {
     if (e) e.preventDefault();
     if ((!commentText.trim() && !commentFile) || loading) return;
-
-    if (commentFile && !commentNiveau) {
-      alert("The level is optional for a document");
-      // Remove the requirement
-    }
+    
+    setCommentError("");
 
     try {
       setLoading(true);
@@ -263,7 +263,8 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
     } catch (error) {
       console.error('❌ Erreur lors de l\'envoi:', error);
       const errorMsg = error.response?.data?.message || 'Erreur lors de l\'envoi du commentaire';
-      alert(`Erreur: ${errorMsg}`);
+      setCommentError(errorMsg);
+      setTimeout(() => setCommentError(""), 4000);
     } finally {
       setLoading(false);
     }
@@ -279,6 +280,17 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
     reactionTimeoutRef.current = setTimeout(() => {
       setShowReactionSelector(false);
     }, 300); // 300ms de délai pour laisser le temps d'aller sur le menu
+  };
+
+  const handleCommentReactionMouseEnter = (commentId) => {
+    if (commentReactionTimeoutRef.current) clearTimeout(commentReactionTimeoutRef.current);
+    setActiveCommentReactionSelector(commentId);
+  };
+
+  const handleCommentReactionMouseLeave = () => {
+    commentReactionTimeoutRef.current = setTimeout(() => {
+      setActiveCommentReactionSelector(null);
+    }, 300);
   };
 
   const handleReaction = async (type) => {
@@ -412,6 +424,9 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
       } else if (action === 'like') {
         await toggleCommentReaction(commentId, 'LIKE');
         loadPostData();
+      } else if (action === 'love') {
+        await toggleCommentReaction(commentId, 'LOVE');
+        await loadPostData();
       }
     } catch (error) {
       console.error(`Error ${action} comment:`, error);
@@ -471,10 +486,11 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
     const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 24) return `${diffInHours}h`;
     const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 30) return `${diffInDays}d`;
+     if (diffInDays < 30) return `${diffInDays}d`;
     const diffInMonths = Math.floor(diffInDays / 30);
     if (diffInMonths < 12) return `${diffInMonths}mo`;
     return `${Math.floor(diffInDays / 365)}y`;
+    
   };
 
   // Format date compact pour les commentaires (comme demandé)
@@ -522,7 +538,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
     return (
       <div key={c.idcomment} className="comment-tree-item">
         <div className={`comment-item-row ${cAnon ? 'anonymous' : ''}`}>
-          <div className="comment-avatar-small" style={{ width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
+            <div className="comment-avatar-small" style={{ width: '32px', height: '32px', borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
             {!cAnon && avatarUrl ? (
               <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={(e) => {e.target.style.display='none'; e.target.nextSibling.style.display='flex'}} />
             ) : null}
@@ -610,11 +626,34 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
             )}
 
             <div className="comment-actions">
-              <button className={`comment-action-btn like-btn ${c.isLiked ? 'active' : ''}`} onClick={() => handleCommentAction('like', c.idcomment)}>
-                Like {c.likes > 0 && `(${c.likes})`}
-              </button>
+              <div
+                className="comment-reaction-wrapper"
+                onMouseEnter={() => handleCommentReactionMouseEnter(c.idcomment)}
+                onMouseLeave={handleCommentReactionMouseLeave}
+              >
+                {activeCommentReactionSelector === c.idcomment && (
+                  <div className="reaction-selector">
+                    <button onClick={() => { handleCommentAction('like', c.idcomment); setActiveCommentReactionSelector(null); }} className="reaction-option" title="Like">
+                      <div className="reaction-icon-bubble like large"><ThumbsUp size={20} fill="white" color="white"/></div>
+                    </button>
+                    <button onClick={() => { handleCommentAction('love', c.idcomment); setActiveCommentReactionSelector(null); }} className="reaction-option" title="Love">
+                      <div className="reaction-icon-bubble love large"><Heart size={20} fill="white" color="white"/></div>
+                    </button>
+                  </div>
+                )}
+
+                <button
+                  className={`comment-action-btn ${c.isLiked ? 'active' : c.isLoved ? 'active-love' : ''}`}
+                  onClick={() => handleCommentAction(c.isLiked ? 'like' : c.isLoved ? 'love' : 'like', c.idcomment)}
+                >
+                  {c.isLoved ? <Heart size={14} fill="currentColor" /> : <ThumbsUp size={14} fill={c.isLiked ? 'currentColor' : 'none'} />}
+                  <span>{c.isLoved ? 'Love' : 'Like'}</span>
+                  {(c.likesCount > 0 || c.lovesCount > 0) && <span className="like-count">({c.likesCount + c.lovesCount})</span>}
+                </button>
+              </div>
               <button className="comment-action-btn" onClick={() => startReplyComment(c.idcomment)}>
-                Reply
+                <CornerDownRight size={14} />
+                <span>Reply</span>
               </button>
             </div>
           </div>
@@ -700,6 +739,8 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
       </div>
 
       <div className="post-content">
+        <p className="post-text">{post.contenu}</p>
+        
         {postDoc && (
           <>
             {(postDoc.type === 'IMAGE' || postDoc.url?.match(/\.(jpg|jpeg|png|gif|webp)$/i)) ? (
@@ -755,8 +796,6 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
             )}
           </>
         )}
-
-        <p className="post-text">{post.contenu}</p>
       </div>
 
       {/* SECTION STATS & ACTIONS (LinkedIn Style) */}
@@ -799,7 +838,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
             </button>
           </div>
 
-          <button 
+           <button 
             className="action-btn" 
             onClick={() => setShowComments(!showComments)}
             style={{ color: commentCount > 0 ? '#25D366' : undefined }}
@@ -887,6 +926,9 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
               )}
             </button>
           </div>
+          {commentError && (
+            <div style={{ color: '#ef4444', fontSize: '13px', padding: '0 15px 10px 15px' }}>{commentError}</div>
+          )}
           
           {commentFile && (
             <div className="file-selected-container">

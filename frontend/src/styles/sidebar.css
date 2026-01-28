@@ -22,9 +22,9 @@
 
 /* Logo section - position relative pour le bouton absolu */
 .logo-section {
-    padding: 20px;
+    padding: 15px 20px;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     position: relative;
     min-height: 70px;
@@ -33,7 +33,7 @@
 
 /* Logo */
 .logo {
-    font-size: 1.6rem;
+    font-size: 2rem;
     font-weight: 800;
     color: #0040D0;
     letter-spacing: 1px;
@@ -49,7 +49,7 @@
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    gap: 15px;
+    gap: 5px;
 }
 
 .sidebar-container.collapsed .logo {
@@ -58,6 +58,8 @@
     width: 100%;
     order: 2; /* Logo en dessous du bouton */
     margin-top: 10px;
+    display: flex;
+    justify-content: center;
 }
 
 /* CORRECTION: Bouton collapse positionné au-dessus du logo en mode collapsed */
@@ -100,7 +102,7 @@
     display: flex;
     flex-direction: column;
     flex: 1;
-    padding: 15px 0 0 0;
+    padding: 0;
 }
 
 /* Items navigation avec bords arrondis */
@@ -286,4 +288,20 @@
 /* Animation smooth pour tout */
 .sidebar-container * {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}    
+}
+
+/* ✅ Styles spécifiques pour les images */
+.sidebar-logo-collapsed {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    object-fit: contain; /* Affiche tout le logo sans couper */
+}
+
+.sidebar-logo-expanded {
+    height: 40px;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+    object-position: left center; /* Colle le logo à gauche */
+}

@@ -150,17 +150,13 @@ export const updateComment = async (id, data) => {
 };
 
 export const toggleCommentReaction = async (id, type) => {
-  // Utilisation de la route de réaction générique ou spécifique selon configuration backend
-  const response = await axiosInstance.post(`/reactions/toggle-comment`, { 
-    idcomment: parseInt(id),
-    typeReaction: type 
+  const response = await axiosInstance.post(`/comments/${id}/react`, { 
+    type: type 
   });
   return response.data;
 };
 
 export const replyToComment = async (id, data) => {
-  // Contournement : Utiliser la route de création standard qui gère idparent
-  // data doit contenir { contenu, idpost }
   const response = await axiosInstance.post(`/comments`, {
     idparent: id,
     idpost: data.idpost,

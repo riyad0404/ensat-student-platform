@@ -88,14 +88,20 @@ const NotificationBell = () => {
             if (groupId) navigate(`/conversations/${groupId}`);
         }
         // 2. Posts & Commentaires
-        else if (['REACTION_PUB', 'COMMENT_PUB', 'REPLY_COMMENT', 'REACTION_COMMENT'].includes(notif.type)) {
+        else if (['REACTION_PUB', 'COMMENT_PUB'].includes(notif.type)) {
             const postId = meta.postId || meta.idpost;
             if (postId) {
-                // Naviguer vers l'accueil et passer l'ID du post pour y scroller
-                navigate('/', { state: { scrollToPostId: postId } });
+                // ✅ Naviguer vers le PROFIL (car c'est mon post) et scroller
+                navigate('/profile', { state: { scrollToPostId: postId } });
             } else {
-                navigate('/'); 
+                navigate('/profile'); 
             }
+        }
+        // 3. Réponses aux commentaires (peut être sur le post de quelqu'un d'autre, donc on garde Home pour l'instant ou on redirige vers le post spécifique si on avait une page détail)
+        else if (['REPLY_COMMENT', 'REACTION_COMMENT'].includes(notif.type)) {
+             // Pour l'instant, on laisse vers Home, ou on pourrait rediriger vers le post s'il est trouvable
+             const postId = meta.postId || meta.idpost;
+             if (postId) navigate('/', { state: { scrollToPostId: postId } });
         }
     }
     

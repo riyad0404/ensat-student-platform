@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import '../styles/profile.css';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import PostCard from '../components/Postcard';
 import { getAllPosts } from '../api/postAPI';
 import CreatePostModal from '../components/CreatePostModal';
@@ -12,6 +12,7 @@ import conversationAPI from '../api/conversationAPI';
 const Profile = () => {
     const { user, updateProfile } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation(); // ✅ Pour récupérer l'état de navigation (scrollToPostId)
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingPost, setEditingPost] = useState(null);
     
@@ -64,6 +65,26 @@ const Profile = () => {
             fetchUserPosts();
         }
     }, [user]);
+
+    // ✅ Effet pour scroller vers un post spécifique si demandé (via notification)
+    useEffect(() => {
+        if (location.state?.scrollToPostId && userPosts.length > 0) {
+            const postId = location.state.scrollToPostId;
+            // Petit délai pour laisser le temps au rendu
+            setTimeout(() => {
+                const element = document.getElementById(`post-${postId}`);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // Optionnel : ajouter une classe pour mettre en évidence temporairement
+                    element.style.border = "2px solid #0040D0";
+                    setTimeout(() => element.style.border = "none", 2000);
+                }
+            }, 500);
+            
+            // Nettoyer l'état pour ne pas rescroller au refresh
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state, userPosts]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -723,13 +744,14 @@ const Profile = () => {
                         <div className="posts-section" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                             {userPosts.length > 0 ? (
                                 userPosts.map(post => (
+                                    <div id={`post-${post.idpost}`} key={post.idpost}>
                                     <PostCard 
-                                        key={post.idpost} 
                                         post={post}
                                         onPostDeleted={() => setUserPosts(prev => prev.filter(p => p.idpost !== post.idpost))}
                                         onEdit={handleEditPost}
                                         showOptions={true}
                                     />
+                                    </div>
                                 ))
                             ) : null}
                         </div>

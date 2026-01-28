@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { Op } from "sequelize";
 import { Comment } from "../models/comment.js";
 import { Post } from "../models/post.js";
 import { createNotification, NOTIF_TYPES } from "../services/notificationservice.js";
@@ -8,7 +9,8 @@ import { User } from "../models/user.js";
 
 const UPLOAD_DIR =
   process.env.UPLOAD_DIR || path.join(process.cwd(), "uploads");
-  // Like / Love / Remove reaction
+
+// Like / Love / Remove reaction
 export const reactComment = async (req, res) => {
   try {
     const iduser = req.user.iduser;
@@ -25,83 +27,47 @@ export const reactComment = async (req, res) => {
     }
 
     const reactedBy = comment.reactedBy || [];
-
-    // trouver l'utilisateur
     const existing = reactedBy.find((r) => r.iduser === iduser);
 
-    // si pas encore existant, on le crée
     if (!existing) {
-      const newEntry = {
-        iduser,
-        like: type === "LIKE",
-        love: type === "LOVE",
-      };
-
+      const newEntry = { iduser, like: type === "LIKE", love: type === "LOVE" };
       comment.reactedBy = [...reactedBy, newEntry];
       if (type === "LIKE") comment.likesCount++;
       if (type === "LOVE") comment.lovesCount++;
+    } else {
+      let newReactedBy = reactedBy.map((r) => {
+        if (r.iduser !== iduser) return r;
+        return { ...r };
+      });
+      const userEntry = newReactedBy.find((r) => r.iduser === iduser);
 
-      await comment.save();
-      return res.status(200).json({ message: "Réaction ajoutée" });
-    }
-
-    // si existant -> on recrée le tableau (important)
-    let newReactedBy = reactedBy.map((r) => {
-      if (r.iduser !== iduser) return r;
-      return { ...r }; // clone
-    });
-
-    // on récupère la version clonée
-    const userEntry = newReactedBy.find((r) => r.iduser === iduser);
-
-    // ====== LIKE ======
-    if (type === "LIKE") {
-      // si déjà like => retirer
-      if (userEntry.like) {
-        userEntry.like = false;
-        comment.likesCount = Math.max(0, comment.likesCount - 1);
-
-        comment.reactedBy = newReactedBy;
-        await comment.save();
-        return res.status(200).json({ message: "Like supprimé" });
+      if (type === "LIKE") {
+        if (userEntry.like) {
+          userEntry.like = false;
+          comment.likesCount = Math.max(0, comment.likesCount - 1);
+        } else {
+          userEntry.like = true;
+          comment.likesCount++;
+        }
+      } else if (type === "LOVE") {
+        if (userEntry.love) {
+          userEntry.love = false;
+          comment.lovesCount = Math.max(0, comment.lovesCount - 1);
+        } else {
+          userEntry.love = true;
+          comment.lovesCount++;
+        }
       }
-
-      // sinon ajouter like
-      userEntry.like = true;
-      comment.likesCount++;
-
       comment.reactedBy = newReactedBy;
-      await comment.save();
-      return res.status(200).json({ message: "Like ajouté" });
     }
 
-    // ====== LOVE ======
-    if (type === "LOVE") {
-      // si déjà love => retirer
-      if (userEntry.love) {
-        userEntry.love = false;
-        comment.lovesCount = Math.max(0, comment.lovesCount - 1);
-
-        comment.reactedBy = newReactedBy;
-        await comment.save();
-        return res.status(200).json({ message: "Love supprimé" });
-      }
-
-      // sinon ajouter love
-      userEntry.love = true;
-      comment.lovesCount++;
-
-      comment.reactedBy = newReactedBy;
-      await comment.save();
-      return res.status(200).json({ message: "Love ajouté" });
-    }
-
+    await comment.save();
+    return res.status(200).json({ message: "Réaction mise à jour" });
   } catch (error) {
     console.error("reactComment:", error);
     return res.status(500).json({ message: "Erreur réaction", error: error.message });
   }
 };
-
 
 
 // =========================
@@ -193,7 +159,7 @@ export const createComment = async (req, res) => {
 
       if (!niveau) {
         await newComment.destroy();
-        return res.status(400).json({ message: "Le niveau est obligatoire pour un document" });
+        return res.status(400).json({ message: "Level is required for a document" });
       }
 
       const ext = file.originalname.split('.').pop().toLowerCase();
@@ -362,7 +328,8 @@ export const getCommentById = async (req, res) => {
 export const getCommentsByPost = async (req, res) => {
   try {
     const { idpost } = req.params;
-    
+    const iduser = req.user.iduser;
+
     console.log('🔍 Récupération commentaires pour post:', idpost);
 
     const comments = await Comment.findAll({
@@ -370,50 +337,36 @@ export const getCommentsByPost = async (req, res) => {
       include: [
         {
           model: User,
-          as: 'auteur',
-          attributes: ['iduser', 'nom', 'prenom', 'photo', 'niveau']
+          as: "auteur",
+          attributes: ["iduser", "nom", "prenom", "photo", "niveau"],
         },
         {
           model: Document,
-          as: 'documents',
-          required: false
-        }
+          as: "documents",
+          required: false,
+        },
       ],
-      order: [['createdAt', 'ASC']]
+      order: [["createdAt", "ASC"]],
     });
 
-    console.log('📝 Nombre de commentaires trouvés:', comments.length);
-    
-    comments.forEach((c, index) => {
-      console.log(`📌 Commentaire ${index + 1}:`, {
-        idcomment: c.idcomment,
-        contenu: c.contenu?.substring(0, 20),
-        hasDocuments: !!c.documents,
-        documentsCount: c.documents?.length || 0,
-        documentsData: c.documents
-      });
+    if (comments.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    const final = comments.map((c) => {
+      const json = c.toJSON();
+      const existing = (json.reactedBy || []).find((r) => r.iduser === iduser);
+
+      return {
+        ...json,
+        isLiked: existing?.like === true,
+        isLoved: existing?.love === true,
+        likesCount: json.likesCount,
+        lovesCount: json.lovesCount,
+      };
     });
 
-    const iduser = req.user.iduser;
-
-const final = comments.map((c) => {
-  const json = c.toJSON();
-
-const existing = (json.reactedBy || []).find((r) => r.iduser === iduser);
-
-return {
-  ...json,
-  isLiked: existing?.like === true,
-  isLoved: existing?.love === true,
-  likesCount: json.likesCount,
-  lovesCount: json.lovesCount,
-};
-
-
-});
-
-return res.status(200).json(final);
-
+    return res.status(200).json(final);
   } catch (error) {
     console.error("❌ getCommentsByPost ERROR:", error);
     return res.status(500).json({ 
