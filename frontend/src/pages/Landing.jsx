@@ -1,11 +1,11 @@
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-/* Replace by local assets if you want */
 const HERO_IMG =
-  "https://images.unsplash.com/photo-1588072432836-7fb78c5f0b44?auto=format&fit=crop&w=1400&q=80";
+  "https://images.pexels.com/photos/4145190/pexels-photo-4145190.jpeg?auto=compress&cs=tinysrgb&w=1400";
+
 const ABOUT_IMG =
-  "https://images.unsplash.com/photo-1588072432904-843af37f03ed?auto=format&fit=crop&w=1400&q=80";
+  "https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=1400";
 
 export default function Landing() {
   const navigate = useNavigate();
@@ -102,13 +102,12 @@ export default function Landing() {
           --card:#ffffff;
           --line:rgba(140,120,255,.18);
 
-          --p1:#7c3aed;
-          --p2:#a855f7;
-          --p3:#6d28d9;
+          --p1:#0040D0;  /* bleu */
+--p2:#E7A33E;  /* orange */
+--p3:#E7A33E;  /
 
-          --shadow: 0 2.5vw 6vw rgba(124,58,237,.14);
-          --shadow2: 0 1.6vw 4vw rgba(15,23,42,.10);
-
+          --shadow: 0 2.5vw 6vw rgba(0,64,208,.14);   /* bleu pâle */
+--shadow2: 0 1.6vw 4vw rgba(231,163,62,.10); /* orange pâle */
           --padX: clamp(4%, 6vw, 7%);
         }
 
@@ -190,7 +189,7 @@ export default function Landing() {
           border-radius: 999px;
           padding: .7em 1.25em;
           font-weight: 700;
-          border: 1px solid rgba(124,58,237,.35);
+          border: 1px solid rgba(0,64,208,.35); 
           background: rgba(255,255,255,.70);
           color: var(--p3);
           transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
@@ -203,7 +202,7 @@ export default function Landing() {
           background: linear-gradient(90deg, var(--p1), var(--p2));
           border-color: transparent;
           color:#fff;
-          box-shadow: 0 1vw 2.4vw rgba(124,58,237,.22);
+          box-shadow: 0 1vw 2.4vw rgba(0,64,208,.22);
         }
 
         /* ✅ Content starts under header + gap */
@@ -221,8 +220,9 @@ export default function Landing() {
         .hero{
           /* ✅ IMPORTANT: no margin-top here (avoid overlap issues) */
           background:
-            radial-gradient(70vw 40vw at 18% 0%, rgba(124,58,237,.18), rgba(124,58,237,0) 60%),
-            radial-gradient(70vw 40vw at 85% 10%, rgba(168,85,247,.16), rgba(168,85,247,0) 62%),
+            radial-gradient(70vw 40vw at 18% 0%, rgba(0,64,208,.18), rgba(0,64,208,0) 60%),
+radial-gradient(70vw 40vw at 85% 10%, rgba(231,163,62,.16), rgba(231,163,62,0) 62%)
+
             linear-gradient(180deg, #ffffff, rgba(244,242,255,1));
           overflow:hidden;
         }
@@ -257,10 +257,10 @@ export default function Landing() {
         .badge{
           padding: .65em 1em;
           border-radius: 999px;
-          border: 1px solid rgba(124,58,237,.18);
+          border: 1px solid rgba(231,163,62,.18); 
           background: rgba(255,255,255,.7);
           font-size: 13px;
-          color: #4c1d95;
+          color: #E7A33E;    
           font-weight: 800;
         }
 
@@ -387,9 +387,9 @@ export default function Landing() {
           justify-content:center;
           padding: .6em 1.1em;
           border-radius: 999px;
-          border: 1px solid rgba(124,58,237,.22);
-          background: rgba(124,58,237,.08);
-          color: #4c1d95;
+          border: 1px solid rgba(231,163,62,.22);
+          background: rgba(231,163,62,.08); 
+         color: #E7A33E;  
           font-weight: 900;
           font-size: 13px;
           letter-spacing: .03em;
@@ -433,7 +433,7 @@ export default function Landing() {
           width: 52px;
           height: 52px;
           border-radius: 999px;
-          border: 1px solid rgba(124,58,237,.22);
+          border: 1px solid rgba(231,163,62,.22);
           background: rgba(255,255,255,.75);
           cursor:pointer;
           font-weight: 900;
@@ -451,7 +451,7 @@ export default function Landing() {
           width: 12px;
           height: 12px;
           border-radius: 999px;
-          border: 1px solid rgba(124,58,237,.35);
+          border: 1px solid rgba(0,64,208,.35); 
           background: rgba(124,58,237,.12);
           cursor:pointer;
           transition: width .25s ease, background .25s ease;
@@ -468,9 +468,9 @@ export default function Landing() {
 
         .how{
           background:
-            radial-gradient(60vw 34vw at 18% 10%, rgba(124,58,237,.12), rgba(124,58,237,0) 60%),
-            radial-gradient(60vw 34vw at 82% 18%, rgba(168,85,247,.10), rgba(168,85,247,0) 62%),
-            linear-gradient(180deg, rgba(255,255,255,1), rgba(244,242,255,1));
+           /*radial-gradient(60vw 34vw at 18% 10%, rgba(193, 202, 221, 0.12), rgba(189, 186, 214, 0) 60%),
+            radial-gradient(60vw 34vw at 82% 18%, rgba(228, 208, 193, 0.1), rgba(226, 206, 159, 0) 62%),*/
+            linear-gradient(180deg,rgb(235, 247, 249) rgb(251, 238, 220), rgb(235, 247, 249));
           overflow:hidden;
         }
 
@@ -495,7 +495,7 @@ export default function Landing() {
           height: 4px;
           border-radius: 999px;
           margin-top: 12px;
-          background: linear-gradient(90deg, var(--p1), var(--p2));
+         background: linear-gradient(90deg, var(--p1), var(--p2));
           opacity: .95;
         }
 
@@ -509,9 +509,9 @@ export default function Landing() {
         .howCard{
           position: relative;
           background: rgba(255,255,255,.82);
-          border: 1px solid rgba(140,120,255,.18);
+          border: 1px solid rgba(236, 182, 160, 0.18);
           border-radius: 22px;
-          box-shadow: 0 24px 48px rgba(15,23,42,.12);
+          box-shadow: 0 24px 48px rgba(86, 101, 136, 0.12);
           padding: 28px;
           transition: transform .25s ease, box-shadow .25s ease;
           overflow:hidden;
@@ -522,8 +522,8 @@ export default function Landing() {
           position:absolute;
           inset:-60px;
           background:
-            radial-gradient(circle at 18% 15%, rgba(124,58,237,.22), transparent 55%),
-            radial-gradient(circle at 80% 35%, rgba(168,85,247,.18), transparent 58%);
+            radial-gradient(circle at 18% 15%, rgba(131, 98, 26, 0.22), transparent 55%),
+            radial-gradient(circle at 80% 35%, rgba(14, 51, 120, 0.18), transparent 58%);
           opacity:.55;
           filter: blur(18px);
           pointer-events:none;
@@ -546,7 +546,7 @@ export default function Landing() {
           color: #fff;
           background: linear-gradient(135deg, var(--p1), var(--p2));
           margin-bottom: 16px;
-          box-shadow: 0 14px 26px rgba(124,58,237,.22);
+          box-shadow: 0 14px 26px rgba(0,64,208,.22);
           z-index: 1;
         }
 
@@ -592,12 +592,13 @@ export default function Landing() {
         <header className="landingHeader" ref={headerRef}>
           <div className="headerIn">
             <div className="brand" onClick={() => navigate("/")}>
-              <div className="logoMark" />
-              <div className="brandTxt">
-                <div className="name">DOCENTRA</div>
-                <div className="sub">ENSAT Student Platform</div>
-              </div>
-            </div>
+  <img
+    src="/images/logo.png"
+    alt="Docentra Logo"
+    style={{ width: "23%", height: "23%", objectFit: "contain", marginLeft: "-10%" }}
+  />
+</div>
+
 
             <div className="headerBtns">
               <button className="btn" onClick={() => navigate("/login")}>
