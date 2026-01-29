@@ -228,18 +228,29 @@ headerClosed: {
     WebkitTextFillColor: "initial",
     backgroundClip: "text",
   },
+  '@keyframes pulse': {
+  '0%, 100%': { 
+    opacity: 1,
+    transform: 'scale(1)'
+  },
+  '50%': { 
+    opacity: 0.5,
+    transform: 'scale(1.1)'
+  }
+},
   statusContainer: {
     display: "flex",
     alignItems: "center",
     gap: "0.5rem",
   },
-  statusDot: {
-    width: "8px",
-    height: "8px",
-    backgroundColor: "#25D366",
-    borderRadius: "50%",
-    animation: "pulse 2s infinite",
-  },
+ statusDot: {
+  width: "10px", // Augmenté de 8px
+  height: "10px", // Augmenté de 8px
+  backgroundColor: "#25D366",
+  borderRadius: "50%",
+  animation: "pulse 2s infinite",
+  boxShadow: "0 0 8px rgba(37, 211, 102, 0.5)", // Ajout d'un glow
+},
   status: {
     color: "#6b7280",
     fontSize: "0.875rem",
@@ -303,15 +314,19 @@ headerClosed: {
     backdropFilter: "blur(10px)",
     border: "1px solid rgba(255, 255, 255, 0.5)",
   },
-  messageBubbleUser: {
-    background: "linear-gradient(90deg, #4a82fc, #0040D0)",
-    color: "white",
-  },
-  messageBubbleBot: {
-    backgroundColor: "rgba(255, 255, 255, 0.99)",
-    color: "#1f2937",
-    borderColor: "rgba(0, 64, 208, 0.08)",
-  },
+messageBubbleUser: {
+  background: "linear-gradient(135deg, #4a82fc 0%, #0040D0 100%)", // Gradient diagonal
+  color: "white",
+  boxShadow: "0 4px 16px rgba(0, 64, 208, 0.25)", // Ombre plus prononcée
+  transition: "all 0.3s ease",
+},
+messageBubbleBot: {
+  backgroundColor: "rgba(255, 255, 255, 0.99)",
+  color: "#1f2937",
+  borderColor: "rgba(0, 64, 208, 0.08)",
+  boxShadow: "0 4px 16px rgba(0, 64, 208, 0.08)", // Ombre plus prononcée
+  transition: "all 0.3s ease", // Animation smooth
+},
   messageText: {
     fontSize: "0.9375rem",
     lineHeight: "1.6",
@@ -398,17 +413,17 @@ quickBtn: {
   gap: "0.5rem",
 },
 
-  inputWrapper: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.75rem",
-    backgroundColor: "white",
-    borderRadius: "1.25rem",
-    padding: "0.75rem 1rem",
-    border: "2px solid #0040D0", 
-    transition: "all 0.3s",
-    boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
-  },
+inputWrapper: {
+  display: "flex",
+  alignItems: "center",
+  gap: "0.75rem",
+  backgroundColor: "white",
+  borderRadius: "1.5rem", // Plus arrondi
+  padding: "0.875rem 1.25rem", // Padding augmenté
+  border: "2px solid rgba(0, 64, 208, 0.2)", // Bordure plus visible par défaut
+  transition: "all 0.3s ease",
+  boxShadow: "0 4px 16px rgba(0, 64, 208, 0.08)", // Ombre plus prononcée
+},
   input: {
     flex: 1,
     backgroundColor: "transparent",
@@ -489,16 +504,13 @@ historyIcon: {
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  width: "40px",  // Taille du fond
-  height: "40px", // Taille du fond
-  borderRadius: "8px",  // Bordure arrondie pour un effet rectangle
-  backgroundColor: "#E7A33E",  // Couleur du fond (identique au bouton de nouvelle conversation)
+  width: "48px", // Augmenté de 40px
+  height: "48px", // Augmenté de 40px
+  borderRadius: "12px", // Plus arrondi
+  background: "linear-gradient(135deg, #E7A33E 0%, #FFC168 100%)", // Gradient au lieu d'une couleur unie
   cursor: "pointer",
-  transition: "all 0.3s",
-  ":hover": {
-    transform: "scale(1.1)",  // Effet de zoom lors du survol
-  },
-  boxShadow: "0 4px 8px rgba(0, 0, 0, 0.15)", // Ombre légère pour plus de profondeur
+  transition: "all 0.3s ease",
+  boxShadow: "0 4px 12px rgba(231, 163, 62, 0.3)", // Ombre plus prononcée
 },
 
 historyIconInside: {
@@ -989,27 +1001,14 @@ const toggleHistoryModal = () => {
     <div style={{ ...styles.mainContent, ...(sidebarOpen ? {} : styles.mainContentExpanded) }}>
 <div style={{ ...styles.header, ...(sidebarOpen ? styles.headerOpen : styles.headerClosed) }}>        <div style={{ ...styles.headerContent, transition: "all 0.3s ease" }}>
   <div style={styles.logo}>
-    <div style={styles.logoCircle}>
-      {/* Remplacer l'icône par l'image logo.png avec fond transparent */}
-      <img
-        src="/images/logo.png" // Le chemin vers l'image logo sans fond
-        alt="Logo"
-        style={{
-          width: '3.5rem',
-          height: '3.5rem',
-          objectFit: 'contain', // Assurer que l'image garde ses proportions
-          background: 'transparent', // Assurer qu'il n'y a pas de fond coloré
-        }}
-      />
-    </div>
-    <div>
-      <h1 style={styles.title}>DocentraBot</h1>
-      <div style={styles.statusContainer}>
-        <div style={styles.statusDot} />
-        <p style={styles.status}>En ligne</p>
-      </div>
+  <div>
+    <h1 style={styles.title}>DocentraBot</h1>
+    <div style={styles.statusContainer}>
+      <div style={styles.statusDot} />
+      <p style={styles.status}>En ligne</p>
     </div>
   </div>
+</div>
   <div style={styles.historyIcon} onClick={toggleHistoryModal}>
     <div style={styles.historyIconInside}>
       <FileText size={38} color="#FFFFFF" /> {/* Ancienne icône d'historique */}

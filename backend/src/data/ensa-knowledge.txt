@@ -32,8 +32,6 @@ Débouchés : Directeur production, responsable qualité, ingénieur process/log
 Aucune option spécifique (formation générale). Maîtrise microélectronique, informatique industrielle, CAO, contrôle/commande, robotique.  
 Débouchés : Ingénieur bureau d'études, responsable fabrication, directeur technique électronique/robotique.
 
-### Génie des Systèmes de Télécommunications et Réseaux (GSTR)
-Réseaux avancés, 5G/6G, cybersécurité réseaux, télécoms.
 
 **Options et Description Détaillée :**  
 Aucune option spécifique (formation générale). Conception et gestion de systèmes de transmission d'information, réseaux avancés.  
@@ -48,6 +46,7 @@ Débouchés : Ingénieur énergie renouvelable, auditeur énergétique, responsa
 
 ### Génie Systèmes et Réseaux (GSR)
 Administration systèmes/réseaux, cloud computing, DevOps.
+c'est la filiere GSTR qui etait avant mais maintenant avec la nouvelle acreditation elle est devenu GSR
 
 **Options et Description Détaillée :**  
 Aucune option spécifique (formation générale). Gestion infrastructures IT, réseaux avancés, sécurité.  
@@ -66,7 +65,7 @@ Débouchés : Expert cybersécurité, consultant cyberintelligence.
 - Tu aimes coder → GINF
 - Tu aimes organiser, optimiser, gérer des projets → GIND/GIL
 - Tu aimes l’électronique et les cartes → GSEA
-- Tu aimes les réseaux et la sécurité → GSTR ou GCYS
+- Tu aimes les réseaux et la sécurité → GSR ou GCYS
 - Tu veux travailler dans l’énergie verte → G2EI
 Toutes les filières ont d’excellents débouchés. Stages obligatoires + PFE en entreprise.
 
@@ -104,7 +103,7 @@ Toutes les filières ont d’excellents débouchés. Stages obligatoires + PFE e
 
 ## Application – Cahier des charges complet (FAQ intégrée)
 ### Contexte & Objectifs
-Plateforme web interne pour tous les étudiants ENSA Tanger (AP1 → 3e année ingénieur, toutes filières : GINF, GIND, GSR, G2EI, GSTR, GSEA, GCYS, etc.). Objectif : partager cours, documents, conseils, questions, trouver facilement des étudiants, communiquer de manière sécurisée.
+Plateforme web interne pour tous les étudiants ENSA Tanger (AP1 → 3e année ingénieur, toutes filières : GINF, GIND, GSR, G2EI, GSEA, GCYS, etc.). Objectif : partager cours, documents, conseils, questions, trouver facilement des étudiants, communiquer de manière sécurisée.
 ### 1. Authentification & Inscription
 - Création de compte : Nom, Prénom, Email, Mot de passe, Filière, Niveau (1 à 5), Photo (optionnelle)
 - Connexion : email + mot de passe
