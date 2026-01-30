@@ -63,7 +63,6 @@ describe("Comment Integration", () => {
   it("should create a comment with a single file and store it in the database", async () => {
     const commentPayload = {
       contenu: "This is a test comment with a single file.",
-      typeContenu: "TEXTE",
       isAnonymat: false,
       niveau: "3A",
       idpost: postId
@@ -76,9 +75,8 @@ describe("Comment Integration", () => {
     const res = await request(app)
       .post("/api/comments/")
       .set("Cookie", tokenA)
-      .attach("file", filePath)
+      .attach("files", filePath) // <-- changed from 'file' to 'files'
       .field("contenu", commentPayload.contenu)
-      .field("typeContenu", commentPayload.typeContenu)
       .field("isAnonymat", commentPayload.isAnonymat)
       .field("niveau", commentPayload.niveau)
       .field("idpost", commentPayload.idpost)
@@ -101,7 +99,6 @@ describe("Comment Integration", () => {
     // Créer un commentaire parent
     const commentPayload = {
       contenu: "This is a test comment.",
-      typeContenu: "TEXTE",
       isAnonymat: false,
       niveau: "3A",
       idpost: postId
@@ -111,7 +108,6 @@ describe("Comment Integration", () => {
       .post("/api/comments/")
       .set("Cookie", tokenA)
       .field("contenu", commentPayload.contenu)
-      .field("typeContenu", commentPayload.typeContenu)
       .field("isAnonymat", commentPayload.isAnonymat)
       .field("niveau", commentPayload.niveau)
       .field("idpost", commentPayload.idpost)
@@ -120,9 +116,7 @@ describe("Comment Integration", () => {
     // Répondre au commentaire créé
     const replyPayload = {
       contenu: "This is a reply to the test comment.",
-      typeContenu: "TEXTE",
-      isAnonymat: false,
-      idparent: createdComment.body.idcomment, // Lier la réponse au commentaire précédent
+      isAnonymat: false
     };
 
     const res = await request(app)
@@ -153,7 +147,6 @@ describe("Comment Integration", () => {
   it("should create a comment with multiple files and store it in the database", async () => {
     const commentPayload = {
       contenu: "This is a test comment with multiple files.",
-      typeContenu: "TEXTE",
       isAnonymat: false,
       niveau: "3A",
       idpost: postId
@@ -171,7 +164,6 @@ describe("Comment Integration", () => {
       .attach("files", filePath1)
       .attach("files", filePath2)
       .field("contenu", commentPayload.contenu)
-      .field("typeContenu", commentPayload.typeContenu)
       .field("isAnonymat", commentPayload.isAnonymat)
       .field("niveau", commentPayload.niveau)
       .field("idpost", commentPayload.idpost)
