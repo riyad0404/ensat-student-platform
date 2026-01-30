@@ -4,10 +4,9 @@ import '../styles/CreatePostModal.css';
 
 const CreatePostModal = ({ isOpen, onClose, onPostCreated, postToEdit }) => {
   const [content, setContent] = useState('');
-  const [file, setFile] = useState(null);
-  const [filePreview, setFilePreview] = useState(null);
-  const [existingFile, setExistingFile] = useState(null); // Pour gérer le fichier existant en édition
-  const [niveau, setNiveau] = useState('GINF1');
+  const [files, setFiles] = useState([]);
+  const [existingFiles, setExistingFiles] = useState([]); // Pour gérer les fichiers existants en édition
+  const [fileLevels, setFileLevels] = useState([]); // Tableau des niveaux pour chaque fichier
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(false);
@@ -16,21 +15,18 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated, postToEdit }) => {
     if (isOpen) {
       if (postToEdit) {
         setContent(postToEdit.contenu || '');
-        setNiveau(postToEdit.niveau || 'GINF1');
         setIsAnonymous(postToEdit.isAnonymat === true || postToEdit.isAnonymat === 'true');
         
         // Gérer le fichier existant
-        const doc = postToEdit.documents?.[0] || postToEdit.document;
-        setExistingFile(doc || null);
+        setExistingFiles(postToEdit.documents || (postToEdit.document ? [postToEdit.document] : []));
         
-        setFile(null);
-        setFilePreview(null);
+        setFiles([]);
+        setFileLevels([]);
       } else {
         setContent('');
-        setFile(null);
-        setFilePreview(null);
-        setExistingFile(null);
-        setNiveau('GINF1');
+        setFiles([]);
+        setExistingFiles([]);
+        setFileLevels([]);
         setIsAnonymous(false);
       }
       setError('');
@@ -40,26 +36,33 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated, postToEdit }) => {
   }, [isOpen, postToEdit]);
 
   const handleFileChange = (e) => {
-    const selectedFile = e.target.files[0];
-    if (selectedFile) {
-      setFile(selectedFile);
-      // Si on ajoute un nouveau fichier, on "cache" l'existant visuellement (il sera remplacé)
-      if (selectedFile.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onloadend = () => setFilePreview(reader.result);
-        reader.readAsDataURL(selectedFile);
-      } else {
-        setFilePreview(selectedFile.name);
-      }
+    const selectedFiles = Array.from(e.target.files);
+    if (selectedFiles.length > 0) {
+      setFiles(prev => [...prev, ...selectedFiles]);
+      // Ajouter un niveau par défaut (GINF1) pour chaque nouveau fichier
+      setFileLevels(prev => [...prev, ...selectedFiles.map(() => 'GINF1')]);
     }
+  };
+
+  const removeFile = (index) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+    setFileLevels(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleLevelChange = (index, newLevel) => {
+    setFileLevels(prev => {
+      const newLevels = [...prev];
+      newLevels[index] = newLevel;
+      return newLevels;
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Validation : il faut au moins du texte OU un fichier (nouveau ou existant)
-    if (!content.trim() && !file && !existingFile) {
-      setError('Add content or a file');
+    if (!content.trim() && files.length === 0 && existingFiles.length === 0) {
+      setError('Add content or files');
       return;
     }
 
@@ -74,21 +77,29 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated, postToEdit }) => {
       
       if (postToEdit) {
         // Update logic
-        if (file) {
-          formData.append('file', file);
-          formData.append('niveau', niveau);
+        if (files.length > 0) {
+          files.forEach((file, index) => {
+            formData.append('files', file);
+            formData.append('niveau', fileLevels[index]);
+          });
         }
-        // Si on avait un fichier existant et qu'on l'a supprimé (et pas remplacé par un nouveau)
-        if (postToEdit.documents?.length > 0 && !existingFile && !file) {
-             formData.append('deletePreviousFile', 'true');
-        }
+        
+        // Calculer les fichiers supprimés
+        const originalDocs = postToEdit.documents || (postToEdit.document ? [postToEdit.document] : []);
+        const originalIds = originalDocs.map(d => d.iddoc);
+        const currentIds = existingFiles.map(d => d.iddoc);
+        const idsToDelete = originalIds.filter(id => !currentIds.includes(id));
+        
+        idsToDelete.forEach(id => formData.append('deleteFileIds', id));
 
         response = await updatePost(postToEdit.idpost, formData);
       } else {
         // Create logic
-        if (file) {
-          formData.append('file', file);
-          formData.append('niveau', niveau);
+        if (files.length > 0) {
+          files.forEach((file, index) => {
+            formData.append('files', file);
+            formData.append('niveau', fileLevels[index]);
+          });
         }
         response = await createPost(formData);
       }
@@ -142,46 +153,96 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated, postToEdit }) => {
             />
             
             {/* Aperçu du NOUVEAU fichier */}
-            {filePreview && (
-              <div className="file-preview">
-                {file && file.type.startsWith('image/') ? (
-                  <img src={filePreview} alt="Aperçu" />
-                ) : (
-                  <div className="document-preview">
-                    <p>📄 {filePreview}</p>
+            {files.length > 0 && (
+              <div className="files-list">
+                {files.map((file, index) => (
+                  <div key={index} className="file-preview">
+                    {file.type.startsWith('image/') ? (
+                      <img src={URL.createObjectURL(file)} alt="Preview" />
+                    ) : (
+                      <div className="document-preview">
+                        <p>📄 {file.name}</p>
+                      </div>
+                    )}
+                    
+                    {/* Sélecteur de niveau PAR FICHIER */}
+                    <select 
+                      value={fileLevels[index]} 
+                      onChange={(e) => handleLevelChange(index, e.target.value)}
+                      className="niveau-select-modal"
+                      style={{ marginTop: '8px', width: '100%', fontSize: '12px', padding: '6px' }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <optgroup label="Prépa">
+                        <option value="AP1">AP1</option>
+                        <option value="AP2">AP2</option>
+                      </optgroup>
+                      <optgroup label="Génie Informatique">
+                        <option value="GINF1">GINF1</option>
+                        <option value="GINF2">GINF2</option>
+                        <option value="GINF3">GINF3</option>
+                      </optgroup>
+                      <optgroup label="Génie Logiciel">
+                        <option value="GIL1">GIL1</option>
+                        <option value="GIL2">GIL2</option>
+                        <option value="GIL3">GIL3</option>
+                      </optgroup>
+                      <optgroup label="Génie des Systèmes et Réseaux">
+                        <option value="GSR1">GSR1</option>
+                        <option value="GSR2">GSR2</option>
+                        <option value="GSR3">GSR3</option>
+                      </optgroup>
+                      <optgroup label="Génie Électrique et Informatique Industrielle">
+                        <option value="G2EI1">G2EI1</option>
+                        <option value="G2EI2">G2EI2</option>
+                        <option value="G2EI3">G2EI3</option>
+                      </optgroup>
+                      <optgroup label="Génie des Systèmes Électriques et Automatiques">
+                        <option value="GSEA1">GSEA1</option>
+                        <option value="GSEA2">GSEA2</option>
+                        <option value="GSEA3">GSEA3</option>
+                      </optgroup>
+                      <optgroup label="Génie des Systèmes de Communication">
+                        <option value="GSYC1">GSYC1</option>
+                        <option value="GSYC2">GSYC2</option>
+                        <option value="GSYC3">GSYC3</option>
+                      </optgroup>
+                    </select>
+
+                    <button
+                      type="button"
+                      className="remove-file-btn"
+                      onClick={() => removeFile(index)}
+                    >
+                      ×
+                    </button>
                   </div>
-                )}
-                <button
-                  type="button"
-                  className="remove-file-btn"
-                  onClick={() => {
-                    setFile(null);
-                    setFilePreview(null);
-                  }}
-                >
-                  ×
-                </button>
+                ))}
               </div>
             )}
 
             {/* Aperçu du FICHIER EXISTANT (si pas de nouveau fichier sélectionné) */}
-            {!file && existingFile && (
-               <div className="file-preview existing">
-                  {(existingFile.type === 'IMAGE' || existingFile.url?.match(/\.(jpg|jpeg|png|gif|webp)$/i)) ? (
-                      <img src={existingFile.url} alt="Existing" />
-                  ) : (
-                      <div className="document-preview">
-                        <p>📄 {existingFile.filename}</p>
-                      </div>
-                  )}
-                  <button
-                    type="button"
-                    className="remove-file-btn"
-                    onClick={() => setExistingFile(null)}
-                    title="Remove file"
-                  >
-                    ×
-                  </button>
+            {files.length === 0 && existingFiles.length > 0 && (
+               <div className="files-list existing">
+                  {existingFiles.map((doc, index) => (
+                    <div key={doc.iddoc || index} className="file-preview existing">
+                        {(doc.type === 'IMAGE' || doc.url?.match(/\.(jpg|jpeg|png|gif|webp)$/i)) ? (
+                            <img src={doc.url} alt="Existing" />
+                        ) : (
+                            <div className="document-preview">
+                              <p>📄 {doc.filename}</p>
+                            </div>
+                        )}
+                        <button
+                          type="button"
+                          className="remove-file-btn"
+                          onClick={() => setExistingFiles(prev => prev.filter((_, i) => i !== index))}
+                          title="Remove file"
+                        >
+                          ×
+                        </button>
+                    </div>
+                  ))}
                </div>
             )}
 
@@ -190,57 +251,16 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated, postToEdit }) => {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
                 </svg>
-                <span>{postToEdit && existingFile ? "Change file" : "Add file"}</span>
+                <span>{postToEdit && existingFiles.length > 0 ? "Add more files" : "Add files"}</span>
                 <input
                   type="file"
+                  multiple
                   accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt"
                   onChange={handleFileChange}
                   style={{ display: 'none' }}
                 />
               </label>
 
-              {(file || existingFile) && (
-                <select 
-                  value={niveau} 
-                  onChange={(e) => setNiveau(e.target.value)}
-                  className="niveau-select-modal"
-                >
-                  <optgroup label="Prépa">
-                    <option value="AP1">AP1</option>
-                    <option value="AP2">AP2</option>
-                  </optgroup>
-                  <optgroup label="Génie Informatique">
-                    <option value="GINF1">GINF1</option>
-                    <option value="GINF2">GINF2</option>
-                    <option value="GINF3">GINF3</option>
-                  </optgroup>
-                  <optgroup label="Génie Logiciel">
-                    <option value="GIL1">GIL1</option>
-                    <option value="GIL2">GIL2</option>
-                    <option value="GIL3">GIL3</option>
-                  </optgroup>
-                  <optgroup label="Génie des Systèmes et Réseaux">
-                    <option value="GSR1">GSR1</option>
-                    <option value="GSR2">GSR2</option>
-                    <option value="GSR3">GSR3</option>
-                  </optgroup>
-                  <optgroup label="Génie Électrique et Informatique Industrielle">
-                    <option value="G2EI1">G2EI1</option>
-                    <option value="G2EI2">G2EI2</option>
-                    <option value="G2EI3">G2EI3</option>
-                  </optgroup>
-                  <optgroup label="Génie des Systèmes Électriques et Automatiques">
-                    <option value="GSEA1">GSEA1</option>
-                    <option value="GSEA2">GSEA2</option>
-                    <option value="GSEA3">GSEA3</option>
-                  </optgroup>
-                  <optgroup label="Génie des Systèmes de Communication">
-                    <option value="GSYC1">GSYC1</option>
-                    <option value="GSYC2">GSYC2</option>
-                    <option value="GSYC3">GSYC3</option>
-                  </optgroup>
-                </select>
-              )}
             </div>
 
             <div className="publication-mode-container">
@@ -272,16 +292,16 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated, postToEdit }) => {
                 </button>
                 <button 
                   type="submit" 
-                  disabled={loading || (!content.trim() && !file && !existingFile)}
+                  disabled={loading || (!content.trim() && files.length === 0 && existingFiles.length === 0)}
                   style={{
                     height: '44px', borderRadius: '25px', background: 'linear-gradient(90deg, #4a82fc, #0040D0)', 
                     color: 'white', fontWeight: '700', fontSize: '14px', border: 'none', 
                     padding: '0 30px', cursor: 'pointer', transition: 'all 0.3s ease',
-                    opacity: (loading || (!content.trim() && !file && !existingFile)) ? 0.7 : 1,
-                    cursor: (loading || (!content.trim() && !file && !existingFile)) ? 'not-allowed' : 'pointer'
+                    opacity: (loading || (!content.trim() && files.length === 0 && existingFiles.length === 0)) ? 0.7 : 1,
+                    cursor: (loading || (!content.trim() && files.length === 0 && existingFiles.length === 0)) ? 'not-allowed' : 'pointer'
                   }}
-                  onMouseEnter={(e) => !(loading || (!content.trim() && !file && !existingFile)) && (e.target.style.transform = 'translateY(-1px)')}
-                  onMouseLeave={(e) => !(loading || (!content.trim() && !file && !existingFile)) && (e.target.style.transform = 'translateY(0)')}
+                  onMouseEnter={(e) => !(loading || (!content.trim() && files.length === 0 && existingFiles.length === 0)) && (e.target.style.transform = 'translateY(-1px)')}
+                  onMouseLeave={(e) => !(loading || (!content.trim() && files.length === 0 && existingFiles.length === 0)) && (e.target.style.transform = 'translateY(0)')}
                 >
                   {loading ? (postToEdit ? 'Saving...' : 'Publishing...') : (postToEdit ? 'Save Changes' : 'Publish')}
                 </button>

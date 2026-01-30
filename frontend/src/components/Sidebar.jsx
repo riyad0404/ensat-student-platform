@@ -63,7 +63,7 @@ const Sidebar = () => {
                             src={appNameImg}
                             alt="" 
                             className="sidebar-logo-expanded"
-                            style={{ height: '100px' }}
+                            style={{ width: '80%', height: 'auto', display: 'block', margin: '0 auto' }}
                         />
                     )}
                 </div>

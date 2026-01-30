@@ -4,11 +4,9 @@ import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import "./../styles/login.css";
 import { FiMail, FiEye, FiEyeOff } from "react-icons/fi";
-import loginImg from "../assets/login-illustration.png";
+import appNameImg from "../assets/appname.jpeg";
 import Input from "../components/input.jsx";
 import Button from "../components/button.jsx";
-import logoImg from "../assets/logo.jpeg";
-import appNameImg from "../assets/appname.jpeg";
 
 const LOGIN_LOCK_KEY = "auth_login_lock_until";        // timestamp ms
 const LOGIN_LOCK_ACTIVE_KEY = "auth_login_lock_active"; // "1" or "0"
@@ -213,15 +211,12 @@ export default function LoginPage() {
       <div className="login-card">
         {/* IMAGE */}
         <div className="login-left">
-          <img src={loginImg} alt="Login Illustration" className="login-illustration" />
+          <img src={appNameImg} alt="Login Illustration" className="login-illustration" />
         </div>
 
         {/* FORM */}
         <div className="login-right">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '20px' }}>
-            <h2>Welcome to</h2>
-            <img src={appNameImg} alt="Docentra" style={{ height: '70px' }} />
-          </div>
+          <h2>Welcome back!</h2>
           <p className="subtitle">Sign in to continue</p>
 
           {/* ✅ SAME LOGIN DESIGN: red banner stays visible while locked */}

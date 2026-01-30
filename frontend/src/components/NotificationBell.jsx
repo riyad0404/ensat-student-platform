@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, Check, X } from 'lucide-react';
 import notificationAPI from '../api/notificationAPI';
+import conversationAPI from '../api/conversationAPI';
 import { useSocket } from '../contexts/SocketContext';
+import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import '../styles/notifications.css';
 
@@ -9,6 +11,7 @@ const NotificationBell = () => {
   const [notifications, setNotifications] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const { socket } = useSocket();
+  const { user } = useAuth();
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
@@ -54,6 +57,46 @@ const NotificationBell = () => {
     }
   };
 
+  const handleAcceptJoin = async (e, notif) => {
+    e.stopPropagation();
+    const meta = typeof notif.metadata === 'string' ? JSON.parse(notif.metadata) : (notif.metadata || {});
+    const groupId = meta.groupId || meta.idgroup;
+    const userId = notif.idSourceUser;
+
+    if (!groupId || !userId) return;
+
+    try {
+      await conversationAPI.addMember(groupId, userId);
+      setNotifications(prev => prev.map(n => 
+        (n.idNotif || n.id || n.idnotification) === (notif.idNotif || notif.id || notif.idnotification)
+          ? { ...n, isRead: true }
+          : n
+      ));
+    } catch (error) {
+      console.error("Error accepting join:", error);
+    }
+  };
+
+  const handleDeclineJoin = async (e, notif) => {
+    e.stopPropagation();
+    const meta = typeof notif.metadata === 'string' ? JSON.parse(notif.metadata) : (notif.metadata || {});
+    const groupId = meta.groupId || meta.idgroup;
+    const userId = notif.idSourceUser;
+
+    if (!groupId || !userId) return;
+
+    try {
+      await conversationAPI.declineJoinRequest(groupId, userId);
+      setNotifications(prev => prev.map(n => 
+        (n.idNotif || n.id || n.idnotification) === (notif.idNotif || notif.id || notif.idnotification)
+          ? { ...n, isRead: true }
+          : n
+      ));
+    } catch (error) {
+      console.error("Error declining join:", error);
+    }
+  };
+
   const handleNotificationClick = async (notif) => {
     const notifId = notif.idNotif || notif.id || notif.idnotification;
 
@@ -83,7 +126,7 @@ const NotificationBell = () => {
         if (notif.type === 'MESSAGE' && meta.conversationId) {
             navigate(`/conversations/${meta.conversationId}`);
         } 
-        else if (['GROUP_INVITE', 'GROUP_ADD', 'JOIN_ACCEPTED', 'JOIN_REQUEST'].includes(notif.type)) {
+        else if (['GROUP_INVITE', 'GROUP_ADD', 'JOIN_ACCEPTED', 'JOIN_REQUEST', 'JOIN_DECLINED'].includes(notif.type)) {
             const groupId = meta.groupId || meta.idgroup;
             if (groupId) navigate(`/conversations/${groupId}`);
         }
@@ -97,11 +140,13 @@ const NotificationBell = () => {
                 navigate('/profile'); 
             }
         }
-        // 3. Réponses aux commentaires (peut être sur le post de quelqu'un d'autre, donc on garde Home pour l'instant ou on redirige vers le post spécifique si on avait une page détail)
+        // 3. Réponses et Réactions aux commentaires
         else if (['REPLY_COMMENT', 'REACTION_COMMENT'].includes(notif.type)) {
-             // Pour l'instant, on laisse vers Home, ou on pourrait rediriger vers le post s'il est trouvable
              const postId = meta.postId || meta.idpost;
-             if (postId) navigate('/', { state: { scrollToPostId: postId } });
+             if (postId) {
+                 // Redirection vers la page d'accueil pour voir le post dans le fil
+                 navigate('/', { state: { scrollToPostId: postId } });
+             }
         }
     }
     
@@ -111,7 +156,7 @@ const NotificationBell = () => {
   // Traduction et formatage des messages
   const formatNotificationMessage = (notif) => {
     const meta = typeof notif.metadata === 'string' ? JSON.parse(notif.metadata) : (notif.metadata || {});
-    const senderName = meta.sender ? `${meta.sender.prenom} ${meta.sender.nom}` : "Someone";
+    const senderName = meta.senderName || (meta.sender ? `${meta.sender.prenom} ${meta.sender.nom}` : "Someone");
     const groupName = meta.groupName || "the group";
 
     switch (notif.type) {
@@ -120,10 +165,18 @@ const NotificationBell = () => {
       case 'COMMENT_PUB':
         return `${senderName} commented on your post`;
       case 'REPLY_COMMENT':
-        return `${senderName} replied to your comment`;
+        const postAuthor = meta.postAuthorName ? ` on ${meta.postAuthorName}'s post` : "";
+        const replyContent = meta.replyContent ? `: "${meta.replyContent}"` : "";
+        return `${senderName} replied to your comment${postAuthor}${replyContent}`;
       case 'REACTION_COMMENT':
         return `${senderName} reacted to your comment (${meta.typeReaction || 'Like'})`;
       case 'MESSAGE':
+        if (senderName === "System") {
+          return notif.message;
+        }
+        if (meta.isGroup && meta.groupName) {
+          return `New message from ${senderName} in group ${meta.groupName}`;
+        }
         return `New message from ${senderName}`;
       case 'GROUP_INVITE':
         return `${senderName} invited you to a group`;
@@ -135,6 +188,8 @@ const NotificationBell = () => {
         return `${meta.requestingUserName || senderName} wants to join ${groupName}`;
       case 'JOIN_ACCEPTED':
         return `You have been accepted into ${groupName}`;
+      case 'JOIN_DECLINED':
+        return `Your request to join ${groupName} was declined`;
       case 'GROUP_ADD':
         return `You have been added to ${groupName}`;
       default:
@@ -169,21 +224,64 @@ const NotificationBell = () => {
             {notifications.length === 0 ? (
               <div className="notification-empty">No notifications yet</div>
             ) : (
-              notifications.map(notif => (
-                <div 
-                  key={notif.idNotif || notif.id || notif.idnotification} 
-                  className={`notification-item ${!notif.isRead ? 'unread' : ''}`}
-                  onClick={() => handleNotificationClick(notif)}
-                >
-                  <div className="notification-content">
-                    <p>{formatNotificationMessage(notif)}</p>
-                    <span className="notification-time">
-                      {new Date(notif.createdAt).toLocaleDateString()} • {new Date(notif.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                    </span>
+              notifications.map(notif => {
+                const isJoinRequest = notif.type === 'JOIN_REQUEST' && !notif.isRead;
+                return (
+                  <div 
+                    key={notif.idNotif || notif.id || notif.idnotification} 
+                    className={`notification-item ${!notif.isRead ? 'unread' : ''}`}
+                    onClick={() => handleNotificationClick(notif)}
+                  >
+                    <div className="notification-content">
+                      <p>{formatNotificationMessage(notif)}</p>
+                      <span className="notification-time">
+                        {new Date(notif.createdAt).toLocaleDateString()} • {new Date(notif.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                      </span>
+                      {isJoinRequest && (
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                          <button 
+                            onClick={(e) => handleAcceptJoin(e, notif)}
+                            style={{
+                              padding: '4px 12px',
+                              borderRadius: '4px',
+                              border: 'none',
+                              background: '#25D366',
+                              color: 'white',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            <Check size={14} /> Accept
+                          </button>
+                          <button 
+                            onClick={(e) => handleDeclineJoin(e, notif)}
+                            style={{
+                              padding: '4px 12px',
+                              borderRadius: '4px',
+                              border: '1px solid #ef4444',
+                              background: 'transparent',
+                              color: '#ef4444',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            <X size={14} /> Refuse
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    {!notif.isRead && !isJoinRequest && <div className="notification-dot"></div>}
                   </div>
-                  {!notif.isRead && <div className="notification-dot"></div>}
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

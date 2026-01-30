@@ -224,7 +224,7 @@ const handleSubmit = async (e) => {
     
     return (
         <div className="edit-profile-page" ref={pageRef} style={{ background: '#f4f6fa' }}>
-            <div className="edit-profile-container">
+            <div className="edit-profile-container" style={{ maxWidth: '96%', width: '100%', margin: '0 auto' }}>
                 <div className="edit-profile-card">
                     <h1 className="edit-profile-title">Edit Profile</h1>
                     

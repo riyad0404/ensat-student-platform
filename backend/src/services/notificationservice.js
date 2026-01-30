@@ -12,6 +12,7 @@ export const NOTIF_TYPES = {
   JOIN_REQUEST: "JOIN_REQUEST",
   REACTION_COMMENT: "REACTION_COMMENT",
     JOIN_ACCEPTED: "JOIN_ACCEPTED",  // Quand un admin accepte une demande
+  JOIN_DECLINED: "JOIN_DECLINED", // Quand un admin refuse une demande
   GROUP_ADD: "GROUP_ADD",  // Quand un admin ajoute un membre
 };
 

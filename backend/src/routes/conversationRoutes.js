@@ -18,6 +18,7 @@ import {
   hideConversation,
   unhideConversation,
   joinConversation,
+  declineJoinRequest,
   markConversationAsRead,
    getAvailableGroups
 } from '../controllers/conversationController.js';
@@ -36,6 +37,9 @@ router.post('/:id/unhide', authMiddleware, unhideConversation);
 
 // Join conversation
 router.post('/:id/join', authMiddleware, joinConversation);
+
+// Decline join request
+router.post('/:id/join/decline', authMiddleware, declineJoinRequest);
 
 // Mark as read
 router.post('/:id/read', authMiddleware, markConversationAsRead);

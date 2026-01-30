@@ -39,7 +39,7 @@ export const createPost = async (postData) => {
       };
     }
     
-    const response = await axiosInstance.post('/posts/pubdoc', postData, config);
+    const response = await axiosInstance.post('/posts/pldoc', postData, config);
     return response.data;
   } catch (error) {
     console.error('Error creating post:', error);
@@ -123,7 +123,11 @@ export const deletePost = async (idpost) => {
 };
 
 export const updatePost = async (idpost, data) => {
-  const response = await axiosInstance.patch(`/posts/${idpost}`, data); 
+  const config = {};
+  if (data instanceof FormData) {
+    config.headers = { 'Content-Type': undefined };
+  }
+  const response = await axiosInstance.patch(`/posts/${idpost}`, data, config); 
   return response.data;
 };
 
@@ -145,7 +149,11 @@ export const deleteComment = async (id) => {
 
 // Modifier un commentaire
 export const updateComment = async (id, data) => {
-  const response = await axiosInstance.patch(`/comments/${id}`, data);
+  let config = {};
+  if (data instanceof FormData) {
+    config.headers = { 'Content-Type': 'multipart/form-data' };
+  }
+  const response = await axiosInstance.patch(`/comments/${id}`, data, config);
   return response.data;
 };
 
@@ -157,6 +165,8 @@ export const toggleCommentReaction = async (id, type) => {
 };
 
 export const replyToComment = async (id, data) => {
+  // Contournement : Utiliser la route de création standard qui gère idparent
+  // data doit contenir { contenu, idpost }
   const response = await axiosInstance.post(`/comments`, {
     idparent: id,
     idpost: data.idpost,

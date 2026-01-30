@@ -33,6 +33,7 @@ const Notification = sequelize.define(
          "REACTION_COMMENT",
           "JOIN_REQUEST",
           "JOIN_ACCEPTED", // Nouveau type
+          "JOIN_DECLINED", // Nouveau type
     "GROUP_ADD" // Nouveau type
       ),
       allowNull: false,

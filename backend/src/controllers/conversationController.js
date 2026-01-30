@@ -15,7 +15,7 @@ export const getAvailableGroups = async (req, res) => {
     // Get all group conversations
     // First, get all conversation IDs where user is a member
     const myMemberships = await ConversationMember.findAll({
-      where: { iduser: myUserId },
+      where: { iduser: myUserId, leftAt: null }, // ✅ CORRECTION : Seulement les membres ACTIFS
       attributes: ['idconversation'],
     });
     const myConvIds = myMemberships.map(m => m.idconversation);
@@ -420,16 +420,24 @@ io.emit("notification", {
       attributes: ['iduser'],
     });
 
+    const senderName = `${sender.prenom} ${sender.nom}`;
+    let notifMessage = `New message from ${senderName}`;
+    if (conv.type === 'GROUP') {
+      notifMessage = `New message from ${senderName} in group ${conv.name}`;
+    }
+
     for (const m of members) {
       if (m.iduser !== myUserId) {
         await createNotification({
           toUserId: m.iduser,
           fromUserId: myUserId,
           type: NOTIF_TYPES.MESSAGE,
-          message: `New message from ${sender.prenom} ${sender.nom}`,
+          message: notifMessage,
           metadata: {
             conversationId: idconversation,
-            senderName: `${sender.prenom} ${sender.nom}`,
+            senderName: senderName,
+            groupName: conv.type === 'GROUP' ? conv.name : undefined,
+            isGroup: conv.type === 'GROUP'
           },
         });
       }
@@ -571,6 +579,79 @@ export const addMember = async (req, res) => {
   }
 };
 
+/**
+ * 17) POST /api/conversations/:id/join/decline
+ * Owner declines a JOIN REQUEST
+ * Body: { userId }
+ */
+export const declineJoinRequest = async (req, res) => {
+  try {
+    const myUserId = req.user.iduser;
+    const idconversation = Number(req.params.id);
+    const { userId } = req.body;
+
+    const owner = await requireOwner(idconversation, myUserId);
+    if (!owner) {
+      return res.status(403).json({ message: 'Only owner can decline requests' });
+    }
+
+    const conv = await Conversation.findByPk(idconversation);
+
+    // Find the notification and mark as read
+    const pendingRequest = await Notification.findOne({
+      where: {
+        type: NOTIF_TYPES.JOIN_REQUEST,
+        idSourceUser: userId,
+        idDestinataire: myUserId,
+        'metadata.groupId': idconversation,
+        isRead: false,
+      },
+    });
+
+    if (pendingRequest) {
+      pendingRequest.isRead = true;
+      await pendingRequest.save();
+    }
+
+    // Notify the user
+    try {
+      await createNotification({
+        toUserId: userId,
+        fromUserId: myUserId,
+        type: NOTIF_TYPES.JOIN_DECLINED,
+        message: `Your request to join ${conv ? conv.name : 'group'} was declined`,
+        metadata: {
+          groupId: idconversation,
+          groupName: conv ? conv.name : '',
+        },
+      });
+    } catch (notifError) {
+      console.error("Notification error in declineJoinRequest:", notifError);
+      console.error("Notification JOIN_DECLINED error, trying fallback:", notifError.message);
+      // Fallback: use MESSAGE type if JOIN_DECLINED is not in DB ENUM yet
+      try {
+        await createNotification({
+          toUserId: userId,
+          fromUserId: myUserId,
+          type: NOTIF_TYPES.MESSAGE,
+          message: `Your request to join ${conv ? conv.name : 'group'} was declined`,
+          metadata: {
+            conversationId: idconversation,
+            senderName: "System",
+            groupName: conv ? conv.name : '',
+          },
+        });
+      } catch (fallbackErr) {
+        console.error("Fallback notification failed:", fallbackErr);
+      }
+    }
+
+    return res.status(200).json({ message: 'Join request declined' });
+  } catch (error) {
+    console.error('declineJoinRequest error:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
 
 
 /**
