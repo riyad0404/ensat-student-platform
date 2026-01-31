@@ -14,7 +14,9 @@ async function createUser(email, nom = "Test", prenom = "User", password = "Test
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const testFilePath = path.join(__dirname, "testfile.txt");
+const uploadsDir = path.join(__dirname, '..', 'uploads');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+const testFilePath = path.join(uploadsDir, "testfile.txt");
 const testFileContent = "This is a test file.";
 
 // Write a small test file before tests
@@ -65,10 +67,13 @@ describe("Post Controller Unit", () => {
       .set("Cookie", token)
       .field("contenu", "File post!")
       .field("niveau", "3A")
+      .field("typeContenu", "DOCUMENT")
       .attach("file", testFilePath)
       .expect(201);
     expect(res.body.post.typeContenu).toBe("DOCUMENT");
-    expect(res.body.document).toBeDefined();
+    expect(res.body.documents).toBeDefined();
+    expect(Array.isArray(res.body.documents)).toBe(true);
+    expect(res.body.documents.length).toBeGreaterThan(0);
     postId = res.body.post.idpost;
   });
 

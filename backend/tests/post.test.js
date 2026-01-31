@@ -78,8 +78,10 @@ describe("Post Integration", () => {
     };
 
     // Mocking file upload
-    const filePath1 = path.join(__dirname, 'testfile1.txt');
-    const filePath2 = path.join(__dirname, 'testfile2.txt');
+    const uploadsDir = path.join(__dirname, '..', 'uploads');
+    if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
+    const filePath1 = path.join(uploadsDir, 'testfile1.txt');
+    const filePath2 = path.join(uploadsDir, 'testfile2.txt');
     fs.writeFileSync(filePath1, "Test content for file 1.");
     fs.writeFileSync(filePath2, "Test content for file 2.");
 
@@ -96,7 +98,7 @@ describe("Post Integration", () => {
 
     expect(res.body.post.idpost).toBeDefined();
     expect(res.body.post.contenu).toBe(postPayload.contenu);
-    expect(res.body.post.typeContenu).toBe(postPayload.typeContenu);
+    expect(res.body.post.typeContenu).toBe("DOCUMENT");
     expect(res.body.post.isAnonymat).toBe(postPayload.isAnonymat);
 
     const postInDb = await Post.findOne({ where: { idpost: res.body.post.idpost } });
