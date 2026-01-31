@@ -15,7 +15,7 @@ Quatre nouvelles fonctionnalités ont été implémentées pour améliorer la ge
 
 ### 1. Appliquer la migration
 
-Avant de déployer, exécutez la migration pour ajouter la colonne `lastReadAt` :
+Avant de déployer,,, exécutez la migration pour ajouter la colonne `lastReadAt` :
 
 ```bash
 cd backend
