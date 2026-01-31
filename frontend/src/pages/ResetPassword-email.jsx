@@ -5,8 +5,7 @@ import { FiMail } from "react-icons/fi";
 import Input from "../components/input.jsx";
 import Button from "../components/button.jsx";
 import axios from "axios";
-import registerImg from "../assets/login-illustration.png";
-import logoImg from "../assets/logo.jpeg";
+import registerImg from "../assets/appname.jpeg";
 
 export default function ForgotPasswordEmail() {
   const navigate = useNavigate();
@@ -56,7 +55,6 @@ export default function ForgotPasswordEmail() {
         </div>
 
         <div className="login-right">
-          <img src={logoImg} alt="Logo" className="top-right-logo" />
           <h2>Reset Password</h2>
           <p className="subtitle">Enter your email to reset your password</p>
 

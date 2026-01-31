@@ -14,6 +14,10 @@ const UPLOAD_DIR =
 export const reactComment = async (req, res) => {
   try {
     const iduser = req.user.iduser;
+    const senderUser = await User.findByPk(iduser);
+    if (!senderUser) {
+      return res.status(404).json({ message: "Utilisateur introuvable" });
+    }
     const idcomment = Number(req.params.idcomment);
     const { type } = req.body; // "LIKE" ou "LOVE"
 
@@ -26,20 +30,47 @@ export const reactComment = async (req, res) => {
       return res.status(404).json({ message: "Commentaire introuvable" });
     }
 
+    // Récupérer le post pour avoir l'ID de l'auteur (nécessaire pour la redirection notif)
+    const post = await Post.findByPk(comment.idpost);
+
     const reactedBy = comment.reactedBy || [];
-    const existing = reactedBy.find((r) => r.iduser === iduser);
+    const existing = reactedBy.find((r) => Number(r.iduser) === Number(iduser));
 
     if (!existing) {
       const newEntry = { iduser, like: type === "LIKE", love: type === "LOVE" };
       comment.reactedBy = [...reactedBy, newEntry];
       if (type === "LIKE") comment.likesCount++;
       if (type === "LOVE") comment.lovesCount++;
+
+      // 🔔 NOTIFICATION (Nouvelle réaction)
+      if (Number(comment.iduser) !== Number(iduser)) {
+        console.log(`🔔 [reactComment] New reaction ${type} from ${iduser} to ${comment.iduser}`);
+        try {
+          await createNotification({
+            toUserId: comment.iduser,
+            fromUserId: iduser,
+            type: NOTIF_TYPES.REACTION_COMMENT,
+            message: `${senderUser.prenom} ${senderUser.nom} a réagi à votre commentaire (${type})`,
+            metadata: {
+              idpost: comment.idpost,
+              idcomment: comment.idcomment,
+              postAuthorId: post ? post.iduser : null,
+              typeReaction: type,
+              sender: {
+                iduser: senderUser.iduser, nom: senderUser.nom, prenom: senderUser.prenom, photo: senderUser.photo
+              }
+            },
+          });
+        } catch (err) {
+          console.error("Notification error (reactComment):", err);
+        }
+      }
     } else {
       let newReactedBy = reactedBy.map((r) => {
-        if (r.iduser !== iduser) return r;
+        if (Number(r.iduser) !== Number(iduser)) return r;
         return { ...r };
       });
-      const userEntry = newReactedBy.find((r) => r.iduser === iduser);
+      const userEntry = newReactedBy.find((r) => Number(r.iduser) === Number(iduser));
 
       if (type === "LIKE") {
         if (userEntry.like) {
@@ -48,6 +79,29 @@ export const reactComment = async (req, res) => {
         } else {
           userEntry.like = true;
           comment.likesCount++;
+          // 🔔 NOTIFICATION (Ajout Like sur existant)
+          if (Number(comment.iduser) !== Number(iduser)) {
+            console.log(`🔔 [reactComment] Toggle LIKE from ${iduser} to ${comment.iduser}`);
+            try {
+              await createNotification({
+                toUserId: comment.iduser,
+                fromUserId: iduser,
+                type: NOTIF_TYPES.REACTION_COMMENT,
+                message: `${senderUser.prenom} ${senderUser.nom} a aimé votre commentaire`,
+                metadata: {
+                  idpost: comment.idpost,
+                  idcomment: comment.idcomment,
+                  postAuthorId: post ? post.iduser : null,
+                  typeReaction: "LIKE",
+                  sender: {
+                    iduser: senderUser.iduser, nom: senderUser.nom, prenom: senderUser.prenom, photo: senderUser.photo
+                  }
+                },
+              });
+            } catch (err) {
+              console.error("Notification error (reactComment update):", err);
+            }
+          }
         }
       } else if (type === "LOVE") {
         if (userEntry.love) {
@@ -56,6 +110,29 @@ export const reactComment = async (req, res) => {
         } else {
           userEntry.love = true;
           comment.lovesCount++;
+          // 🔔 NOTIFICATION (Ajout Love sur existant)
+          if (Number(comment.iduser) !== Number(iduser)) {
+            console.log(`🔔 [reactComment] Toggle LOVE from ${iduser} to ${comment.iduser}`);
+            try {
+              await createNotification({
+                toUserId: comment.iduser,
+                fromUserId: iduser,
+                type: NOTIF_TYPES.REACTION_COMMENT,
+                message: `${senderUser.prenom} ${senderUser.nom} a adoré votre commentaire`,
+                metadata: {
+                  idpost: comment.idpost,
+                  idcomment: comment.idcomment,
+                  postAuthorId: post ? post.iduser : null,
+                  typeReaction: "LOVE",
+                  sender: {
+                    iduser: senderUser.iduser, nom: senderUser.nom, prenom: senderUser.prenom, photo: senderUser.photo
+                  }
+                },
+              });
+            } catch (err) {
+              console.error("Notification error (reactComment update):", err);
+            }
+          }
         }
       }
       comment.reactedBy = newReactedBy;
@@ -77,6 +154,7 @@ export const createComment = async (req, res) => {
   try {
     const { idpost, contenu, isAnonymat, idparent } = req.body; // Ajout de idparent
     const iduser = req.user.iduser;
+    const senderUser = await User.findByPk(iduser);
 
     console.log('📦 req.files:', req.files ? `OUI - ${req.files.length} fichier(s)` : 'NON');
     console.log('📝 req.body:', req.body);
@@ -110,20 +188,24 @@ export const createComment = async (req, res) => {
     if (!idparent) {
       const post = await Post.findByPk(idpost);
       if (post) {
+        const isAnon = newComment.isAnonymat;
+        const senderName = isAnon ? "Someone" : `${senderUser.prenom} ${senderUser.nom}`;
+        const senderData = isAnon ? null : {
+          iduser: senderUser.iduser,
+          nom: senderUser.nom,
+          prenom: senderUser.prenom,
+          photo: senderUser.photo ?? null,
+        };
+
         await createNotification({
           toUserId: post.iduser,
           fromUserId: iduser,
           type: NOTIF_TYPES.COMMENT_PUB,
-          message: `${req.user.prenom} ${req.user.nom} a commenté votre publication`,
+          message: `${senderName} a commenté votre publication`,
           metadata: {
             idpost: post.idpost,
             idcomment: newComment.idcomment,
-            sender: {
-              iduser: req.user.iduser,
-              nom: req.user.nom,
-              prenom: req.user.prenom,
-              photo: req.user.photo ?? null,
-            },
+            sender: senderData,
           },
         });
       }
@@ -131,22 +213,31 @@ export const createComment = async (req, res) => {
       // 🔔 NOTIFICATION : commentaire sur un autre commentaire
       const parentComment = await Comment.findByPk(idparent);
       if (parentComment) {
-        const sender = {
-          iduser: req.user.iduser,
-          nom: req.user.nom,
-          prenom: req.user.prenom,
-          photo: req.user.photo ?? null,
+        const post = await Post.findByPk(idpost, {
+             include: [{ model: User, as: 'auteur', attributes: ['iduser', 'nom', 'prenom'] }]
+        });
+
+        const isAnon = newComment.isAnonymat;
+        const senderName = isAnon ? "Someone" : `${senderUser.prenom} ${senderUser.nom}`;
+        const senderData = isAnon ? null : {
+          iduser: senderUser.iduser,
+          nom: senderUser.nom,
+          prenom: senderUser.prenom,
+          photo: senderUser.photo ?? null,
         };
 
         await createNotification({
           toUserId: parentComment.iduser,  // Destinataire : auteur du commentaire parent
           fromUserId: iduser,              // Expéditeur : auteur du commentaire
           type: NOTIF_TYPES.REPLY_COMMENT, // Type de notification
-          message: `${sender.prenom} ${sender.nom} a répondu à votre commentaire`,
+          message: `${senderName} a répondu à votre commentaire`,
           metadata: {
             idpost: idpost,
             idcomment: newComment.idcomment,  // Ajouter l'id du nouveau commentaire
-            sender, // Sender dans la notification
+            postAuthorId: post ? post.iduser : null,
+            postAuthorName: post && post.auteur ? `${post.auteur.prenom} ${post.auteur.nom}` : "Unknown",
+            replyContent: newComment.contenu ? newComment.contenu.substring(0, 50) : "File/Image",
+            sender: senderData, // Sender dans la notification
           },
         });
       }
@@ -154,7 +245,6 @@ export const createComment = async (req, res) => {
 
     // ✅ 2. Si fichier, créer le document
     if (req.files && req.files.length > 0) {
-      const file = req.files[0];
       const { niveau } = req.body;
 
       if (!niveau) {
@@ -162,32 +252,34 @@ export const createComment = async (req, res) => {
         return res.status(400).json({ message: "Level is required for a document" });
       }
 
-      const ext = file.originalname.split('.').pop().toLowerCase();
-      let docType = "DOCUMENT";
-      if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
-        docType = "IMAGE";
-      } else if (['xls', 'xlsx', 'csv'].includes(ext)) {
-        docType = "TABLEUR";
-      } else if (['ppt', 'pptx'].includes(ext)) {
-        docType = "PRESENTATION";
-      }
+      // Normaliser niveau en tableau
+      const niveaux = Array.isArray(niveau) ? niveau : [niveau];
 
-      const newDocument = await Document.create({
-        filename: file.originalname,
-        url: `${req.protocol}://${req.get('host')}/uploads/${file.filename}`,
-        type: docType,
-        niveau,
-        iduser,
-        idpost: parseInt(idpost), // ✅ IMPORTANT
-        idcomment: newComment.idcomment, // ✅ IMPORTANT
+      const filePromises = req.files.map(async (file, index) => {
+        const ext = file.originalname.split('.').pop().toLowerCase();
+        let docType = "DOCUMENT";
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+          docType = "IMAGE";
+        } else if (['xls', 'xlsx', 'csv'].includes(ext)) {
+          docType = "TABLEUR";
+        } else if (['ppt', 'pptx'].includes(ext)) {
+          docType = "PRESENTATION";
+        }
+
+        const fileLevel = niveaux[index] || niveaux[0] || "UNKNOWN";
+
+        return Document.create({
+          filename: file.originalname,
+          url: `${req.protocol}://${req.get('host')}/uploads/${file.filename}`,
+          type: docType,
+          niveau: fileLevel,
+          iduser,
+          idpost: parseInt(idpost),
+          idcomment: newComment.idcomment,
+        });
       });
 
-      console.log('✅ Document créé:', {
-        iddoc: newDocument.iddoc,
-        filename: newDocument.filename,
-        idcomment: newDocument.idcomment,
-        idpost: newDocument.idpost
-      });
+      await Promise.all(filePromises);
     }
 
     // ✅ 3. Récupérer le commentaire avec relations
@@ -236,6 +328,7 @@ export const replyComment = async (req, res) => {
   try {
     const { contenu, isAnonymat } = req.body;
     const iduser = req.user.iduser;
+    const senderUser = await User.findByPk(iduser);
     const idcomment = req.params.idcomment; // L'ID du commentaire parent
 
     // Vérifier si le commentaire parent existe
@@ -245,6 +338,10 @@ export const replyComment = async (req, res) => {
     }
 
     // Créer la réponse (commentaire sur un commentaire)
+    const post = await Post.findByPk(parentComment.idpost, {
+      include: [{ model: User, as: 'auteur', attributes: ['iduser', 'nom', 'prenom'] }]
+    });
+
     const newComment = await Comment.create({
       contenu: contenu?.trim() || '',
       typeContenu: "TEXTE",
@@ -255,22 +352,27 @@ export const replyComment = async (req, res) => {
     });
 
     // Notifier l'auteur du commentaire parent
-    const sender = {
-      iduser: req.user.iduser,
-      nom: req.user.nom,
-      prenom: req.user.prenom,
-      photo: req.user.photo ?? null,
+    const isAnon = newComment.isAnonymat;
+    const senderName = isAnon ? "Someone" : `${senderUser.prenom} ${senderUser.nom}`;
+    const senderData = isAnon ? null : {
+      iduser: senderUser.iduser,
+      nom: senderUser.nom,
+      prenom: senderUser.prenom,
+      photo: senderUser.photo ?? null,
     };
 
     await createNotification({
       toUserId: parentComment.iduser,  // Destinataire : auteur du commentaire parent
       fromUserId: iduser,              // Expéditeur : auteur de la réponse
       type: NOTIF_TYPES.REPLY_COMMENT, // Type de notification
-      message: `${sender.prenom} ${sender.nom} a répondu à votre commentaire`,
+      message: `${senderName} a répondu à votre commentaire`,
       metadata: {
         idpost: parentComment.idpost,
         idcomment: newComment.idcomment,  // Ajouter l'id du nouveau commentaire
-        sender, // Sender dans la notification
+        postAuthorId: post ? post.iduser : null,
+        postAuthorName: post && post.auteur ? `${post.auteur.prenom} ${post.auteur.nom}` : "Unknown",
+        replyContent: newComment.contenu ? newComment.contenu.substring(0, 50) : "File/Image",
+        sender: senderData, // Sender dans la notification
       },
     });
 
@@ -407,6 +509,7 @@ export const getMyComments = async (req, res) => {
 export const updateComment = async (req, res) => {
   try {
     const idcomment = Number(req.params.idcomment);
+    const iduser = req.user.iduser;
     if (!idcomment) {
       return res.status(400).json({ message: "idcomment invalide" });
     }
@@ -416,7 +519,7 @@ export const updateComment = async (req, res) => {
       return res.status(404).json({ message: "Commentaire introuvable" });
     }
 
-    if (Number(comment.iduser) !== Number(req.user.iduser)) {
+    if (Number(comment.iduser) !== Number(iduser)) {
       return res.status(403).json({ message: "Interdit" });
     }
 
@@ -436,13 +539,66 @@ export const updateComment = async (req, res) => {
         ? req.body.isAnonymat === true || req.body.isAnonymat === "true"
         : comment.isAnonymat;
 
+    // --- GESTION DES FICHIERS ---
+
+    // 1. Suppression des fichiers demandés
+    if (req.body.deleteFiles) {
+      const idsToDelete = Array.isArray(req.body.deleteFiles) 
+          ? req.body.deleteFiles 
+          : [req.body.deleteFiles];
+      
+      const docsToDelete = await Document.findAll({
+          where: { 
+              iddoc: { [Op.in]: idsToDelete },
+              idcomment: idcomment 
+          }
+      });
+
+      for (const doc of docsToDelete) {
+           // Supprimer le fichier physique
+           const filename = String(doc.url).split("/uploads/").pop();
+           if (filename) {
+              const filePath = path.join(UPLOAD_DIR, filename);
+              if (fs.existsSync(filePath)) {
+                try { fs.unlinkSync(filePath); } catch(e) {}
+              }
+           }
+           await doc.destroy();
+      }
+    }
+
+    // 2. Ajout de nouveaux fichiers
+    if (req.files && req.files.length > 0) {
+      const { niveau } = req.body;
+      const niveaux = Array.isArray(niveau) ? niveau : [niveau];
+
+      const filePromises = req.files.map(async (file, index) => {
+        const ext = file.originalname.split('.').pop().toLowerCase();
+        let docType = "DOCUMENT";
+        if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) docType = "IMAGE";
+        else if (['xls', 'xlsx', 'csv'].includes(ext)) docType = "TABLEUR";
+        else if (['ppt', 'pptx'].includes(ext)) docType = "PRESENTATION";
+
+        const fileLevel = niveaux[index] || niveaux[0] || "UNKNOWN";
+
+        return Document.create({
+          filename: file.originalname,
+          url: `${req.protocol}://${req.get('host')}/uploads/${file.filename}`,
+          type: docType,
+          niveau: fileLevel,
+          iduser,
+          idpost: comment.idpost,
+          idcomment: comment.idcomment,
+        });
+      });
+      await Promise.all(filePromises);
+    }
+
     // Vérifier fichiers existants
-    const docsCount = await Document.count({
-      where: { idcomment },
-    });
+    const docsCount = await Document.count({ where: { idcomment } });
 
     // Validation métier
-    if (!newContenu && !newLien && docsCount === 0) {
+    if (!newContenu && !newLien && docsCount === 0 && (!req.files || req.files.length === 0)) {
       return res.status(400).json({
         message: "Le commentaire ne peut pas être vide (texte / lien / fichier).",
       });
@@ -452,6 +608,11 @@ export const updateComment = async (req, res) => {
     comment.contenu = newContenu || null;
     comment.lien = newLien || null;
     comment.isAnonymat = newIsAnonymat;
+    
+    // Mettre à jour le typeContenu si nécessaire
+    if (docsCount > 0 || (req.files && req.files.length > 0)) comment.typeContenu = "DOCUMENT";
+    else if (newLien) comment.typeContenu = "LIEN";
+    else comment.typeContenu = "TEXTE";
 
     await comment.save();
 

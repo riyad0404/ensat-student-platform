@@ -1,6 +1,6 @@
 import express from "express";
 import { authMiddleware } from "../middleware/authMiddleware.js";
-import {uploadSingle,uploadMany,multerErrorHandler} from "../middleware/uploadMiddleware.js";
+import {uploadSingle,uploadMany,uploadAny,multerErrorHandler} from "../middleware/uploadMiddleware.js";
 import {
   createPost,
   getAllPosts,
@@ -26,7 +26,7 @@ router.get("/mesposts", authMiddleware, getMyPosts);
 router.get("/:idpost", authMiddleware, getPostById);
 
 // Modifier une publication
-router.patch("/:idpost", authMiddleware, updatePost);
+router.patch("/:idpost", authMiddleware, uploadAny, multerErrorHandler, updatePost);
 
 // Supprimer une publication
 router.delete("/:idpost", authMiddleware, deletePost);

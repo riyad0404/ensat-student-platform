@@ -37,8 +37,19 @@ const LibraryDocuments = () => {
         };
       });
       
-      console.log('Documents formatés:', formattedData);
-      setDocuments(formattedData);
+      // Filtrer les doublons basés sur le nom de fichier
+      const uniqueDocs = [];
+      const seenFilenames = new Set();
+      
+      formattedData.forEach(doc => {
+        if (!seenFilenames.has(doc.filename)) {
+          seenFilenames.add(doc.filename);
+          uniqueDocs.push(doc);
+        }
+      });
+
+      console.log('Documents formatés (uniques):', uniqueDocs);
+      setDocuments(uniqueDocs);
     } catch (error) {
       console.error('Erreur chargement documents:', error);
       console.error('Détails:', error.response?.data);
@@ -219,7 +230,7 @@ const LibraryDocuments = () => {
         </p>
       </div>
 
-      <div className="page-content" style={{ maxWidth: '1200px', margin: '24px auto 0 auto', width: '100%', padding: '0 20px', flex: 1 }}>
+      <div className="page-content" style={{ maxWidth: '96%', margin: '24px auto 0 auto', width: '100%', padding: '0 20px', flex: 1 }}>
           {/* Documents Grid */}
           {filteredDocuments.length === 0 ? (
             <div style={{ 

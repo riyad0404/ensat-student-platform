@@ -547,7 +547,7 @@ const Profile = () => {
                         </div>
                     )}
                     
-                    <div className="page-content" style={{ maxWidth: '1200px', margin: '10px auto', width: '100%', padding: '0 20px' }}>
+                    <div className="page-content" style={{ maxWidth: '96%', margin: '10px auto', width: '100%', padding: '0 20px' }}>
                     
                     {/* Section 1: User Info Card */}
                     <div style={{ background: 'white', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e0e0e0', marginBottom: '15px', position: 'relative' }}>
