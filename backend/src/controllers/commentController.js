@@ -314,6 +314,9 @@ export const getCommentById = async (req, res) => {
     if (!comment) {
       return res.status(404).json({ message: "Commentaire introuvable" });
     }
+if (comment.isAnonymat && Number(comment.iduser) !== Number(req.user.iduser)) {
+  comment.auteur = { nom: "Anonyme", prenom: "", photo: null };
+}
 
     return res.json(comment);
   } catch (error) {
@@ -356,6 +359,9 @@ export const getCommentsByPost = async (req, res) => {
     const final = comments.map((c) => {
       const json = c.toJSON();
       const existing = (json.reactedBy || []).find((r) => r.iduser === iduser);
+        if (json.isAnonymat && Number(json.iduser) !== Number(iduser)) {
+  json.auteur = { nom: "Anonyme", prenom: "", photo: null };
+}
 
       return {
         ...json,

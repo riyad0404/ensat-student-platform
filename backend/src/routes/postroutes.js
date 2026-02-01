@@ -1,5 +1,6 @@
 import express from "express";
 import { authMiddleware } from "../middleware/authMiddleware.js";
+import { anonymousSafety } from "../middleware/anonymousSafety.js";
 import {uploadSingle,uploadMany,multerErrorHandler} from "../middleware/uploadMiddleware.js";
 import {
   createPost,
@@ -17,13 +18,25 @@ router.post("/pubdoc", authMiddleware, uploadSingle, multerErrorHandler, createP
 // Créer une publication (plusieurs fichiers => champ: "files")
 router.post("/pldoc", authMiddleware, uploadMany, multerErrorHandler, createPost);
 // Mur des publications
-router.get("/", authMiddleware, getAllPosts);
+router.get(
+  "/",
+  authMiddleware,
+  getAllPosts,
+  anonymousSafety,
+  (req, res) => res.json(res.locals.data)
+);
 
 // Mes publications
 router.get("/mesposts", authMiddleware, getMyPosts);
 
 // Une publication par id
-router.get("/:idpost", authMiddleware, getPostById);
+router.get(
+  "/:idpost",
+  authMiddleware,
+  getPostById,
+  anonymousSafety,
+  (req, res) => res.json(res.locals.data)
+);
 
 // Modifier une publication
 router.patch("/:idpost", authMiddleware, updatePost);

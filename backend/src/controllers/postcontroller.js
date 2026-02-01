@@ -67,7 +67,8 @@ export const createPost = async (req, res) => {
 };
 // ===== GET ALL POSTS ====
 
-export const getAllPosts = async (req, res) => {
+export const getAllPosts = async (req, res, next) => 
+{
   try {
     const posts = await Post.findAll({
       order: [["createdAt", "DESC"]],
@@ -93,15 +94,12 @@ export const getAllPosts = async (req, res) => {
     const result = posts.map((pInstance) => {
       const p = pInstance.get({ plain: true }); // Plus propre que toJSON()
 
-      // Gestion de l'anonymat
-      if (p.isAnonymat && Number(p.iduser) !== Number(req.user.iduser)) {
-        p.auteur = { nom: "Anonyme", prenom: "", photo: null }; 
-      }
-
+      
       return p;
     });
+res.locals.data = result;
+return next();
 
-    return res.json(result);
   } catch (error) {
     console.error("Détails de l'erreur getAllPosts:", error);
     return res.status(500).json({ message: "Erreur affichage posts" });
@@ -137,7 +135,7 @@ export const getMyPosts = async (req, res) => {
 };
 
 // ===== GET POST BY ID =====
-export const getPostById = async (req, res) => {
+export const getPostById = async (req, res, next) => {
   try {
     const idpost = Number(req.params.idpost);
     if (!idpost) return res.status(400).json({ message: "idpost invalide" });
@@ -164,11 +162,11 @@ export const getPostById = async (req, res) => {
     if (!post) return res.status(404).json({ message: "Post introuvable" });
 
     const p = post.toJSON();
-    if (p.isAnonymat === true && Number(p.iduser) !== Number(req.user.iduser)) {
-      p.auteur = null;
-    }
+  
 
-    return res.json(p);
+  res.locals.data = p;
+return next();
+
   } catch (error) {
     console.error("getPostById:", error);
     return res.status(500).json({ message: "Erreur affichage post" });

@@ -388,12 +388,6 @@ export const sendMessage = async (req, res) => {
     if (!content || !content.trim()) {
       return res.status(400).json({ message: 'Message content is required' });
     }
-
-    const member = await requireMembership(idconversation, myUserId);
-    if (!member) {
-      return res.status(403).json({ message: 'Not a member of this conversation' });
-    }
-
     const conv = await Conversation.findByPk(idconversation);
     if (!conv) {
       return res.status(404).json({ message: 'Conversation not found' });
