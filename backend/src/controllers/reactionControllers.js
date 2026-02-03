@@ -50,6 +50,7 @@ export const toggleReaction = async (req, res) => {
         metadata: {
           idpost: post.idpost,
           idcomment: null, // Aucun commentaire, c'est une réaction sur un post
+          typeReaction,
           sender: {
             iduser: req.user.iduser,
             nom: req.user.nom,

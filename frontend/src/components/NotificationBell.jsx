@@ -123,12 +123,19 @@ const NotificationBell = () => {
         const meta = typeof notif.metadata === 'string' ? JSON.parse(notif.metadata) : notif.metadata;
         
         // 1. Messages & Groupes
-        if (notif.type === 'MESSAGE' && meta.conversationId) {
-            navigate(`/conversations/${meta.conversationId}`);
-        } 
-        else if (['GROUP_INVITE', 'GROUP_ADD', 'JOIN_ACCEPTED', 'JOIN_REQUEST', 'JOIN_DECLINED'].includes(notif.type)) {
-            const groupId = meta.groupId || meta.idgroup;
-            if (groupId) navigate(`/conversations/${groupId}`);
+         // 1. Messages & Groupes (Logique unifiée)
+        const conversationTypes = ['MESSAGE', 'GROUP_INVITE', 'GROUP_ADD', 'JOIN_ACCEPTED', 'JOIN_REQUEST', 'JOIN_DECLINED'];
+        if (conversationTypes.includes(notif.type)) {
+            const conversationId = meta.conversationId || meta.groupId || meta.idgroup;
+
+            if (conversationId) {
+                // Force 'groups' pour les types explicitement liés aux groupes, sinon vérifie les métadonnées
+                const alwaysGroupTypes = ['GROUP_INVITE', 'GROUP_ADD', 'JOIN_ACCEPTED', 'JOIN_REQUEST', 'JOIN_DECLINED'];
+                // Détection améliorée : vérifie aussi groupName ou groupId pour les anciennes notifications ou les messages système
+                const isGroup = alwaysGroupTypes.includes(notif.type) || meta.isGroup || !!meta.groupName || !!meta.groupId;
+                const sidebarTarget = isGroup ? 'groups' : 'messages';
+                navigate(`/conversations/${conversationId}`, { state: { activeSidebarItem: sidebarTarget } });
+            }
         }
         // 2. Posts & Commentaires
         else if (['REACTION_PUB', 'COMMENT_PUB'].includes(notif.type)) {

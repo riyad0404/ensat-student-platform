@@ -496,6 +496,9 @@ export const addMember = async (req, res) => {
     const idconversation = Number(req.params.id);
     const { userId } = req.body;
 
+    const sender = await User.findByPk(myUserId, { attributes: ['prenom', 'nom'] });
+    const senderName = `${sender.prenom} ${sender.nom}`;
+
     const owner = await requireOwner(idconversation, myUserId);
     if (!owner) {
       return res.status(403).json({ message: 'Only owner can add members' });
@@ -555,8 +558,11 @@ export const addMember = async (req, res) => {
         type: NOTIF_TYPES.JOIN_ACCEPTED,
         message: `You have been accepted into ${conv.name}`,
         metadata: {
+          conversationId: idconversation,
           groupId: idconversation,
           groupName: conv.name,
+          senderName,
+          isGroup: true,
         },
       });
     } else {
@@ -566,8 +572,11 @@ export const addMember = async (req, res) => {
         type: NOTIF_TYPES.GROUP_ADD,
         message: `You have been added to the group ${conv.name}`,
         metadata: {
+          conversationId: idconversation,
           groupId: idconversation,
           groupName: conv.name,
+          senderName,
+          isGroup: true,
         },
       });
     }
@@ -589,6 +598,9 @@ export const declineJoinRequest = async (req, res) => {
     const myUserId = req.user.iduser;
     const idconversation = Number(req.params.id);
     const { userId } = req.body;
+
+    const sender = await User.findByPk(myUserId, { attributes: ['prenom', 'nom'] });
+    const senderName = `${sender.prenom} ${sender.nom}`;
 
     const owner = await requireOwner(idconversation, myUserId);
     if (!owner) {
@@ -621,8 +633,11 @@ export const declineJoinRequest = async (req, res) => {
         type: NOTIF_TYPES.JOIN_DECLINED,
         message: `Your request to join ${conv ? conv.name : 'group'} was declined`,
         metadata: {
+          conversationId: idconversation,
           groupId: idconversation,
           groupName: conv ? conv.name : '',
+          senderName,
+          isGroup: true,
         },
       });
     } catch (notifError) {
@@ -639,6 +654,7 @@ export const declineJoinRequest = async (req, res) => {
             conversationId: idconversation,
             senderName: "System",
             groupName: conv ? conv.name : '',
+            isGroup: true,
           },
         });
       } catch (fallbackErr) {
@@ -966,6 +982,16 @@ export const joinConversation = async (req, res) => {
     
     // Check metadata for existing request
     if (existingRequest && (existingRequest.metadata?.groupId == idconversation)) {
+        // Mise à jour des métadonnées pour s'assurer que isGroup est présent (fix pour les anciennes notifs)
+        existingRequest.metadata = {
+          conversationId: idconversation,
+          groupId: idconversation,
+          groupName: conv.name,
+          requestingUserName: `${requester.prenom} ${requester.nom}`,
+          senderName: `${requester.prenom} ${requester.nom}`,
+          isGroup: true,
+        };
+        await existingRequest.save();
         return res.status(200).json({ message: 'Join request already sent', status: 'pending' });
     }
 
@@ -975,7 +1001,14 @@ export const joinConversation = async (req, res) => {
       fromUserId: myUserId,
       type: NOTIF_TYPES.JOIN_REQUEST,
       message: `${requester.prenom} ${requester.nom} wants to join ${conv.name}`,
-      metadata: { groupId: idconversation, groupName: conv.name, requestingUserName: `${requester.prenom} ${requester.nom}` },
+      metadata: {
+        conversationId: idconversation,
+        groupId: idconversation,
+        groupName: conv.name,
+        requestingUserName: `${requester.prenom} ${requester.nom}`,
+        senderName: `${requester.prenom} ${requester.nom}`,
+        isGroup: true,
+      },
     });
 
     return res.status(200).json({ message: 'Join request sent successfully', status: 'requested' });
