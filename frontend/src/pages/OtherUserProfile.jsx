@@ -173,7 +173,17 @@ const OtherUserProfile = () => {
         // 2. Sinon, utiliser la photo venant du backend
         profileImageUrl = user.photo;
     }
- const bannerStyle = {
+    
+    // Récupérer la bannière (priorité: backend > localStorage fallback)
+    const localBanner = id ? localStorage.getItem(`profile_banner_${id}`) : null;
+    const displayBanner = user.banniere || user.banner || localBanner;
+
+    const bannerStyle = displayBanner ? {
+        backgroundImage: `url(${displayBanner})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+    } : {
         backgroundImage: `url(${defaultBanner})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',

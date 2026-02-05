@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./../styles/login.css";
-import resetImg from "../assets/appname.jpeg";
 import { FiEye, FiEyeOff } from "react-icons/fi"; // Ajout des icônes
 import Input from "../components/input";
 import Button from "../components/button";
@@ -142,7 +141,7 @@ export default function ResetPasswordByCode() {
         
         {/* IMAGE */}
         <div className="login-left">
-          <img src={resetImg} alt="Reset Password" className="login-illustration" />
+          <img alt="Reset Password" className="login-illustration" />
         </div>
 
         {/* FORM */}

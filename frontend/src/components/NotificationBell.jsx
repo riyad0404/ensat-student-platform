@@ -216,7 +216,16 @@ const NotificationBell = () => {
       >
         <Bell size={24} />
         {unreadCount > 0 && (
-          <span className="notification-badge">
+          <span className="notification-badge" style={{ 
+            minWidth: '20px', 
+            height: '20px', 
+            padding: '0 4px', 
+            fontSize: '11px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            borderRadius: '10px'
+          }}>
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}

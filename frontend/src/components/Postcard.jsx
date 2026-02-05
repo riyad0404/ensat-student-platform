@@ -102,13 +102,10 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
   const menuRef = useRef(null);
 
   const isPostAnon = post.isAnonymat === true || post.isAnonymat === 'true';
-  const currentUser = JSON.parse(localStorage.getItem('user'));
-  
-  // Utiliser user du contexte si localStorage est vide ou incomplet
-  const effectiveUser = user || currentUser;
-  const currentUserId = effectiveUser?.iduser || effectiveUser?.id;
+  // CORRECTION : On utilise UNIQUEMENT le user du contexte, jamais le localStorage
+  const currentUserId = user?.iduser || user?.id;
 
-  const isAuthor = effectiveUser && post && (
+  const isAuthor = user && post && (
     String(currentUserId) === String(post.iduser) ||
     (post.auteur && String(currentUserId) === String(post.auteur.iduser)) ||
     (post.auteur && String(currentUserId) === String(post.auteur.id))
@@ -149,8 +146,8 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
          // Si pas d'objet auteur complet mais on a un iduser
          const hasAuthor = c.auteur || c.user || c.User || c.sender || c.student;
          if (!hasAuthor && c.iduser) {
-             // On ne fetch pas si c'est le current user ou l'auteur du post (déjà connus)
-             const isCurrentUser = currentUser && String(c.iduser) === String(currentUser.iduser);
+             // On ne fetch pas si c'est l'utilisateur actuel ou l'auteur du post (déjà connus)
+             const isCurrentUser = user && String(c.iduser) === String(user.iduser);
              const isPostAuthor = post.auteur && String(c.iduser) === String(post.auteur.iduser);
              
              if (!isCurrentUser && !isPostAuthor) {
@@ -187,8 +184,12 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
       setCommentCount(loadedComments.length);
       
       // Vérifier si le post est bookmarké
-      const bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]');
-      setIsBookmarked(bookmarks.some(b => b.idpost === post.idpost));
+      if (currentUserId) {
+        const bookmarks = JSON.parse(localStorage.getItem(`bookmarks_${currentUserId}`) || '[]');
+        setIsBookmarked(bookmarks.some(b => b.idpost === post.idpost));
+      } else {
+        setIsBookmarked(false);
+      }
     } catch (error) {
       console.error("Erreur chargement:", error);
     }
@@ -205,7 +206,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
     };
     window.addEventListener('postUpdated', handleUpdate);
     return () => window.removeEventListener('postUpdated', handleUpdate);
-  }, [post?.idpost]);
+  }, [post?.idpost, currentUserId]);
 
   // Fermer le menu quand on clique ailleurs
   useEffect(() => {
@@ -360,15 +361,17 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
   };
 
   const handleBookmark = () => {
+    if (!currentUserId) return;
     console.log('Saving bookmark for post:', post.idpost);
     try {
-      const bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]');
+      const storageKey = `bookmarks_${currentUserId}`;
+      const bookmarks = JSON.parse(localStorage.getItem(storageKey) || '[]');
       console.log('Current bookmarks:', bookmarks);
       
       if (isBookmarked) {
         // Retirer des bookmarks
         const newBookmarks = bookmarks.filter(b => b.idpost !== post.idpost);
-        localStorage.setItem('bookmarks', JSON.stringify(newBookmarks));
+        localStorage.setItem(storageKey, JSON.stringify(newBookmarks));
         setIsBookmarked(false);
         console.log('Removed from bookmarks');
       } else {
@@ -382,7 +385,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
           dateCreation: post.dateCreation || new Date().toISOString()
         };
         bookmarks.push(bookmarkPost);
-        localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+        localStorage.setItem(storageKey, JSON.stringify(bookmarks));
         setIsBookmarked(true);
         console.log('Added to bookmarks:', bookmarkPost);
       }
@@ -542,8 +545,8 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
     if (!commentAuthor) commentAuthor = c;
     
     const authorId = commentAuthor.iduser || commentAuthor.id || commentAuthor.userId || c.iduser;
-    if (effectiveUser && authorId && String(authorId) === String(effectiveUser.iduser || effectiveUser.id)) {
-        commentAuthor = { ...commentAuthor, ...effectiveUser };
+    if (user && authorId && String(authorId) === String(user.iduser || user.id)) {
+        commentAuthor = { ...commentAuthor, ...user };
     } else if (post.auteur && authorId && String(authorId) === String(post.auteur.iduser || post.auteur.id)) {
         commentAuthor = { ...commentAuthor, ...post.auteur };
     }
@@ -554,9 +557,9 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
     const avatarUrl = getProfileImage({ ...commentAuthor, iduser: authorId });
     const displayName = cAnon ? "Anonymous" : (fullName || commentAuthor?.username || "User");
     
-    const isCommentOwner = effectiveUser && (
-      String(c.iduser) === String(effectiveUser.iduser || effectiveUser.id) ||
-      (c.auteur && String(c.auteur.iduser) === String(effectiveUser.iduser || effectiveUser.id))
+    const isCommentOwner = user && (
+      String(c.iduser) === String(user.iduser || user.id) ||
+      (c.auteur && String(c.auteur.iduser) === String(user.iduser || user.id))
     );
 
     const isEditing = editingCommentId === c.idcomment;
@@ -980,8 +983,8 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
           )}
           <div className="comment-input-wrapper">
             <div className="current-user-avatar-small">
-               {getProfileImage(effectiveUser) ? (
-                 <img src={getProfileImage(effectiveUser)} alt="" />
+               {getProfileImage(user) ? (
+                 <img src={getProfileImage(user)} alt="" />
                ) : (
                  <DefaultAvatar />
                )}

@@ -3,7 +3,6 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "./../styles/login.css";
 import { FiMail, FiEye, FiEyeOff } from "react-icons/fi";
-import registerImg from "../assets/appname.jpeg";
 import Input from "../components/input.jsx";
 import Button from "../components/button.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
@@ -273,7 +272,7 @@ if (!result.success) {
     <div className="login-page">
       <div className="login-card">
         <div className="login-left">
-          <img src={registerImg} alt="Register Illustration" className="login-illustration" />
+          <img alt="Register Illustration" className="login-illustration" />
         </div>
 
         <div className="login-right register-page">

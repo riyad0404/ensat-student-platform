@@ -1,10 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { Trash2 } from 'lucide-react';
 import PostCard from '../components/Postcard';
+import { useAuth } from '../contexts/AuthContext';
 
 const Bookmarks = () => {
+  const { user } = useAuth();
+  const currentUserId = user?.iduser || user?.id;
   const [bookmarks, setBookmarks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showClearModal, setShowClearModal] = useState(false);
+
+  const loadBookmarks = () => {
+    if (!currentUserId) {
+      setBookmarks([]);
+      setLoading(false);
+      return;
+    }
+    try {
+      const saved = JSON.parse(localStorage.getItem(`bookmarks_${currentUserId}`) || '[]');
+      console.log('Loaded bookmarks:', saved);
+      setBookmarks(saved);
+    } catch (error) {
+      console.error('Erreur chargement bookmarks:', error);
+      setBookmarks([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     loadBookmarks();
@@ -18,34 +40,28 @@ const Bookmarks = () => {
     return () => {
       window.removeEventListener('bookmarksUpdated', handleBookmarksUpdate);
     };
-  }, []);
-
-  const loadBookmarks = () => {
-    try {
-      const saved = JSON.parse(localStorage.getItem('bookmarks') || '[]');
-      console.log('Loaded bookmarks:', saved);
-      setBookmarks(saved);
-    } catch (error) {
-      console.error('Erreur chargement bookmarks:', error);
-      setBookmarks([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [currentUserId]);
 
   const removeFromBookmarks = (idpost) => {
+    if (!currentUserId) return;
+    const storageKey = `bookmarks_${currentUserId}`;
     const newBookmarks = bookmarks.filter(b => b.idpost !== idpost);
-    localStorage.setItem('bookmarks', JSON.stringify(newBookmarks));
+    localStorage.setItem(storageKey, JSON.stringify(newBookmarks));
     setBookmarks(newBookmarks);
     window.dispatchEvent(new Event('bookmarksUpdated'));
   };
 
   const clearAllBookmarks = () => {
-    if (window.confirm('Are you sure you want to clear all saved posts?')) {
-      localStorage.setItem('bookmarks', JSON.stringify([]));
-      setBookmarks([]);
-      window.dispatchEvent(new Event('bookmarksUpdated'));
-    }
+    if (!currentUserId) return;
+    setShowClearModal(true);
+  };
+
+  const confirmClearAll = () => {
+    const storageKey = `bookmarks_${currentUserId}`;
+    localStorage.setItem(storageKey, JSON.stringify([]));
+    setBookmarks([]);
+    window.dispatchEvent(new Event('bookmarksUpdated'));
+    setShowClearModal(false);
   };
 
   if (loading) {
@@ -167,6 +183,39 @@ const Bookmarks = () => {
           </div>
         )}
       </div>
+
+      {/* Clear All Confirmation Modal */}
+      {showClearModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          zIndex: 3000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <div style={{
+            background: 'white',
+            width: '90%',
+            maxWidth: '350px',
+            borderRadius: '12px',
+            padding: '24px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            textAlign: 'center'
+          }}>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '1.125rem', fontWeight: '700', color: '#111827' }}>Clear All Bookmarks?</h3>
+            <p style={{ color: '#667781', marginBottom: '20px', fontSize: '14px' }}>Are you sure you want to clear all saved posts?</p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowClearModal(false)} style={{ padding: '8px 16px', borderRadius: '20px', fontWeight: '500', cursor: 'pointer', background: 'none', border: '1px solid #ddd', color: '#111b21' }}>Cancel</button>
+              <button onClick={confirmClearAll} style={{ padding: '8px 16px', borderRadius: '20px', fontWeight: '500', cursor: 'pointer', background: '#ef4444', border: 'none', color: 'white' }}>Clear All</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
