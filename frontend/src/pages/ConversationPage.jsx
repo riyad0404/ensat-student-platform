@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Send, Trash2, ArrowLeft, Users, Pencil, CheckCircle, User, X, Check, Copy, CheckCheck } from 'lucide-react';
 import conversationAPI from '../api/conversationAPI';
 import '../styles/conversations.css';
@@ -11,6 +11,7 @@ import { useSocket } from '../contexts/SocketContext';
 const ConversationPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [conversation, setConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -179,6 +180,20 @@ const ConversationPage = () => {
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
   }, [id, messages, isFirstLoad]);
+
+  // ✅ SYNC SIDEBAR : Force l'onglet "Groupes" si on détecte que c'est un groupe (ou page d'erreur groupe)
+  useEffect(() => {
+    const isGroupConfirmed = (conversation?.type === 'GROUP') || (!!error);
+    
+    if (!loading && isGroupConfirmed) {
+        if (location.state?.activeSidebarItem !== 'groups') {
+            navigate(location.pathname, { 
+                replace: true, 
+                state: { ...location.state, activeSidebarItem: 'groups' } 
+            });
+        }
+    }
+  }, [conversation, error, loading, location.pathname, location.state, navigate]);
 
   const fetchData = async () => {
     try {

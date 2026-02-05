@@ -46,6 +46,11 @@ export const conversationAPI = {
     return res.data;
   },
 
+  declineJoinRequest: async (conversationId, userId) => {
+    const res = await axiosInstance.post(`/conversations/${conversationId}/join/decline`, { userId });
+    return res.data;
+  },
+
   transferOwnership: async (conversationId, newOwnerId) => {
     const res = await axiosInstance.post(`/conversations/${conversationId}/transfer`, { newOwnerId });
     return res.data;

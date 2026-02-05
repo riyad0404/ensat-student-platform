@@ -28,8 +28,8 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
   const [loveCount, setLoveCount] = useState(0);
   const [commentText, setCommentText] = useState("");
   const [isCommentAnon, setIsCommentAnon] = useState(false);
-  const [commentFile, setCommentFile] = useState(null);
-  const [commentNiveau, setCommentNiveau] = useState("");
+  const [commentFiles, setCommentFiles] = useState([]);
+  const [commentFileLevels, setCommentFileLevels] = useState([]);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState([]);
   const [commentCount, setCommentCount] = useState(0);
@@ -38,6 +38,11 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editingCommentId, setEditingMessageId] = useState(null);
   const [editCommentText, setEditCommentText] = useState("");
+  // États pour l'édition de commentaire (fichiers)
+  const [editNewFiles, setEditNewFiles] = useState([]);
+  const [editExistingFiles, setEditExistingFiles] = useState([]);
+  const [editFileLevels, setEditFileLevels] = useState([]);
+  const [filesToDelete, setFilesToDelete] = useState([]);
   const [replyingToComment, setReplyingToComment] = useState(null); // Pour la réponse globale
   const [activeCommentMenuId, setActiveCommentMenuId] = useState(null);
   const [showReactionSelector, setShowReactionSelector] = useState(false);
@@ -97,13 +102,10 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
   const menuRef = useRef(null);
 
   const isPostAnon = post.isAnonymat === true || post.isAnonymat === 'true';
-  const currentUser = JSON.parse(localStorage.getItem('user'));
-  
-  // Utiliser user du contexte si localStorage est vide ou incomplet
-  const effectiveUser = user || currentUser;
-  const currentUserId = effectiveUser?.iduser || effectiveUser?.id;
+  // CORRECTION : On utilise UNIQUEMENT le user du contexte, jamais le localStorage
+  const currentUserId = user?.iduser || user?.id;
 
-  const isAuthor = effectiveUser && post && (
+  const isAuthor = user && post && (
     String(currentUserId) === String(post.iduser) ||
     (post.auteur && String(currentUserId) === String(post.auteur.iduser)) ||
     (post.auteur && String(currentUserId) === String(post.auteur.id))
@@ -144,8 +146,8 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
          // Si pas d'objet auteur complet mais on a un iduser
          const hasAuthor = c.auteur || c.user || c.User || c.sender || c.student;
          if (!hasAuthor && c.iduser) {
-             // On ne fetch pas si c'est le current user ou l'auteur du post (déjà connus)
-             const isCurrentUser = currentUser && String(c.iduser) === String(currentUser.iduser);
+             // On ne fetch pas si c'est l'utilisateur actuel ou l'auteur du post (déjà connus)
+             const isCurrentUser = user && String(c.iduser) === String(user.iduser);
              const isPostAuthor = post.auteur && String(c.iduser) === String(post.auteur.iduser);
              
              if (!isCurrentUser && !isPostAuthor) {
@@ -182,8 +184,12 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
       setCommentCount(loadedComments.length);
       
       // Vérifier si le post est bookmarké
-      const bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]');
-      setIsBookmarked(bookmarks.some(b => b.idpost === post.idpost));
+      if (currentUserId) {
+        const bookmarks = JSON.parse(localStorage.getItem(`bookmarks_${currentUserId}`) || '[]');
+        setIsBookmarked(bookmarks.some(b => b.idpost === post.idpost));
+      } else {
+        setIsBookmarked(false);
+      }
     } catch (error) {
       console.error("Erreur chargement:", error);
     }
@@ -200,7 +206,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
     };
     window.addEventListener('postUpdated', handleUpdate);
     return () => window.removeEventListener('postUpdated', handleUpdate);
-  }, [post?.idpost]);
+  }, [post?.idpost, currentUserId]);
 
   // Fermer le menu quand on clique ailleurs
   useEffect(() => {
@@ -221,7 +227,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
 
   const handleCommentSubmit = async (e) => {
     if (e) e.preventDefault();
-    if ((!commentText.trim() && !commentFile) || loading) return;
+    if ((!commentText.trim() && commentFiles.length === 0) || loading) return;
     
     setCommentError("");
 
@@ -234,9 +240,11 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
       formData.append('isAnonymat', isCommentAnon);
       if (replyingToComment) formData.append('idparent', replyingToComment.idcomment);
       
-      if (commentFile) {
-        formData.append('file', commentFile);
-        formData.append('niveau', commentNiveau);
+      if (commentFiles.length > 0) {
+        commentFiles.forEach((file, index) => {
+          formData.append('files', file);
+          formData.append('niveau', commentFileLevels[index]);
+        });
       }
 
       const newComment = await createComment(post.idpost, formData);
@@ -255,8 +263,8 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
       if (onPostUpdated) onPostUpdated(); // Notifier le parent
       
       setCommentText("");
-      setCommentFile(null);
-      setCommentNiveau("");
+      setCommentFiles([]);
+      setCommentFileLevels([]);
       setIsCommentAnon(false);
       setReplyingToComment(null); // Reset reply state
       setShowComments(true);
@@ -353,15 +361,17 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
   };
 
   const handleBookmark = () => {
+    if (!currentUserId) return;
     console.log('Saving bookmark for post:', post.idpost);
     try {
-      const bookmarks = JSON.parse(localStorage.getItem('bookmarks') || '[]');
+      const storageKey = `bookmarks_${currentUserId}`;
+      const bookmarks = JSON.parse(localStorage.getItem(storageKey) || '[]');
       console.log('Current bookmarks:', bookmarks);
       
       if (isBookmarked) {
         // Retirer des bookmarks
         const newBookmarks = bookmarks.filter(b => b.idpost !== post.idpost);
-        localStorage.setItem('bookmarks', JSON.stringify(newBookmarks));
+        localStorage.setItem(storageKey, JSON.stringify(newBookmarks));
         setIsBookmarked(false);
         console.log('Removed from bookmarks');
       } else {
@@ -375,7 +385,7 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
           dateCreation: post.dateCreation || new Date().toISOString()
         };
         bookmarks.push(bookmarkPost);
-        localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+        localStorage.setItem(storageKey, JSON.stringify(bookmarks));
         setIsBookmarked(true);
         console.log('Added to bookmarks:', bookmarkPost);
       }
@@ -416,14 +426,30 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
       if (action === 'delete') {
         setCommentToDelete(commentId);
       } else if (action === 'edit') {
-         setEditingLoading(true);
-        await updateComment(commentId, { contenu: data, idpost: post.idpost });
+        setEditingLoading(true);
+        
+        // Préparer les données (FormData si fichiers, JSON sinon)
+        let payload = { contenu: data, idpost: post.idpost };
+        
+        if (editNewFiles.length > 0 || filesToDelete.length > 0) {
+            const formData = new FormData();
+            formData.append('contenu', data);
+            formData.append('idpost', post.idpost);
+            editNewFiles.forEach((file, index) => {
+                formData.append('files', file);
+                formData.append('niveau', editFileLevels[index] || 'GINF1');
+            });
+            filesToDelete.forEach(id => formData.append('deleteFiles', id));
+            payload = formData;
+        }
+
+        await updateComment(commentId, payload);
         setEditingMessageId(null);
         setEditCommentText("");
         await loadPostData();
       } else if (action === 'like') {
         await toggleCommentReaction(commentId, 'LIKE');
-        loadPostData();
+        await loadPostData();
       } else if (action === 'love') {
         await toggleCommentReaction(commentId, 'LOVE');
         await loadPostData();
@@ -451,6 +477,10 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
   const startEditComment = (comment) => {
     setEditingMessageId(comment.idcomment);
     setEditCommentText(comment.contenu);
+    setEditExistingFiles(comment.documents || []);
+    setEditNewFiles([]);
+    setEditFileLevels([]);
+    setFilesToDelete([]);
     setReplyingToComment(null);
   };
 
@@ -466,9 +496,14 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
   const cancelCommentAction = () => {
     setEditingMessageId(null);
     setEditCommentText("");
+    setEditExistingFiles([]);
+    setEditNewFiles([]);
+    setEditFileLevels([]);
+    setFilesToDelete([]);
   };
 
-  const postDoc = post.documents?.[0] || post.document || null;
+  // Récupérer tous les documents du post
+  const postDocs = post.documents && post.documents.length > 0 ? post.documents : (post.document ? [post.document] : []);
 
   // Gestion de l'avatar auteur
   const authorAvatarUrl = getProfileImage(post.auteur);
@@ -510,8 +545,8 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
     if (!commentAuthor) commentAuthor = c;
     
     const authorId = commentAuthor.iduser || commentAuthor.id || commentAuthor.userId || c.iduser;
-    if (effectiveUser && authorId && String(authorId) === String(effectiveUser.iduser || effectiveUser.id)) {
-        commentAuthor = { ...commentAuthor, ...effectiveUser };
+    if (user && authorId && String(authorId) === String(user.iduser || user.id)) {
+        commentAuthor = { ...commentAuthor, ...user };
     } else if (post.auteur && authorId && String(authorId) === String(post.auteur.iduser || post.auteur.id)) {
         commentAuthor = { ...commentAuthor, ...post.auteur };
     }
@@ -522,15 +557,14 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
     const avatarUrl = getProfileImage({ ...commentAuthor, iduser: authorId });
     const displayName = cAnon ? "Anonymous" : (fullName || commentAuthor?.username || "User");
     
-    const isCommentOwner = effectiveUser && (
-      String(c.iduser) === String(effectiveUser.iduser || effectiveUser.id) ||
-      (c.auteur && String(c.auteur.iduser) === String(effectiveUser.iduser || effectiveUser.id))
+    const isCommentOwner = user && (
+      String(c.iduser) === String(user.iduser || user.id) ||
+      (c.auteur && String(c.auteur.iduser) === String(user.iduser || user.id))
     );
 
     const isEditing = editingCommentId === c.idcomment;
-    const commentDoc = c.documents?.[0] || c.document;
-
-    const isImage = commentDoc && (commentDoc.type === 'IMAGE' || commentDoc.url?.match(/\.(jpg|jpeg|png|gif|webp)$/i));
+    // Récupérer tous les documents
+    const commentDocs = c.documents && c.documents.length > 0 ? c.documents : (c.document ? [c.document] : []);
 
     // Trouver les réponses à ce commentaire
     const replies = comments.filter(reply => reply.idparent === c.idcomment);
@@ -582,6 +616,67 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
                   className="edit-comment-input"
                   autoFocus
                 />
+                
+                {/* Zone de gestion des fichiers en édition */}
+                <div className="edit-files-area" style={{ marginTop: '8px' }}>
+                    {/* Fichiers existants */}
+                    {editExistingFiles.map(doc => (
+                        <div key={doc.iddoc} className="file-preview-chip" style={{ display: 'flex', alignItems: 'center', gap: '5px', background: '#f3f4f6', padding: '4px 8px', borderRadius: '4px', marginBottom: '4px', fontSize: '12px' }}>
+                            <span>📄 {doc.filename}</span>
+                            <button onClick={() => {
+                                setFilesToDelete(prev => [...prev, doc.iddoc]);
+                                setEditExistingFiles(prev => prev.filter(d => d.iddoc !== doc.iddoc));
+                            }} style={{ border: 'none', background: 'transparent', color: 'red', cursor: 'pointer' }}>×</button>
+                        </div>
+                    ))}
+                    
+                    {/* Nouveaux fichiers */}
+                    {editNewFiles.map((file, idx) => (
+                        <div key={idx} className="file-preview-chip" style={{ display: 'flex', alignItems: 'center', gap: '5px', background: '#e0f2fe', padding: '4px 8px', borderRadius: '4px', marginBottom: '4px', fontSize: '12px', flexWrap: 'wrap' }}>
+                            <span>📄 {file.name}</span>
+                            <select 
+                              value={editFileLevels[idx] || 'GINF1'} 
+                              onChange={(e) => {
+                                const newLevels = [...editFileLevels];
+                                newLevels[idx] = e.target.value;
+                                setEditFileLevels(newLevels);
+                              }}
+                              style={{ fontSize: '10px', padding: '2px', border: '1px solid #ccc', borderRadius: '3px', maxWidth: '80px' }}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <optgroup label="Prepa"><option value="AP1">AP1</option><option value="AP2">AP2</option></optgroup>
+                              <optgroup label="Computer Science"><option value="GINF1">GINF1</option><option value="GINF2">GINF2</option><option value="GINF3">GINF3</option></optgroup>
+                              <optgroup label="Logistics"><option value="GIL1">GIL1</option><option value="GIL2">GIL2</option><option value="GIL3">GIL3</option></optgroup>
+                              <optgroup label="Systems"><option value="GSR1">GSR1</option><option value="GSR2">GSR2</option><option value="GSR3">GSR3</option></optgroup>
+                              <optgroup label="Env"><option value="G2EI1">G2EI1</option><option value="G2EI2">G2EI2</option><option value="G2EI3">G2EI3</option></optgroup>
+                              <optgroup label="Elec"><option value="GSEA1">GSEA1</option><option value="GSEA2">GSEA2</option><option value="GSEA3">GSEA3</option></optgroup>
+                              <optgroup label="Cyber"><option value="GSYC1">GSYC1</option><option value="GSYC2">GSYC2</option><option value="GSYC3">GSYC3</option></optgroup>
+                            </select>
+                            <button onClick={() => {
+                                setEditNewFiles(prev => prev.filter((_, i) => i !== idx));
+                                setEditFileLevels(prev => prev.filter((_, i) => i !== idx));
+                            }} style={{ border: 'none', background: 'transparent', color: 'red', cursor: 'pointer' }}>×</button>
+                        </div>
+                    ))}
+
+                    {/* Bouton ajout fichier */}
+                    <label style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#0040D0', marginTop: '4px' }}>
+                        <Paperclip size={14} /> Add files
+                        <input 
+                            type="file" 
+                            multiple 
+                            style={{ display: 'none' }} 
+                            onChange={(e) => {
+                                if (e.target.files) {
+                                    const newFiles = Array.from(e.target.files);
+                                    setEditNewFiles(prev => [...prev, ...newFiles]);
+                                    setEditFileLevels(prev => [...prev, ...newFiles.map(() => 'GINF1')]);
+                                }
+                            }}
+                        />
+                    </label>
+                </div>
+
                 <div className="edit-comment-actions">
                  <button 
                     type="button"
@@ -602,26 +697,33 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
               <p className="comment-text">{c.contenu}</p>
             )}
             
-            {commentDoc && (
-              <div className="comment-document">
-                {isImage ? (
-                  <div className="comment-image-container">
-                    <img src={commentDoc.url} alt={commentDoc.filename} className="comment-image" />
-                    <button onClick={() => handleDownload(commentDoc)} className="download-btn-small image-download-btn-small" title="Download image">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="comment-file-wrapper">
-                    <a href={commentDoc.url} target="_blank" rel="noopener noreferrer" className="comment-file-link">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
-                      <span className="file-name-link">{commentDoc.filename}</span>
-                    </a>
-                    <button onClick={() => handleDownload(commentDoc)} className="download-btn-small" title="Download">
-                      <Download size={16} />
-                    </button>
-                  </div>
-                )}
+            {!isEditing && commentDocs.length > 0 && (
+              <div className="comment-documents-list">
+                {commentDocs.map((doc, idx) => {
+                  const isImage = doc.type === 'IMAGE' || doc.url?.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+                  return (
+                    <div key={doc.iddoc || idx} className="comment-document">
+                      {isImage ? (
+                        <div className="comment-image-container">
+                          <img src={doc.url} alt={doc.filename} className="comment-image" />
+                          <button onClick={() => handleDownload(doc)} className="download-btn-small image-download-btn-small" title="Download image">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="comment-file-wrapper">
+                          <a href={doc.url} target="_blank" rel="noopener noreferrer" className="comment-file-link">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+                            <span className="file-name-link">{doc.filename}</span>
+                          </a>
+                          <button onClick={() => handleDownload(doc)} className="download-btn-small" title="Download">
+                            <Download size={16} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
 
@@ -644,9 +746,10 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
 
                 <button
                   className={`comment-action-btn ${c.isLiked ? 'active' : c.isLoved ? 'active-love' : ''}`}
-                  onClick={() => handleCommentAction(c.isLiked ? 'like' : c.isLoved ? 'love' : 'like', c.idcomment)}
+                  onClick={(e) => { e.stopPropagation(); handleCommentAction(c.isLiked ? 'like' : c.isLoved ? 'love' : 'like', c.idcomment); }}
+                  style={{ color: c.isLiked ? '#0040D0' : c.isLoved ? '#e11d48' : 'inherit' }}
                 >
-                  {c.isLoved ? <Heart size={14} fill="currentColor" /> : <ThumbsUp size={14} fill={c.isLiked ? 'currentColor' : 'none'} />}
+                  {c.isLoved ? <Heart size={14} fill="#e11d48" color="#e11d48" /> : <ThumbsUp size={14} fill={c.isLiked ? "#0040D0" : "none"} color={c.isLiked ? "#0040D0" : "currentColor"} />}
                   <span>{c.isLoved ? 'Love' : 'Like'}</span>
                   {(c.likesCount > 0 || c.lovesCount > 0) && <span className="like-count">({c.likesCount + c.lovesCount})</span>}
                 </button>
@@ -741,60 +844,67 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
       <div className="post-content">
         <p className="post-text">{post.contenu}</p>
         
-        {postDoc && (
-          <>
-            {(postDoc.type === 'IMAGE' || postDoc.url?.match(/\.(jpg|jpeg|png|gif|webp)$/i)) ? (
-              <div className="post-image-container"> {/* Container needs to be relative for the button */}
-                <img 
-                  src={postDoc.url} 
-                  alt={postDoc.filename || "Post content"} 
-                  className="post-image"
-                />
-                <button 
-                  onClick={() => handleDownload(postDoc)}
-                  className="download-btn image-download-btn"
-                  title="Download image"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                  </svg>
-                </button>
-              </div>
-            ) : (
-              <div className="post-document-container">
-                <div className="post-file-wrapper">
-                  <a 
-                    href={postDoc.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="post-file-link"
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-                      <polyline points="13 2 13 9 20 9"></polyline>
-                    </svg>
-                    <div className="file-details">
-                      <span className="file-name">{postDoc.filename || 'Document'}</span>
-                      {postDoc.niveau && <span className="file-niveau-badge">{postDoc.niveau}</span>}
+        {postDocs.length > 0 && (
+          <div className="post-documents-list">
+            {postDocs.map((doc, idx) => {
+              const isImage = doc.type === 'IMAGE' || doc.url?.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+              return (
+                <div key={doc.iddoc || idx} className="post-document-item">
+                  {isImage ? (
+                    <div className="post-image-container">
+                      <img 
+                        src={doc.url} 
+                        alt={doc.filename || "Post content"} 
+                        className="post-image"
+                      />
+                      <button 
+                        onClick={() => handleDownload(doc)}
+                        className="download-btn image-download-btn"
+                        title="Download image"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                          <polyline points="7 10 12 15 17 10"></polyline>
+                          <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                      </button>
                     </div>
-                  </a>
-                  <button 
-                    onClick={() => handleDownload(postDoc)}
-                    className="download-btn"
-                    title="Download"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                      <polyline points="7 10 12 15 17 10"></polyline>
-                      <line x1="12" y1="15" x2="12" y2="3"></line>
-                    </svg>
-                  </button>
+                  ) : (
+                    <div className="post-document-container">
+                      <div className="post-file-wrapper">
+                        <a 
+                          href={doc.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="post-file-link"
+                        >
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                            <polyline points="13 2 13 9 20 9"></polyline>
+                          </svg>
+                          <div className="file-details">
+                            <span className="file-name">{doc.filename || 'Document'}</span>
+                            {doc.niveau && <span className="file-niveau-badge">{doc.niveau}</span>}
+                          </div>
+                        </a>
+                        <button 
+                          onClick={() => handleDownload(doc)}
+                          className="download-btn"
+                          title="Download"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
-          </>
+              );
+            })}
+          </div>
         )}
       </div>
 
@@ -873,8 +983,8 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
           )}
           <div className="comment-input-wrapper">
             <div className="current-user-avatar-small">
-               {getProfileImage(effectiveUser) ? (
-                 <img src={getProfileImage(effectiveUser)} alt="" />
+               {getProfileImage(user) ? (
+                 <img src={getProfileImage(user)} alt="" />
                ) : (
                  <DefaultAvatar />
                )}
@@ -896,7 +1006,12 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
             <label className="comment-icon-btn attach-label">
               <input 
                 type="file" 
-                onChange={(e) => setCommentFile(e.target.files[0])} 
+                multiple
+                onChange={(e) => {
+                  const newFiles = Array.from(e.target.files);
+                  setCommentFiles(prev => [...prev, ...newFiles]);
+                  setCommentFileLevels(prev => [...prev, ...newFiles.map(() => 'GINF1')]); // Default level
+                }} 
                 style={{display: 'none'}}
                 accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.jpg,.jpeg,.png"
               />
@@ -917,12 +1032,12 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
               type="button" 
               onClick={handleCommentSubmit}
               className="comment-submit-icon-btn" 
-              disabled={(!commentText.trim() && !commentFile) || loading}
+              disabled={(!commentText.trim() && commentFiles.length === 0) || loading}
             >
               {loading ? (
                 <div className="spinner" style={{width: '20px', height: '20px', border: '2px solid #0040D0', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 1s linear infinite'}}></div>
               ) : (
-                <Send size={20} color={(!commentText.trim() && !commentFile) ? "#9ca3af" : "#0040D0"} />
+                <Send size={20} color={(!commentText.trim() && commentFiles.length === 0) ? "#9ca3af" : "#0040D0"} />
               )}
             </button>
           </div>
@@ -930,65 +1045,75 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
             <div style={{ color: '#ef4444', fontSize: '13px', padding: '0 15px 10px 15px' }}>{commentError}</div>
           )}
           
-          {commentFile && (
+          {commentFiles.length > 0 && (
             <div className="file-selected-container">
-              <div className="file-info">
+              {commentFiles.map((file, index) => (
+              <div key={index} className="file-info">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0040D0" strokeWidth="2">
                   <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
                   <polyline points="13 2 13 9 20 9"></polyline>
                 </svg>
-                <span className="file-name">{commentFile.name}</span>
+                <span className="file-name">{file.name}</span>
                 <button 
                   type="button" 
-                  onClick={() => {setCommentFile(null); setCommentNiveau('');}}
+                  onClick={() => {
+                    setCommentFiles(prev => prev.filter((_, i) => i !== index));
+                    setCommentFileLevels(prev => prev.filter((_, i) => i !== index));
+                  }}
                   className="file-remove-btn"
                   title="Remove file"
                 >
                   ✕
                 </button>
+                
+                {/* Sélecteur de niveau pour commentaire */}
+                <select 
+                  value={commentFileLevels[index]} 
+                  onChange={(e) => {
+                    const newLevels = [...commentFileLevels];
+                    newLevels[index] = e.target.value;
+                    setCommentFileLevels(newLevels);
+                  }}
+                  className="niveau-select"
+                  style={{ marginLeft: 'auto', fontSize: '11px', padding: '4px' }}
+                >
+                  <optgroup label="Prepa">
+                    <option value="AP1">AP1</option>
+                    <option value="AP2">AP2</option>
+                  </optgroup>
+                  <optgroup label="Computer Science">
+                    <option value="GINF1">GINF1</option>
+                    <option value="GINF2">GINF2</option>
+                    <option value="GINF3">GINF3</option>
+                  </optgroup>
+                  <optgroup label="Logistics and Industrial Engineering">
+                    <option value="GIL1">GIL1</option>
+                    <option value="GIL2">GIL2</option>
+                    <option value="GIL3">GIL3</option>
+                  </optgroup>
+                  <optgroup label="Systems and Networks Engineering">
+                    <option value="GSR1">GSR1</option>
+                    <option value="GSR2">GSR2</option>
+                    <option value="GSR3">GSR3</option>
+                  </optgroup>
+                  <optgroup label="Environmental Engineering">
+                    <option value="G2EI1">G2EI1</option>
+                    <option value="G2EI2">G2EI2</option>
+                    <option value="G2EI3">G2EI3</option>
+                  </optgroup>
+                  <optgroup label="Electrical Systems and Automatic Engineering">
+                    <option value="GSEA1">GSEA1</option>
+                    <option value="GSEA2">GSEA2</option>
+                    <option value="GSEA3">GSEA3</option>
+                  </optgroup>
+                  <optgroup label="Cyber Security and Engineering">
+                    <option value="GSYC1">GSYC1</option>
+                    <option value="GSYC2">GSYC2</option>
+                    <option value="GSYC3">GSYC3</option>
+                  </optgroup>
+                </select>
               </div>
-              
-              <select 
-                value={commentNiveau} 
-                onChange={(e) => setCommentNiveau(e.target.value)}
-                className="niveau-select"
-              >
-                <option value="">Select level (optional)</option>
-                <optgroup label="Prepa">
-                  <option value="AP1">AP1</option>
-                  <option value="AP2">AP2</option>
-                </optgroup>
-                <optgroup label="Computer Science">
-                  <option value="GINF1">GINF1</option>
-                  <option value="GINF2">GINF2</option>
-                  <option value="GINF3">GINF3</option>
-                </optgroup>
-                <optgroup label="Logistics and Industrial Engineering">
-                  <option value="GIL1">GIL1</option>
-                  <option value="GIL2">GIL2</option>
-                  <option value="GIL3">GIL3</option>
-                </optgroup>
-                <optgroup label="Systems and Networks Engineering">
-                  <option value="GSR1">GSR1</option>
-                  <option value="GSR2">GSR2</option>
-                  <option value="GSR3">GSR3</option>
-                </optgroup>
-                <optgroup label="Environmental Engineering">
-                  <option value="G2EI1">G2EI1</option>
-                  <option value="G2EI2">G2EI2</option>
-                  <option value="G2EI3">G2EI3</option>
-                </optgroup>
-                <optgroup label="Electrical Systems and Automatic Engineering">
-                  <option value="GSEA1">GSEA1</option>
-                  <option value="GSEA2">GSEA2</option>
-                  <option value="GSEA3">GSEA3</option>
-                </optgroup>
-                <optgroup label="Cyber Security and Engineering">
-                  <option value="GSYC1">GSYC1</option>
-                  <option value="GSYC2">GSYC2</option>
-                  <option value="GSYC3">GSYC3</option>
-                </optgroup>
-              </select>
+              ))}
             </div>
           )}
         </div>

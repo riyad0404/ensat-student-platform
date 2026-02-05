@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
 import conversationAPI from '../api/conversationAPI';
@@ -12,6 +12,7 @@ import { Search } from 'lucide-react';
 const OtherUserProfile = () => {
     const { user: authUser, loading: authLoading } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
     const { id } = useParams();
     
     const [user, setUser] = useState(null);
@@ -62,6 +63,22 @@ const OtherUserProfile = () => {
             fetchUser();
         }
     }, [id, authUser, authLoading, navigate]);
+
+    // Effet pour scroller vers un post spécifique si demandé (via notification)
+    useEffect(() => {
+        if (location.state?.scrollToPostId && userPosts.length > 0) {
+            const postId = location.state.scrollToPostId;
+            setTimeout(() => {
+                const element = document.getElementById(`post-${postId}`);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    element.style.border = "2px solid #0040D0";
+                    setTimeout(() => element.style.border = "none", 2000);
+                }
+            }, 500);
+            window.history.replaceState({}, document.title);
+        }
+    }, [location.state, userPosts]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -156,7 +173,17 @@ const OtherUserProfile = () => {
         // 2. Sinon, utiliser la photo venant du backend
         profileImageUrl = user.photo;
     }
- const bannerStyle = {
+    
+    // Récupérer la bannière (priorité: backend > localStorage fallback)
+    const localBanner = id ? localStorage.getItem(`profile_banner_${id}`) : null;
+    const displayBanner = user.banniere || user.banner || localBanner;
+
+    const bannerStyle = displayBanner ? {
+        backgroundImage: `url(${displayBanner})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+    } : {
         backgroundImage: `url(${defaultBanner})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
@@ -242,7 +269,7 @@ const OtherUserProfile = () => {
                 </div>
             )}
             
-            <div className="page-content" style={{ maxWidth: '1200px', margin: '10px auto', width: '100%', padding: '0 20px' }}>
+            <div className="page-content" style={{ maxWidth: '96%', margin: '10px auto', width: '100%', padding: '0 20px' }}>
                 {/* Section 1: User Info Card */}
                 <div style={{ background: 'white', borderRadius: '10px', overflow: 'hidden', border: '1px solid #e0e0e0', marginBottom: '15px', position: 'relative' }}>
                     <div className="profile-banner" style={bannerStyle}></div>
@@ -319,10 +346,11 @@ const OtherUserProfile = () => {
                 <div className="posts-section" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     {userPosts.length > 0 ? (
                         userPosts.map(post => (
-                            <PostCard 
-                                key={post.idpost} 
-                                post={post}
-                            />
+                            <div id={`post-${post.idpost}`} key={post.idpost}>
+                                <PostCard 
+                                    post={post}
+                                />
+                            </div>
                         ))
                     ) : null}
                 </div>

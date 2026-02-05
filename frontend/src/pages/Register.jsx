@@ -3,10 +3,8 @@ import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "./../styles/login.css";
 import { FiMail, FiEye, FiEyeOff } from "react-icons/fi";
-import registerImg from "../assets/login-illustration.png";
 import Input from "../components/input.jsx";
 import Button from "../components/button.jsx";
-import logoImg from "../assets/logo.jpeg";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { validatePasswordField, applyPasswordPolicyBackendError } from "../utils/authValidation";
 
@@ -274,13 +272,11 @@ if (!result.success) {
     <div className="login-page">
       <div className="login-card">
         <div className="login-left">
-          <img src={registerImg} alt="Register Illustration" className="login-illustration" />
+          <img alt="Register Illustration" className="login-illustration" />
         </div>
 
         <div className="login-right register-page">
-          <img src={logoImg} alt="Logo" className="top-right-logo" />
           <h2>Create an Account</h2>
-          <p className="subtitle">Welcome to the community</p>
 
           {/* ✅ même design d’erreur que login (box rouge) */}
           {error && <div className="error-message">{error}</div>}
@@ -326,35 +322,29 @@ if (!result.success) {
               disabled={isSignupLocked || loading}
             />
 
-            <div style={{ position: "relative", marginBottom: "1.2rem" }}>
-              <Input
-                label="Password"
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
-                value={formData.password}
-                onChange={handleChange("password")}
-                error={fieldErrors.password}
-                required
-                disabled={isSignupLocked || loading}
-              />
-              <span
-                onClick={() => !isSignupLocked && setShowPassword(!showPassword)}
-                style={{
-                  position: "absolute",
-                  right: "1rem",
-                  top: "2.3rem",
-                  cursor: isSignupLocked ? "not-allowed" : "pointer",
-                  color: "#666",
-                  display: "flex",
-                  alignItems: "center",
-                  zIndex: 10,
-                  transition: "color 0.2s",
-                  opacity: isSignupLocked ? 0.5 : 1,
-                }}
-              >
-                {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
-              </span>
-            </div>
+            <Input
+              label="Password"
+              type={showPassword ? "text" : "password"}
+              placeholder="Enter your password"
+              value={formData.password}
+              onChange={handleChange("password")}
+              error={fieldErrors.password}
+              required
+              disabled={isSignupLocked || loading}
+              icon={
+                <span
+                  onClick={() => !isSignupLocked && setShowPassword(!showPassword)}
+                  style={{
+                    cursor: isSignupLocked ? "not-allowed" : "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    opacity: isSignupLocked ? 0.5 : 1,
+                  }}
+                >
+                  {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+                </span>
+              }
+            />
 
             <Input
               label="Secret Code"

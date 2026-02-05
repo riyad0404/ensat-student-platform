@@ -155,7 +155,7 @@ export const groupInvite = async (req, res) => {
     const sender = getSenderFromReq(req);
 
     const { recipientId } = req.body;
-    const { idgroup } = req.params;
+    const idgroup = Number(req.params.idgroup);
 
     const notif = await createNotification({
       toUserId: recipientId,
@@ -163,8 +163,11 @@ export const groupInvite = async (req, res) => {
       type: NOTIF_TYPES.GROUP_INVITE,
       message: `${sender.prenom} ${sender.nom} vous a invité dans un groupe`,
       metadata: {
+        conversationId: idgroup,
         groupId: idgroup,
         sender,
+        senderName: `${sender.prenom} ${sender.nom}`,
+        isGroup: true,
       },
     });
 
@@ -180,7 +183,7 @@ export const inviteAccepted = async (req, res) => {
     const sender = getSenderFromReq(req);
 
     const { recipientId } = req.body;
-    const { idgroup } = req.params;
+    const idgroup = Number(req.params.idgroup);
 
     const notif = await createNotification({
       toUserId: recipientId,
@@ -188,8 +191,11 @@ export const inviteAccepted = async (req, res) => {
       type: NOTIF_TYPES.GROUP_INVITE_ACCEPTED,
       message: `${sender.prenom} ${sender.nom} a accepté votre invitation`,
       metadata: {
+        conversationId: idgroup,
         groupId: idgroup,
         sender,
+        senderName: `${sender.prenom} ${sender.nom}`,
+        isGroup: true,
       },
     });
 
@@ -205,7 +211,7 @@ export const inviteDeclined = async (req, res) => {
     const sender = getSenderFromReq(req);
 
     const { recipientId } = req.body;
-    const { idgroup } = req.params;
+    const idgroup = Number(req.params.idgroup);
 
     const notif = await createNotification({
       toUserId: recipientId,
@@ -213,8 +219,11 @@ export const inviteDeclined = async (req, res) => {
       type: NOTIF_TYPES.GROUP_INVITE_DECLINED,
       message: `${sender.prenom} ${sender.nom} a refusé votre invitation`,
       metadata: {
+        conversationId: idgroup,
         groupId: idgroup,
         sender,
+        senderName: `${sender.prenom} ${sender.nom}`,
+        isGroup: true,
       },
     });
 

@@ -19,6 +19,7 @@ import {
   hideConversation,
   unhideConversation,
   joinConversation,
+  declineJoinRequest,
   markConversationAsRead,
   getAvailableGroups
 } from '../controllers/conversationController.js';
@@ -47,6 +48,9 @@ router.post('/:id/leave', authMiddleware, checkMember, leaveConversation);
 // Hide/unhide conversation
 router.post('/:id/hide', authMiddleware, checkMember, hideConversation);
 router.post('/:id/unhide', authMiddleware, checkMember, unhideConversation);
+
+// Decline join request
+router.post('/:id/join/decline', authMiddleware, declineJoinRequest);
 
 // Mark as read
 router.post('/:id/read', authMiddleware, checkMember, markConversationAsRead);

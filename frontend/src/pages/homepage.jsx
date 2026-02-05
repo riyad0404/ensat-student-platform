@@ -309,14 +309,15 @@ const HomePage = () => {
             <div className="loading-feed">Loading posts...</div>
           ) : (
             posts.map(post => (
-              <PostCard 
-                key={post.idpost} 
-                post={post} 
-                onPostDeleted={fetchPosts}
-                onPostUpdated={fetchPosts}
-                showOptions={true}
-                onEdit={handleEditPost}
-              />
+              <div id={`post-${post.idpost}`} key={post.idpost}>
+                <PostCard 
+                  post={post} 
+                  onPostDeleted={fetchPosts}
+                  onPostUpdated={fetchPosts}
+                  showOptions={true}
+                  onEdit={handleEditPost}
+                />
+              </div>
             ))
           )}
           {!loading && posts.length === 0 && (

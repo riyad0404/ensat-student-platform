@@ -397,14 +397,14 @@
   position: fixed;
   top: 6rem;
   right: 1.5rem;
-  background: linear-gradient(90deg, #4a82fc, #0040D0);
+  background: linear-gradient(90deg, #2ecc71, #27ae60);
   color: white;
   padding: 1rem 1.5rem;
   border-radius: 0.875rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  box-shadow: 0 8px 24px rgba(0, 64, 208, 0.2);
+  box-shadow: 0 8px 24px rgba(39, 174, 96, 0.2);
   z-index: 1000;
   animation: slideInRight 0.3s ease-out;
   font-weight: 500;

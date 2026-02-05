@@ -45,7 +45,7 @@ const Comment = sequelize.define(
       allowNull: true,
     },
  likedBy: {
-  type: DataTypes.JSONB,
+  type: DataTypes.JSON,
   allowNull: false,
   defaultValue: [],
   field: "likedby"
@@ -66,7 +66,7 @@ lovesCount: {
 },
 
 reactedBy: {
-  type: DataTypes.JSONB,
+  type: DataTypes.JSON,
   allowNull: false,
   defaultValue: [],
   field: "reactedby"

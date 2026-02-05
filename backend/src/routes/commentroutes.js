@@ -25,7 +25,7 @@ router.get("/post/:idpost", authMiddleware, getCommentsByPost);
 router.get("/mescomments", authMiddleware, getMyComments);
 // UPDATE comment (texte / lien uniquement)
 router.get("/:idcomment", authMiddleware, getCommentById);
-router.patch("/:idcomment", authMiddleware, updateComment);
+router.patch("/:idcomment", authMiddleware, uploadAny, multerErrorHandler, updateComment);
 // DELETE comment + documents + fichiers
 router.delete("/:idcomment", authMiddleware, deleteComment);
 // Exemple de route pour répondre à un commentaire

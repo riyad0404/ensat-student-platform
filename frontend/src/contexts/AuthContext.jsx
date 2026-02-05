@@ -236,6 +236,17 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       console.log("👋 Déconnexion en cours...");
+      
+      // Nettoyer le localStorage pour éviter les données périmées
+      const oldUser = JSON.parse(localStorage.getItem('user'));
+      if (oldUser && (oldUser.iduser || oldUser.id)) {
+        const oldUserId = oldUser.iduser || oldUser.id;
+        // On ne supprime plus les bookmarks pour qu'ils persistent par utilisateur
+        localStorage.removeItem(`profile_image_${oldUserId}`);
+        localStorage.removeItem(`profile_banner_${oldUserId}`);
+      }
+      localStorage.removeItem('user');
+
       await authAPI.logout();
     } catch (error) {
       console.error("⚠️ Erreur logout:", error);

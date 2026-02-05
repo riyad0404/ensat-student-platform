@@ -2,11 +2,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./../styles/login.css";
-import resetImg from "../assets/login-illustration.png";
 import { FiEye, FiEyeOff } from "react-icons/fi"; // Ajout des icônes
 import Input from "../components/input";
 import Button from "../components/button";
-import logoImg from "../assets/logo.jpeg";
 import axios from "axios";
 import { validatePasswordField, applyPasswordPolicyBackendError } from "../utils/authValidation";
 
@@ -143,12 +141,11 @@ export default function ResetPasswordByCode() {
         
         {/* IMAGE */}
         <div className="login-left">
-          <img src={resetImg} alt="Reset Password" className="login-illustration" />
+          <img alt="Reset Password" className="login-illustration" />
         </div>
 
         {/* FORM */}
         <div className="login-right">
-          <img src={logoImg} alt="Logo" className="top-right-logo" />
           <h2>Reset Password</h2>
           <p className="subtitle">
             Enter your secret code to reset your password
