@@ -4,7 +4,6 @@ import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import "./../styles/login.css";
 import { FiMail, FiEye, FiEyeOff } from "react-icons/fi";
-import appNameImg from "../assets/appname.jpeg";
 import Input from "../components/input.jsx";
 import Button from "../components/button.jsx";
 
@@ -211,7 +210,7 @@ export default function LoginPage() {
       <div className="login-card">
         {/* IMAGE */}
         <div className="login-left">
-          <img src={appNameImg} alt="Login Illustration" className="login-illustration" />
+          <img alt="Login Illustration" className="login-illustration" />
         </div>
 
         {/* FORM */}

@@ -5,7 +5,6 @@ import { FiMail } from "react-icons/fi";
 import Input from "../components/input.jsx";
 import Button from "../components/button.jsx";
 import axios from "axios";
-import registerImg from "../assets/appname.jpeg";
 
 export default function ForgotPasswordEmail() {
   const navigate = useNavigate();
@@ -51,7 +50,7 @@ export default function ForgotPasswordEmail() {
     <div className="login-page">
       <div className="login-card reset-page"> {/* ⭐ AJOUTEZ reset-page */}
         <div className="login-left">
-          <img src={registerImg} alt="Reset Illustration" className="login-illustration" />
+          <img alt="Reset Illustration" className="login-illustration" />
         </div>
 
         <div className="login-right">

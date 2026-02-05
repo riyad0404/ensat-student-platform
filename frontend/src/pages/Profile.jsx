@@ -62,6 +62,14 @@ const Profile = () => {
             if (savedImage) {
                 setLocalProfileImage(savedImage);
             }
+            
+            // Charger la bannière depuis le localStorage ou l'utilisateur
+            const savedBanner = localStorage.getItem(`profile_banner_${user.iduser}`);
+            if (savedBanner) {
+                setBannerImage(savedBanner);
+            } else if (user.banniere || user.banner) {
+                setBannerImage(user.banniere || user.banner);
+            }
             fetchUserPosts();
         }
     }, [user]);
@@ -276,6 +284,14 @@ const Profile = () => {
         try {
             const base64Image = await convertToBase64(file);
             setBannerImage(base64Image);
+            
+            if (user.iduser) {
+                // Sauvegarder dans le localStorage pour la persistance au refresh
+                localStorage.setItem(`profile_banner_${user.iduser}`, base64Image);
+                // Tenter de mettre à jour sur le serveur (si le backend le supporte)
+                updateProfile({ banniere: base64Image, banner: base64Image }).catch(err => console.log("Banner server update skipped"));
+            }
+
             setShowBannerMenu(false);
             showAlert('Banner updated!', 'success');
         } catch (error) {
@@ -286,6 +302,10 @@ const Profile = () => {
 
     const handleRemoveBanner = () => {
         setBannerImage('');
+        if (user.iduser) {
+            localStorage.removeItem(`profile_banner_${user.iduser}`);
+            updateProfile({ banniere: '', banner: '' }).catch(err => console.log("Banner server update skipped"));
+        }
         setShowBannerMenu(false);
         showAlert('Banner removed!', 'success');
     };

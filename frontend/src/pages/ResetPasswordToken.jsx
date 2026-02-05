@@ -6,7 +6,6 @@ import Input from "../components/input.jsx";
 import Button from "../components/button.jsx";
 import { FiEye, FiEyeOff } from "react-icons/fi";
 import axios from "axios";
-import resetImg from "../assets/appname.jpeg";
 import { validatePasswordField, applyPasswordPolicyBackendError } from "../utils/authValidation";
 
 export default function ResetPasswordToken() {
@@ -235,7 +234,6 @@ export default function ResetPasswordToken() {
       <div className="login-card">
         <div className="login-left">
           <img 
-            src={resetImg} 
             alt="Reset Password" 
             className="login-illustration" 
           />
