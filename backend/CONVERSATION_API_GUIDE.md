@@ -7,7 +7,7 @@ Quatre nouvelles fonctionnalités ont été implémentées pour améliorer la ge
 1. ✅ Masquer une conversation (soft delete)
 2. ✅ Rejoindre une conversation de groupe
 3. ✅ Comptage des messages non lus
-4. ✅ Gestion automatique de la lecture
+4. ✅ Gestion automatique de la lecture .
 
 ---
 
