@@ -555,12 +555,12 @@ const PostCard = ({ post, onPostDeleted, onPostUpdated, isBookmark = false, onEd
     const userPrenom = commentAuthor?.prenom || commentAuthor?.Prenom || commentAuthor?.firstName || "";
     const fullName = `${userPrenom} ${userNom}`.trim();
     const avatarUrl = getProfileImage({ ...commentAuthor, iduser: authorId });
-    const displayName = cAnon ? "Anonymous" : (fullName || commentAuthor?.username || "User");
     
     const isCommentOwner = user && (
       String(c.iduser) === String(user.iduser || user.id) ||
       (c.auteur && String(c.auteur.iduser) === String(user.iduser || user.id))
     );
+    const displayName = isCommentOwner ? "Me" : (cAnon ? "Student" : (fullName || commentAuthor?.username || "User"));
 
     const isEditing = editingCommentId === c.idcomment;
     // Récupérer tous les documents
