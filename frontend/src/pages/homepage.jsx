@@ -40,9 +40,9 @@ const HomePage = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       const data = await getAllPosts();
       // Gestion de la structure de données (tableau ou objet avec propriété posts)
       const postsArray = Array.isArray(data) ? data : (data?.posts || []);
@@ -58,7 +58,7 @@ const HomePage = () => {
       console.error("Error loading posts", error);
       setPosts([]);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -177,8 +177,21 @@ const HomePage = () => {
     }
   };
 
-  const handlePostCreated = () => {
-    fetchPosts(); // Rafraîchir le flux après création
+  const handlePostCreated = (savedPost) => {
+    if (savedPost && savedPost.idpost) {
+      setPosts(prev => {
+        const exists = prev.find(p => p.idpost === savedPost.idpost);
+        if (exists) {
+          return prev.map(p => p.idpost === savedPost.idpost ? { 
+            ...p, 
+            ...savedPost,
+            auteur: savedPost.auteur || p.auteur // Garder l'auteur si le backend ne le renvoie pas complet
+          } : p);
+        }
+        return [savedPost, ...prev];
+      });
+    }
+    fetchPosts(false); // Rafraîchir le flux après création
   };
 
   return (
