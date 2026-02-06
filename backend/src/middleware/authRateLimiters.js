@@ -13,6 +13,7 @@ export const loginLimiter = isTest
       max: 5, // 5 tentatives max dans ces 2 minutes
       standardHeaders: true,
       legacyHeaders: false,
+      skipSuccessfulRequests: true,
       message: {
         message: "Too many login attempts. Please try again in 2 minutes.",
       },
