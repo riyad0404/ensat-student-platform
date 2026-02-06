@@ -1,4 +1,4 @@
-// middleware/conversationMiddleware.js
+import { ConversationMember } from "../models/associations.js";
 export const checkOwner = async (req, res, next) => {
   try {
     const idconversation = Number(req.params.id);
