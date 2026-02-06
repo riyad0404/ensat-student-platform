@@ -205,45 +205,65 @@ export const updatePost = async (req, res) => {
       return res.status(403).json({ message: "Interdit" });
     }
 
-    const { contenu, typeContenu, isAnonymat } = req.body;
+    // DEBUG: Vérifier ce que le serveur reçoit
+    console.log("📝 UPDATE POST - ID:", idpost);
+    console.log("📝 Body reçu:", req.body);
+    console.log("📝 Fichiers reçus:", req.files);
+
+    // Sécurisation si req.body est undefined (ex: pb middleware)
+    const body = req.body || {};
+    if (Object.keys(body).length === 0 && (!req.files || req.files.length === 0)) {
+        console.warn("⚠️ ATTENTION: Aucune donnée reçue. Vérifiez que le middleware Multer est bien présent sur la route PATCH.");
+    }
+
+    const { contenu, typeContenu, isAnonymat } = body;
 
     if (contenu !== undefined) post.contenu = contenu;
     if (typeContenu !== undefined) post.typeContenu = typeContenu;
-    if (isAnonymat !== undefined) post.isAnonymat = isAnonymat;
+    // Conversion explicite du booléen (FormData envoie des strings)
+    if (isAnonymat !== undefined) {
+        post.isAnonymat = (String(isAnonymat) === "true");
+    }
 
     // --- GESTION DES FICHIERS ---
 
     // 1. Suppression des fichiers demandés
-    if (req.body.deleteFileIds) {
-      const idsToDelete = Array.isArray(req.body.deleteFileIds) 
-          ? req.body.deleteFileIds 
-          : [req.body.deleteFileIds];
+    if (body.deleteFileIds) {
+      let idsToDelete = Array.isArray(body.deleteFileIds) 
+          ? body.deleteFileIds 
+          : [body.deleteFileIds];
       
-      const docsToDelete = await Document.findAll({
-          where: { 
-              iddoc: { [Op.in]: idsToDelete },
-              idpost: idpost 
-          }
-      });
+      // Conversion en nombres pour éviter les erreurs SQL
+      idsToDelete = idsToDelete.map(id => Number(id)).filter(id => !isNaN(id));
 
-      for (const doc of docsToDelete) {
-           const filename = String(doc.url).split("/uploads/").pop();
-           if (filename) {
-              const filePath = path.join(UPLOAD_DIR, filename);
-              if (fs.existsSync(filePath)) {
-                try { fs.unlinkSync(filePath); } catch(e) {}
-              }
-           }
-           await doc.destroy();
+      if (idsToDelete.length > 0) {
+        const docsToDelete = await Document.findAll({
+            where: { 
+                iddoc: { [Op.in]: idsToDelete },
+                idpost: idpost 
+            }
+        });
+
+        for (const doc of docsToDelete) {
+             const filename = String(doc.url).split("/uploads/").pop();
+             if (filename) {
+                const filePath = path.join(UPLOAD_DIR, filename);
+                if (fs.existsSync(filePath)) {
+                  try { fs.unlinkSync(filePath); } catch(e) {}
+                }
+             }
+             await doc.destroy();
+        }
       }
     }
 
     // 2. Ajout de nouveaux fichiers
-    if (req.files && req.files.length > 0) {
-      const { niveau } = req.body;
+    const files = req.files || [];
+    if (files.length > 0) {
+      const { niveau } = body;
       const niveaux = Array.isArray(niveau) ? niveau : [niveau];
 
-      const filePromises = req.files.map(async (file, index) => {
+      const filePromises = files.map(async (file, index) => {
         const ext = file.originalname.split('.').pop().toLowerCase();
         let docType = "DOCUMENT";
         if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) docType = "IMAGE";

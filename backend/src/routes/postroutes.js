@@ -39,7 +39,7 @@ router.get(
 );
 
 // Modifier une publication
-router.patch("/:idpost", authMiddleware, updatePost);
+router.patch("/:idpost", authMiddleware, uploadMany, multerErrorHandler, updatePost);
 
 // Supprimer une publication
 router.delete("/:idpost", authMiddleware, deletePost);
