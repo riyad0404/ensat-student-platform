@@ -221,8 +221,8 @@ const CreatePostModal = ({ isOpen, onClose, onPostCreated, postToEdit }) => {
               </div>
             )}
 
-            {/* Aperçu du FICHIER EXISTANT (si pas de nouveau fichier sélectionné) */}
-            {files.length === 0 && existingFiles.length > 0 && (
+            {/* Aperçu du FICHIER EXISTANT */}
+            {existingFiles.length > 0 && (
                <div className="files-list existing">
                   {existingFiles.map((doc, index) => (
                     <div key={doc.iddoc || index} className="file-preview existing">
