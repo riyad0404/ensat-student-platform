@@ -6,9 +6,15 @@ export default {
       { type: Sequelize.QueryTypes.SELECT }
     );
 
+    // ✅ Sécurisation pour éviter user inexistant
     function randomUser(level) {
       const list = users.filter(u => u.niveau === level);
-      if (!list.length) return null;
+
+      if (!list.length) {
+        if (!users.length) return null;
+        return users[Math.floor(Math.random() * users.length)];
+      }
+
       return list[Math.floor(Math.random() * list.length)];
     }
 

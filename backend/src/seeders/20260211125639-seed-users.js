@@ -4,6 +4,12 @@ function randomItem(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+function takeAndRemoveRandom(arr) {
+  if (!arr || arr.length === 0) return null;
+  const idx = Math.floor(Math.random() * arr.length);
+  return arr.splice(idx, 1)[0];
+}
+
 function slugify(text) {
   return (text || "")
     .toLowerCase()
@@ -15,7 +21,10 @@ function slugify(text) {
 export default {
   async up(queryInterface, Sequelize) {
 
-    const count = 150;
+    // Nettoyer la table avant d'insérer les nouvelles données
+    await queryInterface.bulkDelete("users", null, {});
+
+    const count = 150; // ✅ FIX ICI
 
     const prenoms = [
       "Youssef","Salma","Omar","Aya","Imane","Hamza","Sara","Mehdi",
@@ -46,12 +55,11 @@ export default {
       "GSYC1","GSYC2","GSYC3"
     ];
 
-    /* Photos humaines (jeunes + cadrage propre) */
-    const malePhotos = Array.from({ length: 30 }, (_, i) =>
+    const malePhotos = Array.from({ length: 100 }, (_, i) =>
       `https://randomuser.me/api/portraits/men/${i}.jpg`
     );
 
-    const femalePhotos = Array.from({ length: 30 }, (_, i) =>
+    const femalePhotos = Array.from({ length: 100 }, (_, i) =>
       `https://randomuser.me/api/portraits/women/${i}.jpg`
     );
 
@@ -67,10 +75,15 @@ export default {
       "Passionnée par la technologie et l’apprentissage continu."
     ];
 
-    const hashedPassword = await bcrypt.hash("P@ssw0rd2026!", 10);
+    const hashedPasswordDefault = await bcrypt.hash("P@ssw0rd2026!", 10);
+    const hashedJihanePassword = await bcrypt.hash("Jihane2005@", 10);
 
     const users = [];
     const usedEmails = new Set();
+
+    // =============================
+    // 🔹 150 USERS RANDOM
+    // =============================
 
     for (let i = 0; i < count; i++) {
 
@@ -79,7 +92,6 @@ export default {
       const niveau = randomItem(niveaux);
       const isFemale = femaleNames.includes(prenom);
 
-      /* Email sécurisé */
       let baseEmail = `${slugify(prenom)}.${slugify(nom)}`;
       let email;
       let counter = 0;
@@ -94,30 +106,21 @@ export default {
 
       usedEmails.add(email);
 
-      /* PHOTO LOGIQUE */
-      let photo;
+      let photo = isFemale
+        ? takeAndRemoveRandom(femalePhotos) ?? takeAndRemoveRandom(malePhotos)
+        : takeAndRemoveRandom(malePhotos) ?? takeAndRemoveRandom(femalePhotos);
 
-      if (Math.random() < 0.3) {
-        // 30% avatars LinkedIn style (initiales)
-        photo = `https://ui-avatars.com/api/?name=${encodeURIComponent(
-          prenom + " " + nom
-        )}&background=0A66C2&color=ffffff&size=256`;
-      } else {
-        // 70% vraies photos humaines
-        photo = isFemale
-          ? randomItem(femalePhotos)
-          : randomItem(malePhotos);
+      if (!photo) {
+        throw new Error("Pas assez d'images disponibles.");
       }
 
-      const bio = isFemale
-        ? randomItem(bioFemale)
-        : randomItem(bioMale);
+      const bio = isFemale ? randomItem(bioFemale) : randomItem(bioMale);
 
       users.push({
         nom,
         prenom,
         email,
-        password: hashedPassword,
+        password: hashedPasswordDefault,
         niveau,
         secretCode: Math.floor(Math.random() * 900000) + 100000,
         bio,
@@ -128,6 +131,30 @@ export default {
         updatedAt: new Date(),
       });
     }
+
+    // =============================
+    // 🔹 AJOUT MANUEL DE JIHANE
+    // =============================
+
+    const jihanePhoto = takeAndRemoveRandom(femalePhotos) ?? takeAndRemoveRandom(malePhotos);
+    if (!jihanePhoto) {
+      throw new Error("Pas assez d'images pour la photo de Jihane.");
+    }
+
+    users.push({
+      nom: "El Ghazrani",
+      prenom: "Jihane",
+      email: "elghazranijihane@gmail.com",
+      password: hashedJihanePassword,
+      niveau: "GINF2",
+      secretCode: 200520,
+      bio: "Étudiante en école d'ingénieur passionnée par l'innovation technologique.",
+      photo: jihanePhoto,
+      resetPasswordToken: null,
+      resetPasswordExpires: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
 
     await queryInterface.bulkInsert("users", users);
   },
