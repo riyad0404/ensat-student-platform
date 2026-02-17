@@ -268,6 +268,7 @@ const Profile = () => {
         if (localProfileImage) {
             return localProfileImage;
         }
+        if (user?.photo) return user.photo;
         // Retourne null pour afficher l'icône par défaut
         return null;
     };
